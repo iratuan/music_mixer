@@ -1,0 +1,156 @@
+/* Estrutura: barra lateral + área principal. */
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100vh;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-3);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 8px;
+}
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.brand-name {
+  font: 600 16px / 1 var(--font-display);
+}
+.brand-name b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-title {
+  font: 650 10.5px / 1 var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 6px 10px;
+}
+.nav-item {
+  width: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 9px 10px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+.nav-item:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.nav-item.active svg {
+  color: var(--accent);
+}
+.nav-song {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: auto;
+  animation: bf-pulse 1.2s ease-in-out infinite;
+}
+@keyframes bf-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.side-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.theme-pick {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+}
+.theme-pick button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+}
+.theme-pick button[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+.theme-pick .t-dark { background: #14161b; }
+.theme-pick .t-light { background: #ffffff; }
+.theme-pick .t-wood { background: #6b4527; }
+.theme-pick .t-paper { background: #f4f1ea; }
+
+.main-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.content.full {
+  overflow: hidden;
+}
+
+/* Telas comuns (com margem) */
+.screen {
+  padding: var(--s-6) var(--s-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  max-width: 1400px;
+}
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.page-head.row {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+/* Marca mixerCraft na barra lateral. */
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  object-fit: contain;
+}

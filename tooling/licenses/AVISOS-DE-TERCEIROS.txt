@@ -1,0 +1,63 @@
+Baixaria Fina — componentes de terceiros incluídos no instalador
+=================================================================
+
+O Baixaria Fina chama os programas abaixo como processos separados (não são ligados ao código do
+app). Cada um mantém a própria licença. Os textos das licenças GPL estão nesta pasta.
+
+Programas executáveis
+---------------------
+FFmpeg 9.0.2 (build "essentials" de www.gyan.dev)
+  Licença: GNU GPL versão 3 (compilado com --enable-gpl --enable-version3) — texto em GPL-3.0.txt
+  Código-fonte: https://ffmpeg.org/download.html  ·  build: https://www.gyan.dev/ffmpeg/builds/
+  Uso: extrair e converter áudio.
+
+Rubber Band 4.0.0 (executável oficial)
+  Licença: GNU GPL versão 2 ou posterior — texto em RubberBand-COPYING.txt
+  Código-fonte: https://breakfastquay.com/rubberband/  ·  https://github.com/breakfastquay/rubberband
+  Uso: transposição de tom sem mudar o andamento.
+
+yt-dlp 2026.10.26
+  Licença: Unlicense (domínio público)
+  Código-fonte: https://github.com/yt-dlp/yt-dlp
+  Uso: baixar o áudio de um link de vídeo.
+
+Python 3.11.18 (CPython)
+  Licença: Python Software Foundation License
+  https://www.python.org/
+
+Bibliotecas Python
+------------------
+Demucs 4.1.0 ............ MIT        https://github.com/adefossez/demucs
+  Modelo htdemucs_6s ..... MIT        (pesos publicados com o Demucs)
+PyTorch 2.5.1 (CPU) ..... BSD-3      https://pytorch.org/
+torchaudio 2.5.1 ........ BSD-2      https://github.com/pytorch/audio
+Basic Pitch 0.4.0 ....... Apache-2.0 https://github.com/spotify/basic-pitch
+librosa 0.11.0 .......... ISC        https://librosa.org/
+NumPy 2.4.6 ............. BSD-3      https://numpy.org/
+SciPy 1.17.1 ............ BSD-3      https://scipy.org/
+Numba 0.68.1 / llvmlite . BSD-2      https://numba.pydata.org/
+ONNX Runtime 1.31.1 ..... MIT        https://onnxruntime.ai/
+soundfile 0.14.0 ........ BSD-3      (usa libsndfile, LGPL-2.1)
+lameenc 1.9.0 ........... LGPL-3.0   (codificador MP3 LAME)
+pretty_midi 0.2.11 ...... MIT        https://github.com/craffel/pretty-midi
+resampy 0.4.3 ........... ISC        https://github.com/bmcfee/resampy
+Demais dependências: licenças em resources/python/Lib/site-packages/*.dist-info.
+
+Divisão da voz (voz principal × backing vocals)
+-----------------------------------------------
+Arquitetura Mel-Band RoFormer ... MIT  copiada de audio-separator 0.48.0
+  (github.com/nomadkaraoke/python-audio-separator), baseada em lucidrains/BS-RoFormer (MIT);
+  rotary-embedding-torch 0.6.5 (MIT, lucidrains). Textos em resources/tools/bf_roformer/LICENSES.txt.
+Modelo mel_band_roformer_karaoke (aufr33 e viperx): NÃO vem no instalador. É baixado pelo
+  próprio usuário, quando pede, dos repositórios públicos do UVR/audio-separator no GitHub.
+
+Interface
+---------
+Electron 33.4.11 ........ MIT (inclui Chromium, BSD-3, e Node.js, MIT)
+React 18.3 .............. MIT
+
+Pedido de código-fonte
+----------------------
+Para FFmpeg e Rubber Band, o código-fonte exato das versões acima está nos endereços indicados.
+Se algum endereço deixar de funcionar, peça uma cópia ao distribuidor do Baixaria Fina; ela será
+fornecida por até três anos a partir desta distribuição, conforme a GPL.

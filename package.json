@@ -1,0 +1,127 @@
+{
+  "name": "baixaria-fina",
+  "version": "0.5.0-beta.3",
+  "private": true,
+  "description": "mixerCraft — faixas separadas, player com compassos e acordes, transposição e exercícios de baixo.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "dist/main/main.cjs",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:renderer": "vite build",
+    "build:electron": "esbuild apps/desktop/src/main/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/main/main.cjs && esbuild apps/desktop/src/preload/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/preload/preload.cjs",
+    "build": "npm run build:renderer && npm run build:electron",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win --dir",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.2",
+    "playwright": "^1.65.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.4"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "build": {
+    "appId": "br.local.mixercraft",
+    "productName": "mixerCraft",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "npmRebuild": false,
+    "forceCodeSigning": false,
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "mixerCraft",
+      "artifactName": "mixerCraft-Setup-${version}.${ext}"
+    },
+    "extraResources": [
+      {
+        "from": "tooling/runtime/python",
+        "to": "python",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**"
+        ]
+      },
+      {
+        "from": "tooling/runtime/models",
+        "to": "models"
+      },
+      {
+        "from": "tooling/rubberband/rubberband-4.0.0-gpl-executable-windows",
+        "to": "rubberband"
+      },
+      {
+        "from": "tooling/stems/bf_tools.py",
+        "to": "tools/bf_tools.py"
+      },
+      {
+        "from": "tooling/ytdlp/yt-dlp.exe",
+        "to": "ytdlp/yt-dlp.exe"
+      },
+      {
+        "from": "tooling/stems/ffmpeg/ffmpeg.exe",
+        "to": "ffmpeg/ffmpeg.exe"
+      },
+      {
+        "from": "tooling/licenses",
+        "to": "licenses"
+      },
+      {
+        "from": "tooling/stems/bf_roformer",
+        "to": "tools/bf_roformer",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**"
+        ]
+      },
+      {
+        "from": "tooling/stems/models-sep",
+        "to": "models/voice",
+        "filter": [
+          "*_config.yaml"
+        ]
+      }
+    ]
+  },
+  "author": "Baixaria Fina (local)"
+}

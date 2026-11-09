@@ -1,0 +1,70 @@
+/*
+ * Tokens do Baixaria Fina — proposta (Etapa 3). Layout minimalista, tema escuro padrão.
+ * Valores são propostas; a paleta final depende de aprovação do usuário (ver docs/decisoes.md).
+ * Componentes devem consumir estes tokens, nunca valores literais.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Superfícies */
+  --bf-color-bg: #0d0f12;
+  --bf-color-surface: #161a1f;
+  --bf-color-surface-raised: #1d2228;
+  --bf-color-border: #2a3038;
+
+  /* Texto */
+  --bf-color-text: #e8ebef;
+  --bf-color-text-muted: #9aa3ad;
+
+  /* Ação e foco */
+  --bf-color-accent: #5fb4ff;
+  --bf-color-focus: #ffd166;
+
+  /* Estados — sempre acompanhados de ícone e texto */
+  --bf-color-success: #6fd08c;
+  --bf-color-warning: #ffb547;
+  --bf-color-danger: #ff6b6b;
+
+  /* Espaço (escala de 4 px) */
+  --bf-space-1: 4px;
+  --bf-space-2: 8px;
+  --bf-space-3: 12px;
+  --bf-space-4: 16px;
+  --bf-space-6: 24px;
+  --bf-space-8: 32px;
+
+  /* Tipografia */
+  --bf-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --bf-font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --bf-font-size-sm: 13px;
+  --bf-font-size-md: 15px;
+  --bf-font-size-lg: 18px;
+  --bf-line-height: 1.45;
+
+  /* Forma e movimento */
+  --bf-radius-sm: 4px;
+  --bf-radius-md: 8px;
+  --bf-motion-fast: 120ms;
+  --bf-motion-base: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --bf-motion-fast: 0ms;
+    --bf-motion-base: 0ms;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--bf-color-focus);
+  outline-offset: 2px;
+}
+
+body {
+  margin: 0;
+  background: var(--bf-color-bg);
+  color: var(--bf-color-text);
+  font-family: var(--bf-font-family);
+  font-size: var(--bf-font-size-md);
+  line-height: var(--bf-line-height);
+}

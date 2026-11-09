@@ -1,0 +1,215 @@
+/*
+ * Tokens do Baixaria Fina. Tudo que é cor, espaço, raio e tipo vem daqui.
+ * Os temas trocam só as cores (atributo data-theme no <html>). Paletas Claro, Madeira e Papel
+ * adaptadas do ScaleMonster (mesmo autor); Escuro é a identidade coral + teal do Baixaria.
+ */
+:root {
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+  --fs-xs: 11.5px;
+  --fs-sm: 13px;
+  --fs-md: 14.5px;
+  --fs-lg: 18px;
+  --fs-xl: 26px;
+  --fs-hero: 44px;
+
+  --hand-left: #c97a12;
+  --key-white: #f7f6f2;
+  --key-black: #1b1c20;
+  --key-line: #b9b6ae;
+  --key-dim: #8d8a83;
+  --lcd-bg: #0f1115;
+  --lcd-ink: #eef0f3;
+  --lcd-dim: #737a86;
+  --lcd-line: rgba(255, 255, 255, 0.08);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 160ms;
+}
+
+/* Escuro (padrão): grafite, coral e teal */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0c0f;
+  --surface: #14161b;
+  --surface-2: #1b1e25;
+  --surface-3: #252932;
+  --text: #f2f3f5;
+  --muted: #9aa0ab;
+  --faint: #6d737e;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --accent: #ff5a3c;
+  --accent-ink: #1a0603;
+  --accent-soft: rgba(255, 90, 60, 0.16);
+  --accent-2: #4fd1c5;
+  --good: #3ddc97;
+  --warn: #ffb547;
+  --bad: #ff6b6b;
+  --focus: #ffd166;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --wave-bg: #101217;
+  --board: #1a140f;
+  --fret: rgba(235, 225, 205, 0.45);
+  --string: #c9ced8;
+  --inlay: rgba(235, 225, 205, 0.35);
+
+  --stem-vocals: #ff7ab6;
+  --stem-lead: #ff7ab6;
+  --stem-backing: #c79bff;
+  --stem-guitar: #ffb547;
+  --stem-piano: #7cc4ff;
+  --stem-bass: #ff5a3c;
+  --stem-drums: #4fd1c5;
+  --stem-other: #a7b0be;
+  --stem-rest: #7d8592;
+  --stem-metro: #ffd166;
+  --mute: #7cc4ff;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f3f3f6;
+  --surface: #ffffff;
+  --surface-2: #ececf1;
+  --surface-3: #e0e0e7;
+  --text: #1c1c21;
+  --muted: #62626d;
+  --faint: #8a8a95;
+  --line: rgba(0, 0, 0, 0.07);
+  --line-strong: rgba(0, 0, 0, 0.14);
+  --accent: #e2442a;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(226, 68, 42, 0.12);
+  --accent-2: #0e8f84;
+  --good: #0e9f6e;
+  --warn: #b26a00;
+  --bad: #d92d20;
+  --focus: #1f6feb;
+  --scrim: rgba(20, 20, 30, 0.3);
+  --shadow: 0 8px 24px rgba(20, 20, 40, 0.1);
+  --wave-bg: #f7f7fa;
+  --board: #e9dcc6;
+  --fret: rgba(60, 45, 25, 0.45);
+  --string: #6f6a62;
+  --inlay: rgba(60, 45, 25, 0.25);
+
+  --stem-vocals: #d63384;
+  --stem-lead: #d63384;
+  --stem-backing: #7c4dff;
+  --stem-guitar: #c97a00;
+  --stem-piano: #1f78d1;
+  --stem-bass: #e2442a;
+  --stem-drums: #0e8f84;
+  --stem-other: #6c7480;
+  --stem-rest: #8a919c;
+  --stem-metro: #b58900;
+  --mute: #1f78d1;
+}
+
+/* Madeira: jacarandá, trastes de osso, cordas de níquel (do ScaleMonster) */
+[data-theme='wood'] {
+  --mute: var(--accent-2);
+  color-scheme: dark;
+  --bg: #17110b;
+  --surface: #211810;
+  --surface-2: #2b2016;
+  --surface-3: #372a1d;
+  --text: #f2e8d5;
+  --muted: #b3a185;
+  --faint: #8c7c63;
+  --line: rgba(242, 232, 213, 0.08);
+  --line-strong: rgba(242, 232, 213, 0.16);
+  --accent: #e3a84f;
+  --accent-ink: #2a1c12;
+  --accent-soft: rgba(227, 168, 79, 0.2);
+  --accent-2: #a6d189;
+  --good: #a6d189;
+  --warn: #e3a84f;
+  --bad: #e58b6f;
+  --focus: #f4ead2;
+  --scrim: rgba(12, 8, 4, 0.6);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --wave-bg: #1c140d;
+  --board: #2a1c12;
+  --fret: rgba(240, 226, 196, 0.7);
+  --string: #d9dce2;
+  --inlay: #efe3c6;
+
+  --stem-vocals: #f0a6a0;
+  --stem-lead: #f0a6a0;
+  --stem-backing: #d6a8e0;
+  --stem-guitar: #e3a84f;
+  --stem-piano: #9cc7e8;
+  --stem-bass: #f08a5d;
+  --stem-drums: #a6d189;
+  --stem-other: #c2b49a;
+  --stem-rest: #9c8c72;
+  --stem-metro: #f4ead2;
+}
+
+/* Papel: creme, tinta escura, flat (tema Draw do ScaleMonster) */
+[data-theme='paper'] {
+  --mute: var(--accent-2);
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --surface: #faf8f3;
+  --surface-2: #ebe7dc;
+  --surface-3: #dfdace;
+  --text: #1d1c1a;
+  --muted: #5f5a50;
+  --faint: #8a8475;
+  --line: #dcd6c6;
+  --line-strong: #c6bfac;
+  --accent: #2f5d46;
+  --accent-ink: #faf8f3;
+  --accent-soft: rgba(47, 93, 70, 0.12);
+  --accent-2: #9b3b26;
+  --good: #2f5d46;
+  --warn: #8a5a00;
+  --bad: #9b3b26;
+  --focus: #1d1c1a;
+  --scrim: rgba(60, 52, 38, 0.35);
+  --shadow: none;
+  --wave-bg: #f7f4ed;
+  --board: #faf8f3;
+  --fret: rgba(29, 28, 26, 0.3);
+  --string: #5d584e;
+  --inlay: rgba(29, 28, 26, 0.2);
+
+  --stem-vocals: #9b3b26;
+  --stem-lead: #9b3b26;
+  --stem-backing: #6b4a7a;
+  --stem-guitar: #8a5a00;
+  --stem-piano: #2a5d8a;
+  --stem-bass: #b5482f;
+  --stem-drums: #2f5d46;
+  --stem-other: #5f5a50;
+  --stem-rest: #8a8475;
+  --stem-metro: #1d1c1a;
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+  }
+}

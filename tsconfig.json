@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@domain": ["packages/domain/src/index.ts"],
+      "@ui/*": ["packages/ui/src/*"]
+    }
+  },
+  "include": ["packages/**/*.ts", "packages/**/*.tsx", "apps/desktop/src/**/*.ts", "apps/desktop/src/**/*.tsx", "apps/desktop/tests/**/*.ts", "tests/**/*.ts", "vite.config.ts"]
+}

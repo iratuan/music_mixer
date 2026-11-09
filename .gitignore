@@ -1,0 +1,41 @@
+# Dependências e saídas de build
+node_modules/
+dist/
+release/
+release-next/
+coverage/
+
+# Ferramentas e runtimes montados localmente (não versionados; ver README)
+tooling/runtime/python/
+tooling/runtime/models/
+tooling/rubberband/
+tooling/ytdlp/*.exe
+tooling/stems/.venv/
+tooling/stems/ffmpeg/
+tooling/stems/out/
+tooling/stems/models-sep/*.ckpt
+tooling/stems/models-sep/download_checks.json
+
+# Pesos de modelo e binários
+*.ckpt
+*.onnx
+*.pth
+*.pt
+*.exe
+*.dll
+*.zip
+*.pyd
+*.so
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+
+# Configuração pessoal e logs
+.claude/settings.local.json
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
