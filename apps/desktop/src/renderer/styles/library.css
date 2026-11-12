@@ -213,6 +213,65 @@
 }
 
 /* Importar: link de vídeo */
+.grab-screen {
+  max-width: 1000px;
+}
+.grab-destination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-4);
+}
+.grab-destination p {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.grab-import,
+.grab-job,
+.grab-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.grab-result-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.grab-result-head > svg,
+.grab-check.ok > svg {
+  color: var(--good);
+  flex: none;
+}
+.grab-checks {
+  display: grid;
+  gap: 7px;
+}
+.grab-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.grab-check.warn {
+  color: var(--warn);
+}
+.grab-check.fail {
+  color: var(--bad);
+}
+.grab-warnings {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--warn);
+  font-size: var(--fs-sm);
+}
+.grab-screen .sp-foot {
+  margin-top: var(--s-2);
+}
+.grab-screen .url-text strong {
+  overflow-wrap: anywhere;
+}
 .notice h2 {
   margin: 0 0 8px;
   font-size: var(--fs-lg);

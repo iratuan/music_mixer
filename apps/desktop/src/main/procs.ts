@@ -7,6 +7,7 @@
  *   que sobreviveria. `killTree` usa `taskkill /T /F` para levar a árvore toda.
  * - `single` junta pedidos iguais em andamento (mesma análise, mesmo MIDI): sem dois processos
  *   escrevendo o mesmo arquivo temporário.
+ * - `runTool` roda ffmpeg/ffprobe com prazo e sem shell (argumentos em lista, nunca interpolados).
  * - `logLine` grava falhas em userData/logs/main.log (rotação simples em 1 MB) para diagnóstico.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -44,6 +45,45 @@ export function killAll(): number {
 
 export function liveCount(): number {
   return live.size;
+}
+
+export interface ToolResult {
+  readonly code: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+}
+
+/** Roda um executável de linha de comando com prazo; estoura o processo (árvore) ao vencer. */
+export function runTool(
+  exe: string,
+  args: readonly string[],
+  timeoutMs: number,
+  onSpawn?: (child: ChildProcess) => void,
+): Promise<ToolResult> {
+  return new Promise((resolve, reject) => {
+    const child = track(spawn(exe, [...args], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }));
+    onSpawn?.(child);
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d: Buffer) => {
+      stdout = (stdout + d.toString()).slice(-200_000);
+    });
+    child.stderr.on('data', (d: Buffer) => {
+      stderr = (stderr + d.toString()).slice(-200_000);
+    });
+    const timer = setTimeout(() => {
+      killTree(child);
+      reject(new Error('tempo limite excedido'));
+    }, timeoutMs);
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code, stdout, stderr });
+    });
+  });
 }
 
 const inFlight = new Map<string, Promise<unknown>>();
