@@ -741,9 +741,17 @@ function registerIpc(): void {
       send({ phase: 'verify', percent: null });
       const outProbe = ffprobe ? await probeFile(ffprobe, outTmp) : null;
       const { decoded, peakDb } = await decodePeak(ffmpegExe, outTmp);
+      if (state.cancelled) throw new Error('download cancelado');
       const checks: GrabCheck[] = outProbe
         ? verifyGrab({ source: sourceProbe, output: outProbe, decoded, expectedSampleRate: sampleRate, expectedChannels: channels })
-        : [{ id: 'verificacao', level: 'warn', detail: 'ffprobe não encontrado; o arquivo não foi verificado' }];
+        : [
+            {
+              id: 'verificacao',
+              level: 'warn',
+              detail: ffprobe ? 'ffprobe não conseguiu ler os metadados; verificação limitada à decodificação' : 'ffprobe não encontrado; verificação limitada à decodificação',
+            },
+            { id: 'decode', level: decoded ? 'ok' : 'fail', detail: decoded ? 'decodifica por inteiro' : 'há trechos corrompidos' },
+          ];
       if (peakDb !== null) {
         checks.push({ id: 'pico', level: peakDb > -0.1 ? 'warn' : 'ok', detail: peakDb === -Infinity ? 'silêncio digital' : `pico ${peakDb.toFixed(1)} dBFS` });
       }
@@ -759,6 +767,10 @@ function registerIpc(): void {
       );
       const finalPath = path.join(folder, `${base}.mp3`);
       await rename(outTmp, finalPath);
+      if (state.cancelled) {
+        await rm(finalPath, { force: true });
+        throw new Error('download cancelado');
+      }
       let originalPath: string | null = null;
       if (keepOriginal) {
         try {
@@ -768,6 +780,11 @@ function registerIpc(): void {
           originalPath = null;
           logLine('cópia do original falhou', e);
         }
+      }
+      if (state.cancelled) {
+        await rm(finalPath, { force: true });
+        if (originalPath) await rm(originalPath, { force: true });
+        throw new Error('download cancelado');
       }
       return {
         path: finalPath,
@@ -799,8 +816,12 @@ function registerIpc(): void {
     const folder = await grabFolder();
     const raw = (input as { path?: unknown })?.path;
     if (!folder || typeof raw !== 'string') throw new Error('caminho inválido');
+    const resolvedFolder = path.resolve(folder);
     const target = path.resolve(raw);
-    if (!target.startsWith(folder + path.sep) || !existsSync(target)) throw new Error('caminho inválido');
+    const relative = path.relative(resolvedFolder, target);
+    if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative) || !existsSync(target) || !(await stat(target)).isFile()) {
+      throw new Error('caminho inválido');
+    }
     shell.showItemInFolder(target);
     return { ok: true };
   });

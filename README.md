@@ -45,6 +45,7 @@ O **mixerCraft** é um aplicativo de estudo para baixistas (e para quem toca com
 
 **Entrada**
 - Importa um arquivo de áudio ou um link do YouTube (via `yt-dlp`).
+- Ferramenta **Baixar MP3**: salva o áudio de um link em uma pasta escolhida, com V0 ou 320 kbps e verificação do arquivo.
 - Biblioteca com pastas e coleções; cada música guarda seu andamento, tom e seções.
 
 **Separação de faixas**

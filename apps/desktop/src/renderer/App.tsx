@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Import } from './screens/Import.js';
+import { GrabMp3 } from './screens/GrabMp3.js';
 import { Library } from './screens/Library.js';
 import { Song } from './screens/Song.js';
 import { Exercises } from './screens/Exercises.js';
 import { Icon, type IconName } from './components/Icons.js';
 import { applyTheme, readTheme, THEMES, type ThemeName } from './lib/theme.js';
-import type { AudioFormatName, SeparateOptions } from '../preload/preload.js';
+import type { AudioFormatName, GrabProgress, GrabQuality, GrabResult, SeparateOptions } from '../preload/preload.js';
 import { cleanIpcError } from './screens/Import.js';
 import markUrl from './assets/mark.png';
 
@@ -40,12 +41,29 @@ export interface UrlDownload extends UrlRequest {
   readonly outdated?: boolean;
 }
 
-type Screen = 'library' | 'import' | 'song' | 'exercises';
+export interface GrabRequest {
+  readonly url: string;
+  readonly title: string;
+  readonly quality: GrabQuality;
+  readonly keepOriginal: boolean;
+}
+
+/** Download MP3 em andamento ou o último resultado/falha, preservado ao trocar de tela. */
+export interface GrabDownload extends GrabRequest {
+  readonly phase: GrabProgress['phase'];
+  readonly percent: number | null;
+  readonly speed?: number | null;
+  readonly error?: string;
+  readonly outdated?: boolean;
+  readonly result?: GrabResult;
+}
+
+type Screen = 'library' | 'import' | 'grab' | 'song' | 'exercises';
 
 /** Tela inicial. O parâmetro ?screen= só é usado no teste de fumaça (BF_SMOKE_SCREEN). */
 function initialScreen(): Screen {
   const requested = new URLSearchParams(window.location.search).get('screen');
-  return requested === 'import' || requested === 'exercises' ? requested : 'library';
+  return requested === 'import' || requested === 'grab' || requested === 'exercises' ? requested : 'library';
 }
 
 export const cleanName = (n: string) => n.replace(/\.[a-z0-9]{2,5}$/i, '');
@@ -63,6 +81,7 @@ export function App() {
   }, []);
   const [jobs, setJobs] = useState<Record<string, SongJob>>({});
   const [download, setDownload] = useState<UrlDownload | null>(null);
+  const [grabDownload, setGrabDownload] = useState<GrabDownload | null>(null);
   const running = useRef(false);
   const screenRef = useRef(screen);
   screenRef.current = screen;
@@ -85,10 +104,14 @@ export function App() {
     const offImport = window.baixaria.onImportProgress((p) => {
       setDownload((d) => (d && !d.error && d.url === p.url ? { ...d, phase: p.phase, percent: p.percent, speed: p.speed ?? null } : d));
     });
+    const offGrab = window.baixaria.onGrabProgress((p) => {
+      setGrabDownload((d) => (d && !d.error && !d.result && d.url === p.url ? { ...d, phase: p.phase, percent: p.percent, speed: p.speed ?? null } : d));
+    });
     return () => {
       offStems();
       offSong();
       offImport();
+      offGrab();
     };
   }, []);
 
@@ -154,6 +177,28 @@ export function App() {
     setScreen('song');
   }
 
+  function startGrab(req: GrabRequest) {
+    if (grabDownload && !grabDownload.error && !grabDownload.result) return;
+    setGrabDownload({ ...req, phase: 'download', percent: 0 });
+    void (async () => {
+      try {
+        const result = await window.baixaria.grabFetch(req.url, req.quality, req.keepOriginal);
+        setGrabDownload((current) => (current?.url === req.url ? { ...current, phase: 'verify', percent: null, result } : current));
+      } catch (e) {
+        const message = cleanIpcError(e);
+        if (message === 'download cancelado') setGrabDownload(null);
+        else setGrabDownload((current) => (current?.url === req.url ? { ...current, error: message, outdated: /desatualizado/i.test(message) } : current));
+      }
+    })();
+  }
+
+  function cancelGrab() {
+    void window.baixaria.grabCancel().catch((e) => {
+      const message = cleanIpcError(e);
+      setGrabDownload((current) => (current ? { ...current, error: message } : current));
+    });
+  }
+
   const nav: ReadonlyArray<{ id: Screen; label: string; icon: IconName }> = [
     { id: 'library', label: 'Biblioteca', icon: 'library' },
     { id: 'import', label: 'Importar', icon: 'import' },
@@ -184,6 +229,14 @@ export function App() {
               {item.id === 'import' && download && !download.error && <span className="nav-dot" aria-label="baixando" />}
             </button>
           ))}
+        </div>
+        <div className="nav-section">
+          <div className="nav-title">Ferramentas</div>
+          <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')}>
+            <Icon name="import" size={18} />
+            <span>Baixar MP3</span>
+            {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
+          </button>
         </div>
         <div className="nav-section">
           <div className="nav-title">Prática</div>
@@ -240,6 +293,14 @@ export function App() {
               onCancelUrl={() => void window.baixaria.cancelImportUrl()}
               onDismissUrl={() => setDownload(null)}
               onOpen={openSong}
+            />
+          )}
+          {screen === 'grab' && (
+            <GrabMp3
+              download={grabDownload}
+              onStart={startGrab}
+              onCancel={cancelGrab}
+              onDismiss={() => setGrabDownload(null)}
             />
           )}
           {screen === 'exercises' && <Exercises />}
