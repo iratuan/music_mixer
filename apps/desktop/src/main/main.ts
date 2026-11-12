@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell, type IpcMainInvokeEvent } from 'electron';
+import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -8,7 +9,24 @@ import { Library, isSemitones } from './library.js';
 import { sanitizeMap, sanitizeSections, songMapHtml } from './songmap.js';
 import { DEMUCS_STEMS, parseStemChoice } from './stems.js';
 import { VOICE_MODEL, downloadVoiceModel } from './voicemodel.js';
-import { busyKeys, initLog, killAll, killTree, logLine, requireFree, single, track } from './procs.js';
+import { busyKeys, initLog, killAll, killTree, logLine, requireFree, runTool, single, track } from './procs.js';
+import {
+  AUDIO_FORMAT_SELECTOR,
+  buildFfmpegArgs,
+  grabFileName,
+  isGrabQuality,
+  mp3Channels,
+  mp3SampleRate,
+  parseGrabMeta,
+  parseProbe,
+  sourceWarnings,
+  uniqueBaseName,
+  verifyGrab,
+  type GrabCheck,
+  type GrabMeta,
+  type GrabQuality,
+  type ProbeInfo,
+} from './grab.js';
 import {
   DEFAULT_MAX_DURATION_SEC,
   PROGRESS_TEMPLATE,
@@ -576,6 +594,217 @@ function registerIpc(): void {
     return { cancelled: true };
   });
 
+  /**
+   * Ferramenta "Baixar MP3": baixa o melhor fluxo de áudio e codifica uma vez com o LAME,
+   * fora da biblioteca e sem separar faixas. A pasta é escolhida pelo usuário (diálogo nativo)
+   * e fica lembrada; nenhum caminho vem do renderer.
+   */
+  ipcMain.handle('grab:folder', async (event) => {
+    guard('grab:folder', event);
+    return { folder: await grabFolder() };
+  });
+
+  ipcMain.handle('grab:pick-folder', async (event) => {
+    guard('grab:pick-folder', event);
+    const owner = ownerOf(event);
+    const res = owner
+      ? await dialog.showOpenDialog(owner, { properties: ['openDirectory', 'createDirectory'] })
+      : await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
+    const picked = res.filePaths[0];
+    if (res.canceled || !picked) return { canceled: true as const };
+    const folder = path.resolve(picked);
+    await mkdir(folder, { recursive: true });
+    await setGrabFolder(folder);
+    return { canceled: false as const, folder };
+  });
+
+  ipcMain.handle('grab:info', async (event, input) => {
+    guard('grab:info', event);
+    const check = validateVideoUrl((input as { url?: unknown })?.url);
+    if (!check.ok) throw new Error(check.reason);
+    const meta = grabMetaCache.get(check.url) ?? (await fetchGrabMeta(check.url));
+    const cached = meta.info.thumbnail ? thumbCache.get(meta.info.url) : undefined;
+    const thumb = cached ?? (meta.info.thumbnail ? await fetchThumbnail(meta.info.thumbnail) : null);
+    if (thumb) thumbCache.set(meta.info.url, thumb);
+    return {
+      ...meta.info,
+      id: meta.id,
+      source: meta.source,
+      warnings: sourceWarnings(meta.source),
+      thumbnailData: thumb ? `data:${thumb.mime};base64,${Buffer.from(thumb.bytes).toString('base64')}` : null,
+      maxDuration: maxVideoDuration(),
+    };
+  });
+
+  ipcMain.handle('grab:fetch', async (event, input) => {
+    guard('grab:fetch', event);
+    const req = (input ?? {}) as { url?: unknown; quality?: unknown; keepOriginal?: unknown };
+    const check = validateVideoUrl(req.url);
+    if (!check.ok) throw new Error(check.reason);
+    const quality: GrabQuality = isGrabQuality(req.quality) ? req.quality : 'v0';
+    const keepOriginal = req.keepOriginal === true;
+    const folder = await grabFolder();
+    if (!folder) throw new Error('escolha a pasta de destino antes de baixar');
+    if (grab) throw new Error('já há um download em andamento');
+    const ffmpeg = ffmpegDir();
+    if (!ffmpeg) throw new Error('ffmpeg não encontrado (necessário para converter o áudio)');
+    const ffmpegExe = path.join(ffmpeg, 'ffmpeg.exe');
+    const ffprobe = ffprobeExe();
+    const meta = grabMetaCache.get(check.url) ?? (await fetchGrabMeta(check.url));
+    await requireFree(folder, 600 * 1024 ** 2, 'baixar o áudio');
+    const win = ownerOf(event);
+    const send = (p: { phase: 'download' | 'convert' | 'verify'; percent: number | null; speed?: number | null; eta?: number | null }) => {
+      if (win && !win.isDestroyed()) win.webContents.send('grab:progress', { url: meta.info.url, ...p });
+    };
+    const tmp = path.join(folder, `.bfgrab-${Date.now().toString(36)}-${randomBytes(3).toString('hex')}`);
+    await mkdir(tmp, { recursive: true });
+    const state = { child: null as ChildProcess | null, cancelled: false };
+    grab = state;
+    try {
+      send({ phase: 'download', percent: 0 });
+      const args = [
+        ...YTDLP_BASE_ARGS,
+        '--newline',
+        '--no-mtime',
+        '--ffmpeg-location',
+        ffmpeg,
+        '-f',
+        AUDIO_FORMAT_SELECTOR,
+        '--max-filesize',
+        '500M',
+        '--concurrent-fragments',
+        '4',
+        '--progress-template',
+        PROGRESS_TEMPLATE,
+        '-o',
+        path.join(tmp, 'source.%(ext)s'),
+        '--',
+        meta.info.url,
+      ];
+      const res = await runYtdlp(
+        args,
+        DOWNLOAD_TIMEOUT_MS,
+        (line) => {
+          const p = parseProgressLine(line);
+          if (p) send({ phase: 'download', percent: p.percent, speed: p.speed, eta: p.eta });
+        },
+        (child) => (state.child = child),
+      );
+      if (state.cancelled) throw new Error('download cancelado');
+      if (res.code !== 0) throw new Error(explainYtdlpError(res.stderr).reason);
+      const names = await readdir(tmp);
+      const srcName = names.find(
+        (n) => !n.endsWith('.part') && !n.endsWith('.ytdl') && /\.(webm|m4a|opus|mp3|ogg|aac|wav|flac)$/i.test(n),
+      );
+      if (!srcName) throw new Error('o baixador terminou sem gravar o áudio');
+      const srcPath = path.join(tmp, srcName);
+      const srcSize = (await stat(srcPath)).size;
+      if (srcSize < 1024 || srcSize > MAX_IMPORT_BYTES) throw new Error('áudio baixado com tamanho fora do limite');
+
+      const sourceProbe = ffprobe ? await probeFile(ffprobe, srcPath) : null;
+      const sampleRate = mp3SampleRate(sourceProbe?.sampleRate ?? meta.source?.sampleRate ?? null);
+      const channels = mp3Channels(sourceProbe?.channels ?? meta.source?.channels ?? null);
+
+      let coverPath: string | null = null;
+      if (meta.info.thumbnail) {
+        const thumb = thumbCache.get(meta.info.url) ?? (await fetchThumbnail(meta.info.thumbnail));
+        if (thumb) {
+          thumbCache.set(meta.info.url, thumb);
+          const ext = thumb.mime === 'image/png' ? '.png' : thumb.mime === 'image/webp' ? '.webp' : '.jpg';
+          coverPath = path.join(tmp, `cover${ext}`);
+          await writeFile(coverPath, thumb.bytes);
+        }
+      }
+
+      send({ phase: 'convert', percent: null });
+      const outTmp = path.join(tmp, 'out.mp3');
+      const fres = await runTool(
+        ffmpegExe,
+        buildFfmpegArgs({
+          input: srcPath,
+          output: outTmp,
+          cover: coverPath,
+          quality,
+          sampleRate,
+          channels,
+          tags: { title: meta.info.title, artist: meta.info.channel || meta.info.site, date: meta.uploadDate, comment: meta.info.url },
+        }),
+        15 * 60 * 1000,
+        (child) => (state.child = child),
+      );
+      if (state.cancelled) throw new Error('download cancelado');
+      if (fres.code !== 0) {
+        const tail = fres.stderr.split(/\r?\n/).filter((l) => l.trim().length > 0).pop() ?? '';
+        throw new Error(`ffmpeg falhou${tail ? `: ${tail.slice(0, 200)}` : ''}`);
+      }
+
+      send({ phase: 'verify', percent: null });
+      const outProbe = ffprobe ? await probeFile(ffprobe, outTmp) : null;
+      const { decoded, peakDb } = await decodePeak(ffmpegExe, outTmp);
+      const checks: GrabCheck[] = outProbe
+        ? verifyGrab({ source: sourceProbe, output: outProbe, decoded, expectedSampleRate: sampleRate, expectedChannels: channels })
+        : [{ id: 'verificacao', level: 'warn', detail: 'ffprobe não encontrado; o arquivo não foi verificado' }];
+      if (peakDb !== null) {
+        checks.push({ id: 'pico', level: peakDb > -0.1 ? 'warn' : 'ok', detail: peakDb === -Infinity ? 'silêncio digital' : `pico ${peakDb.toFixed(1)} dBFS` });
+      }
+      const failed = checks.find((c) => c.level === 'fail');
+      if (failed) throw new Error(`verificação falhou: ${failed.detail}`);
+
+      const stem = grabFileName(meta).replace(/\.mp3$/i, '');
+      const srcExt = path.extname(srcName).toLowerCase();
+      const base = uniqueBaseName(
+        stem,
+        (candidate) =>
+          existsSync(path.join(folder, `${candidate}.mp3`)) || (keepOriginal && existsSync(path.join(folder, `${candidate}${srcExt}`))),
+      );
+      const finalPath = path.join(folder, `${base}.mp3`);
+      await rename(outTmp, finalPath);
+      let originalPath: string | null = null;
+      if (keepOriginal) {
+        try {
+          originalPath = path.join(folder, `${base}${srcExt}`);
+          await copyFile(srcPath, originalPath);
+        } catch (e) {
+          originalPath = null;
+          logLine('cópia do original falhou', e);
+        }
+      }
+      return {
+        path: finalPath,
+        name: path.basename(finalPath),
+        bytes: (await stat(finalPath)).size,
+        original: originalPath,
+        report: { source: sourceProbe, output: outProbe, checks, decoded, peakDb },
+        warnings: sourceWarnings(meta.source),
+      };
+    } catch (e) {
+      logLine('baixar-mp3 falhou', e);
+      throw e;
+    } finally {
+      grab = null;
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  ipcMain.handle('grab:cancel', (event) => {
+    guard('grab:cancel', event);
+    if (!grab) return { cancelled: false };
+    grab.cancelled = true;
+    killTree(grab.child);
+    return { cancelled: true };
+  });
+
+  ipcMain.handle('grab:reveal', async (event, input) => {
+    guard('grab:reveal', event);
+    const folder = await grabFolder();
+    const raw = (input as { path?: unknown })?.path;
+    if (!folder || typeof raw !== 'string') throw new Error('caminho inválido');
+    const target = path.resolve(raw);
+    if (!target.startsWith(folder + path.sep) || !existsSync(target)) throw new Error('caminho inválido');
+    shell.showItemInFolder(target);
+    return { ok: true };
+  });
+
   ipcMain.handle('ytdlp:version', async (event) => {
     guard('ytdlp:version', event);
     const exe = ytdlpExe();
@@ -818,6 +1047,41 @@ function ffmpegDir(): string | null {
   const candidates = [path.join(process.resourcesPath, 'ffmpeg'), path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)];
   return candidates.find((c) => existsSync(path.join(c, 'ffmpeg.exe'))) ?? null;
 }
+
+/** ffprobe vem junto do build "essentials" do ffmpeg; sem ele, a verificação fica só no decode. */
+function ffprobeExe(): string | null {
+  const dir = ffmpegDir();
+  if (!dir) return null;
+  const exe = path.join(dir, 'ffprobe.exe');
+  return existsSync(exe) ? exe : null;
+}
+
+function grabSettingsPath(): string {
+  return path.join(app.getPath('userData'), 'grab.json');
+}
+
+let savedGrabFolder: string | null | undefined;
+
+/**
+ * Pasta de destino do "Baixar MP3". Só é aceita se foi escolhida no diálogo nativo e continua
+ * existindo; fica gravada porque baixar é uma ação repetida. O renderer nunca inventa caminho.
+ */
+async function grabFolder(): Promise<string | null> {
+  if (savedGrabFolder !== undefined) return savedGrabFolder;
+  try {
+    const raw = JSON.parse(await readFile(grabSettingsPath(), 'utf8')) as { folder?: unknown };
+    const folder = typeof raw.folder === 'string' ? path.resolve(raw.folder) : '';
+    savedGrabFolder = folder && existsSync(folder) && (await stat(folder)).isDirectory() ? folder : null;
+  } catch {
+    savedGrabFolder = null;
+  }
+  return savedGrabFolder;
+}
+
+async function setGrabFolder(folder: string): Promise<void> {
+  savedGrabFolder = folder;
+  await writeFile(grabSettingsPath(), JSON.stringify({ folder }), 'utf8');
+}
 const MIDI_TIMEOUT_MS = 20 * 60 * 1000;
 const PITCH_TIMEOUT_MS = 10 * 60 * 1000;
 /** Faixas com altura definida (a bateria não vira MIDI de notas). */
@@ -897,6 +1161,8 @@ const YTDLP_BASE_ARGS = ['--ignore-config', '--no-plugin-dirs', '--no-cookies', 
 let download: { child: ChildProcess | null; cancelled: boolean } | null = null;
 const infoCache = new Map<string, VideoInfo>();
 const thumbCache = new Map<string, { bytes: Uint8Array; mime: string }>();
+const grabMetaCache = new Map<string, GrabMeta>();
+let grab: { child: ChildProcess | null; cancelled: boolean } | null = null;
 
 function maxVideoDuration(): number {
   const min = Number(process.env.BF_MAX_VIDEO_MIN);
@@ -977,6 +1243,36 @@ async function fetchVideoInfo(url: string): Promise<VideoInfo> {
   infoCache.set(url, parsed.info);
   infoCache.set(parsed.info.url, parsed.info);
   return parsed.info;
+}
+
+/** Metadados da ferramenta "Baixar MP3": mesmos do vídeo, mais id, data e formato da fonte. */
+async function fetchGrabMeta(url: string): Promise<GrabMeta> {
+  const res = await runYtdlp([...YTDLP_BASE_ARGS, '--dump-single-json', '--', url], INFO_TIMEOUT_MS);
+  if (res.code !== 0) throw new Error(explainYtdlpError(res.stderr).reason);
+  const parsed = parseGrabMeta(res.stdout, maxVideoDuration());
+  if (!parsed.ok) throw new Error(parsed.reason);
+  grabMetaCache.set(url, parsed.meta);
+  grabMetaCache.set(parsed.meta.info.url, parsed.meta);
+  infoCache.set(url, parsed.meta.info);
+  infoCache.set(parsed.meta.info.url, parsed.meta.info);
+  return parsed.meta;
+}
+
+async function probeFile(exe: string, file: string): Promise<ProbeInfo | null> {
+  const res = await runTool(exe, ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', file], 60_000);
+  return res.code === 0 ? parseProbe(res.stdout) : null;
+}
+
+/** Decodifica o MP3 inteiro (prova que não há quadro corrompido) e mede o pico de amostra. */
+async function decodePeak(exe: string, file: string): Promise<{ decoded: boolean; peakDb: number | null }> {
+  const res = await runTool(
+    exe,
+    ['-hide_banner', '-nostdin', '-i', file, '-af', 'astats=metadata=1:reset=0', '-f', 'null', '-'],
+    10 * 60 * 1000,
+  );
+  const m = /Peak level dB:\s*(-?[\d.]+|-inf)/.exec(res.stderr);
+  const peak = m ? (m[1] === '-inf' ? -Infinity : Number(m[1])) : null;
+  return { decoded: res.code === 0, peakDb: peak !== null && (Number.isFinite(peak) || peak === -Infinity) ? peak : null };
 }
 
 function imageMime(b: Uint8Array): string | null {

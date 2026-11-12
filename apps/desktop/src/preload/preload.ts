@@ -39,6 +39,62 @@ export interface VideoPreview {
 
 export type AudioFormatName = 'mp3' | 'flac' | 'wav';
 
+/** Qualidade do MP3 na ferramenta "Baixar MP3": V0 (VBR transparente) ou 320 kbps fixos. */
+export type GrabQuality = 'v0' | 'cbr320';
+
+export interface GrabSource {
+  readonly codec: string;
+  readonly bitrate: number | null;
+  readonly sampleRate: number | null;
+  readonly channels: number | null;
+}
+
+/** Prévia da ferramenta: o vídeo, o formato do melhor fluxo de áudio e os avisos da fonte. */
+export interface GrabPreview extends VideoPreview {
+  readonly id: string | null;
+  readonly source: GrabSource | null;
+  readonly warnings: readonly string[];
+}
+
+export interface GrabProgress {
+  readonly url: string;
+  readonly phase: 'download' | 'convert' | 'verify';
+  readonly percent: number | null;
+  readonly speed?: number | null;
+  readonly eta?: number | null;
+}
+
+export interface GrabProbe {
+  readonly codec: string;
+  readonly sampleRate: number;
+  readonly channels: number;
+  readonly durationSec: number;
+  readonly bitrate: number | null;
+  readonly tags: Readonly<Record<string, string>>;
+}
+
+export interface GrabCheck {
+  readonly id: string;
+  readonly level: 'ok' | 'warn' | 'fail';
+  readonly detail: string;
+}
+
+export interface GrabResult {
+  readonly path: string;
+  readonly name: string;
+  readonly bytes: number;
+  /** Cópia do fluxo original (Opus/M4A), quando pedida. */
+  readonly original: string | null;
+  readonly report: {
+    readonly source: GrabProbe | null;
+    readonly output: GrabProbe | null;
+    readonly checks: readonly GrabCheck[];
+    readonly decoded: boolean;
+    readonly peakDb: number | null;
+  };
+  readonly warnings: readonly string[];
+}
+
 export interface ImportProgress {
   readonly url: string;
   readonly phase: 'download' | 'convert';
@@ -139,6 +195,17 @@ export interface BaixariaApi {
   /** Baixa o áudio do vídeo para a biblioteca. */
   importUrl(url: string, format: AudioFormatName, startMix?: Record<string, boolean>): Promise<{ id: string; name: string; existing: boolean }>;
   cancelImportUrl(): Promise<{ cancelled: boolean }>;
+  /** Ferramenta "Baixar MP3": pasta de destino lembrada (null na primeira vez). */
+  grabFolder(): Promise<{ folder: string | null }>;
+  grabPickFolder(): Promise<{ canceled: true } | { canceled: false; folder: string }>;
+  /** Lê o vídeo e o formato do melhor fluxo de áudio, sem baixar. */
+  grabInfo(url: string): Promise<GrabPreview>;
+  /** Baixa e converte uma vez para MP3, com verificação. */
+  grabFetch(url: string, quality: GrabQuality, keepOriginal: boolean): Promise<GrabResult>;
+  grabCancel(): Promise<{ cancelled: boolean }>;
+  onGrabProgress(listener: (p: GrabProgress) => void): () => void;
+  /** Abre a pasta com o arquivo selecionado (só dentro da pasta de destino). */
+  grabReveal(path: string): Promise<{ ok: boolean }>;
   cancelSeparation(songId: string): Promise<{ cancelled: boolean }>;
   /** Modelo de divisão da voz (baixado sob demanda). */
   voiceModelStatus(): Promise<{ installed: boolean; downloading: boolean; bytes: number }>;
@@ -193,6 +260,13 @@ const api: BaixariaApi = {
   videoInfo: (url) => ipcRenderer.invoke('import:url-info', { url }),
   importUrl: (url, format, startMix) => ipcRenderer.invoke('import:url', { url, format, startMix }),
   cancelImportUrl: () => ipcRenderer.invoke('import:url-cancel'),
+  grabFolder: () => ipcRenderer.invoke('grab:folder'),
+  grabPickFolder: () => ipcRenderer.invoke('grab:pick-folder'),
+  grabInfo: (url) => ipcRenderer.invoke('grab:info', { url }),
+  grabFetch: (url, quality, keepOriginal) => ipcRenderer.invoke('grab:fetch', { url, quality, keepOriginal }),
+  grabCancel: () => ipcRenderer.invoke('grab:cancel'),
+  onGrabProgress: (listener) => subscribe('grab:progress', listener),
+  grabReveal: (path) => ipcRenderer.invoke('grab:reveal', { path }),
   cancelSeparation: (songId) => ipcRenderer.invoke('stems:cancel', { id: songId }),
   voiceModelStatus: () => ipcRenderer.invoke('voice:status'),
   voiceModelDownload: () => ipcRenderer.invoke('voice:download'),
