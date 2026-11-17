@@ -3,7 +3,15 @@ import { contextBridge, ipcRenderer } from 'electron';
 /**
  * API mínima exposta ao renderer. Nenhum acesso genérico a ipcRenderer, fs ou shell.
  * Cada função corresponde a um canal de ALLOWED_CHANNELS no processo principal.
+ *
+ * PROFILE-dependent:
+ * - PROFILE=mixer: expõe ~40 canais (library, stems, grab, etc.)
+ * - PROFILE=academy: expõe ~3 canais (db, getAppInfo, openAppFolder)
+ *
+ * Em build, Vite tree-shakes branches não usados.
  */
+
+const PROFILE = (process.env.PROFILE || 'mixer') as 'mixer' | 'academy';
 export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt' | 'json';
 export interface LibrarySong {
   readonly id: string;
@@ -251,62 +259,72 @@ function subscribe<T>(channel: string, listener: (p: T) => void): () => void {
   };
 }
 
-const api: BaixariaApi = {
-  db: (op, args) => ipcRenderer.invoke('db:call', { op, args }),
+/** Shared API (ambos profiles) */
+const sharedApi = {
+  db: (op: string, args?: Record<string, unknown>) => ipcRenderer.invoke('db:call', { op, args }),
   getAppInfo: () => ipcRenderer.invoke('app:info'),
-  openAppFolder: (which) => ipcRenderer.invoke('app:open-folder', { which }),
+  openAppFolder: (which: 'logs' | 'licenses') => ipcRenderer.invoke('app:open-folder', { which }),
+};
+
+/** Mixer-specific API (40+ canais) */
+const mixerApi = {
   pickAudioFile: () => ipcRenderer.invoke('dialog:pick-audio'),
   readAudioFile: (path: string) => ipcRenderer.invoke('audio:read', path),
-  chooseExportPath: (kind, suggestedName) => ipcRenderer.invoke('dialog:save', { kind, suggestedName }),
-  writeExportFile: (path, bytes) => ipcRenderer.invoke('file:write', { path, bytes }),
+  chooseExportPath: (kind: ExportKindName, suggestedName: string) => ipcRenderer.invoke('dialog:save', { kind, suggestedName }),
+  writeExportFile: (path: string, bytes: Uint8Array) => ipcRenderer.invoke('file:write', { path, bytes }),
   stemsAvailable: () => ipcRenderer.invoke('stems:available'),
-  separateStems: (songId, options = {}) => ipcRenderer.invoke('stems:separate', { id: songId, quality: options.quality, stems: options.stems }),
+  separateStems: (songId: string, options: SeparateOptions = {}) => ipcRenderer.invoke('stems:separate', { id: songId, quality: options.quality, stems: options.stems }),
   libraryList: () => ipcRenderer.invoke('library:list'),
-  libraryAdd: (path, name) => ipcRenderer.invoke('library:add', { path, name }),
-  libraryReadOriginal: (id) => ipcRenderer.invoke('library:read-original', { id }),
-  libraryReadStem: (id, stem, semitones = 0, speed = 100) => ipcRenderer.invoke('library:read-stem', { id, stem, semitones, speed }),
-  libraryReadAnalysis: (id) => ipcRenderer.invoke('library:read-analysis', { id }),
-  libraryRemove: (id) => ipcRenderer.invoke('library:remove', { id }),
-  analyzeSong: (id, opts) => ipcRenderer.invoke('song:analyze', { id, tempo: opts?.tempo }),
-  stemsTranspose: (id, semitones, speed = 100) => ipcRenderer.invoke('stems:transpose', { id, semitones, speed }),
-  stemsMidi: (id, stem, semitones) => ipcRenderer.invoke('stems:midi', { id, stem, semitones }),
-  onStemsProgress: (listener) => subscribe('stems:progress', listener),
+  libraryAdd: (path: string, name?: string) => ipcRenderer.invoke('library:add', { path, name }),
+  libraryReadOriginal: (id: string) => ipcRenderer.invoke('library:read-original', { id }),
+  libraryReadStem: (id: string, stem: string, semitones = 0, speed = 100) => ipcRenderer.invoke('library:read-stem', { id, stem, semitones, speed }),
+  libraryReadAnalysis: (id: string) => ipcRenderer.invoke('library:read-analysis', { id }),
+  libraryRemove: (id: string) => ipcRenderer.invoke('library:remove', { id }),
+  analyzeSong: (id: string, opts?: { tempo?: 'auto' | 'fixed' }) => ipcRenderer.invoke('song:analyze', { id, tempo: opts?.tempo }),
+  stemsTranspose: (id: string, semitones: number, speed = 100) => ipcRenderer.invoke('stems:transpose', { id, semitones, speed }),
+  stemsMidi: (id: string, stem: string, semitones: number) => ipcRenderer.invoke('stems:midi', { id, stem, semitones }),
+  onStemsProgress: (listener: (p: StemsProgress) => void) => subscribe('stems:progress', listener),
   libraryStorage: () => ipcRenderer.invoke('library:storage'),
   libraryCompact: () => ipcRenderer.invoke('library:compact'),
-  onCompactProgress: (listener) => subscribe('library:compact-progress', listener),
-  libraryExport: (opts) => ipcRenderer.invoke('library:export', { includeOriginal: opts.includeOriginal, ...(opts.ids ? { ids: [...opts.ids] } : {}), ...(opts.collection ? { collection: opts.collection } : {}) }),
+  onCompactProgress: (listener: (p: { done: number; total: number; freed: number; name?: string }) => void) => subscribe('library:compact-progress', listener),
+  libraryExport: (opts: { includeOriginal: boolean; ids?: readonly string[]; collection?: string }) => ipcRenderer.invoke('library:export', { includeOriginal: opts.includeOriginal, ...(opts.ids ? { ids: [...opts.ids] } : {}), ...(opts.collection ? { collection: opts.collection } : {}) }),
   libraryImport: () => ipcRenderer.invoke('library:import'),
   libraryShowExport: () => ipcRenderer.invoke('library:show-export'),
   libraryLocation: () => ipcRenderer.invoke('library:location'),
-  libraryChooseLocation: (opts) => ipcRenderer.invoke('library:choose-location', { keep: opts?.keep === true }),
+  libraryChooseLocation: (opts?: { keep?: boolean }) => ipcRenderer.invoke('library:choose-location', { keep: opts?.keep === true }),
   libraryOpenLocation: () => ipcRenderer.invoke('library:open-location'),
-  onTransferProgress: (listener) => subscribe('library:transfer-progress', listener),
-  onSongProgress: (listener) => subscribe('song:progress', listener),
-  videoInfo: (url) => ipcRenderer.invoke('import:url-info', { url }),
-  importUrl: (url, format, startMix) => ipcRenderer.invoke('import:url', { url, format, startMix }),
+  onTransferProgress: (listener: (p: { phase: 'export' | 'import'; done: number; total: number; name?: string }) => void) => subscribe('library:transfer-progress', listener),
+  onSongProgress: (listener: (p: SongProgress) => void) => subscribe('song:progress', listener),
+  videoInfo: (url: string) => ipcRenderer.invoke('import:url-info', { url }),
+  importUrl: (url: string, format: AudioFormatName, startMix?: Record<string, boolean>) => ipcRenderer.invoke('import:url', { url, format, startMix }),
   cancelImportUrl: () => ipcRenderer.invoke('import:url-cancel'),
   grabFolder: () => ipcRenderer.invoke('grab:folder'),
   grabPickFolder: () => ipcRenderer.invoke('grab:pick-folder'),
-  grabInfo: (url) => ipcRenderer.invoke('grab:info', { url }),
-  grabFetch: (url, quality, keepOriginal) => ipcRenderer.invoke('grab:fetch', { url, quality, keepOriginal }),
+  grabInfo: (url: string) => ipcRenderer.invoke('grab:info', { url }),
+  grabFetch: (url: string, quality: GrabQuality, keepOriginal: boolean) => ipcRenderer.invoke('grab:fetch', { url, quality, keepOriginal }),
   grabCancel: () => ipcRenderer.invoke('grab:cancel'),
-  onGrabProgress: (listener) => subscribe('grab:progress', listener),
-  grabReveal: (path) => ipcRenderer.invoke('grab:reveal', { path }),
-  cancelSeparation: (songId) => ipcRenderer.invoke('stems:cancel', { id: songId }),
+  onGrabProgress: (listener: (p: GrabProgress) => void) => subscribe('grab:progress', listener),
+  grabReveal: (path: string) => ipcRenderer.invoke('grab:reveal', { path }),
+  cancelSeparation: (songId: string) => ipcRenderer.invoke('stems:cancel', { id: songId }),
   voiceModelStatus: () => ipcRenderer.invoke('voice:status'),
   voiceModelDownload: () => ipcRenderer.invoke('voice:download'),
   voiceModelCancel: () => ipcRenderer.invoke('voice:cancel'),
-  onVoiceModelProgress: (listener) => subscribe('voice:progress', listener),
-  onImportProgress: (listener) => subscribe('import:progress', listener),
+  onVoiceModelProgress: (listener: (p: { received: number; total: number; speed: number }) => void) => subscribe('voice:progress', listener),
+  onImportProgress: (listener: (p: ImportProgress) => void) => subscribe('import:progress', listener),
   ytdlpVersion: () => ipcRenderer.invoke('ytdlp:version'),
   ytdlpUpdate: () => ipcRenderer.invoke('ytdlp:update'),
-  librarySetStartMix: (id, startMix) => ipcRenderer.invoke('library:set-start-mix', { id, startMix }),
+  librarySetStartMix: (id: string, startMix: Record<string, boolean>) => ipcRenderer.invoke('library:set-start-mix', { id, startMix }),
   libraryCollections: () => ipcRenderer.invoke('library:collections'),
-  libraryCollectionOp: (op, name, extra) => ipcRenderer.invoke('library:collection-op', { op, name, ...(extra ?? {}) }),
-  librarySetSections: (id, sections) => ipcRenderer.invoke('library:set-sections', { id, sections }),
-  exportMapPdf: (path, map) => ipcRenderer.invoke('export:map-pdf', { path, map }),
-  libraryReadCover: (id) => ipcRenderer.invoke('library:read-cover', { id }),
-  libraryOpenOrigin: (id) => ipcRenderer.invoke('library:open-origin', { id }),
+  libraryCollectionOp: (op: 'create' | 'rename' | 'delete' | 'add' | 'remove', name: string, extra?: { to?: string; ids?: readonly string[] }) => ipcRenderer.invoke('library:collection-op', { op, name, ...(extra ?? {}) }),
+  librarySetSections: (id: string, sections: ReadonlyArray<{ startBar: number; name: string }>) => ipcRenderer.invoke('library:set-sections', { id, sections }),
+  exportMapPdf: (path: string, map: unknown) => ipcRenderer.invoke('export:map-pdf', { path, map }),
+  libraryReadCover: (id: string) => ipcRenderer.invoke('library:read-cover', { id }),
+  libraryOpenOrigin: (id: string) => ipcRenderer.invoke('library:open-origin', { id }),
 };
+
+/** Monta API final baseado no profile */
+const api: BaixariaApi = PROFILE === 'mixer'
+  ? { ...sharedApi, ...mixerApi } as BaixariaApi
+  : sharedApi as unknown as BaixariaApi;
 
 contextBridge.exposeInMainWorld('baixaria', api);
