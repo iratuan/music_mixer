@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { dbCall, openDatabase } from './db.js';
+
+// Configuração de profile (Mixer vs Academy) — lido do PROFILE env var em build
+const PROFILE = (process.env.PROFILE || 'mixer') as 'mixer' | 'academy';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { copyFile, cp, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
