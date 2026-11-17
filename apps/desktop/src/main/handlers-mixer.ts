@@ -14,28 +14,15 @@ import { randomBytes } from 'node:crypto';
 import type { Library } from './library.js';
 import type { ChildProcess } from 'node:child_process';
 
-// Importar dependências do main.ts (estes precisarão ser passados como argumentos ou usar singleton)
-// Por enquanto, apenas estrutura — estes handlers precisam de contexto do main.ts
-
 /**
- * Registra todos os handlers Mixer-only.
- * Deve ser chamado no contexto onde as variáveis globais do main estão disponíveis.
+ * Registra todos os handlers Mixer-only (45 canais).
+ * Deve ser chamado em registerIpc() quando PROFILE=mixer.
  *
- * Requer:
- * - `guard()` function
- * - `library` instance
- * - `ownerOf()` function
- * - Variáveis globais: separating, compacting, transferring, download, grab, sepJob, lastExport, etc.
- * - Funções auxiliares: analyzeS ong, compressSongStems, stemFolders, wavBytesOf, etc.
+ * IMPLEMENTAÇÃO PENDENTE (Etapa 1-Final):
+ * Extrair de main.ts registerIpc() as linhas 116–1114 (45 handlers + funções auxiliares).
+ * Estratégia: usar IDE refactor para mover com segurança.
+ * Risco: Alto. Testar com E2E após cada chunk de 10 handlers.
  */
 export function registerMixerHandlers(): void {
-  // TODO: Implementar extraction completa de todos os 45 handlers Mixer-only
-  // Este arquivo será populado com:
-  // - dialog:pick-audio (linhas 116-131)
-  // - audio:read (linhas 133-141)
-  // - dialog:save (linhas 143-160)
-  // ... (40 more handlers)
-  // - file:write (linhas 1105-1114)
-
-  // Placeholder para permitir compilação
+  // TODO: Preencher com 45 handlers Mixer-only quando pronto
 }
