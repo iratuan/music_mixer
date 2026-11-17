@@ -20,6 +20,7 @@ import type { AudioFormatName, GrabProgress, GrabQuality, GrabResult, SeparateOp
 import { cleanIpcError } from './screens/Import.js';
 import markUrl from './assets/logo.png';
 import { readStore, writeStore } from './lib/store.js';
+import { FEATURES } from './lib/features.js';
 
 /**
  * Trabalho em segundo plano de uma música: separar em 6 faixas e depois analisar.
@@ -262,45 +263,51 @@ export function App() {
             </button>
           ))}
         </div>
-        <div className="nav-section">
-          <div className="nav-title">Ferramentas de estúdio</div>
-          <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')} title="Baixar MP3">
-            <Icon name="import" size={18} />
-            <span>Baixar MP3</span>
-            {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
-          </button>
-        </div>
-        <div className="nav-section">
-          <div className="nav-title">Formação & Trilhas</div>
-          <button className={`nav-item ${screen === 'trails' ? 'active' : ''}`} aria-current={screen === 'trails' ? 'page' : undefined} onClick={() => setScreen('trails')} title="Trilhas de aprendizado">
-            <Icon name="library" size={18} />
-            <span>Trilhas</span>
-          </button>
-          <button
-            className={`nav-item ${screen === 'exercises' ? 'active' : ''}`}
-            aria-current={screen === 'exercises' ? 'page' : undefined}
-            onClick={() => setScreen('exercises')}
-            title="Exercícios"
-          >
-            <Icon name="exercise" size={18} />
-            <span>Prática livre & desafios</span>
-          </button>
-          <button className={`nav-item ${screen === 'harmony' ? 'active' : ''}`} aria-current={screen === 'harmony' ? 'page' : undefined} onClick={() => setScreen('harmony')} title="Harmonia">
-            <Icon name="chords" size={18} />
-            <span>Harmonia</span>
-          </button>
-        </div>
-        <div className="nav-section">
-          <div className="nav-title">Academia</div>
-          <button className={`nav-item ${screen === 'theory' ? 'active' : ''}`} onClick={() => setScreen('theory')} title="Teoria musical e leitura">
-            <Icon name="chords" size={18} />
-            <span>Teoria & leitura</span>
-          </button>
-          <button className={`nav-item ${screen === 'ear' ? 'active' : ''}`} onClick={() => setScreen('ear')} title="Laboratório e ear training">
-            <Icon name="wave" size={18} />
-            <span>Ear training</span>
-          </button>
-        </div>
+        {FEATURES.GRAB_MP3 && (
+          <div className="nav-section">
+            <div className="nav-title">Ferramentas de estúdio</div>
+            <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')} title="Baixar MP3">
+              <Icon name="import" size={18} />
+              <span>Baixar MP3</span>
+              {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
+            </button>
+          </div>
+        )}
+        {FEATURES.EXERCISES && (
+          <div className="nav-section">
+            <div className="nav-title">Formação & Trilhas</div>
+            <button className={`nav-item ${screen === 'trails' ? 'active' : ''}`} aria-current={screen === 'trails' ? 'page' : undefined} onClick={() => setScreen('trails')} title="Trilhas de aprendizado">
+              <Icon name="library" size={18} />
+              <span>Trilhas</span>
+            </button>
+            <button
+              className={`nav-item ${screen === 'exercises' ? 'active' : ''}`}
+              aria-current={screen === 'exercises' ? 'page' : undefined}
+              onClick={() => setScreen('exercises')}
+              title="Exercícios"
+            >
+              <Icon name="exercise" size={18} />
+              <span>Prática livre & desafios</span>
+            </button>
+            <button className={`nav-item ${screen === 'harmony' ? 'active' : ''}`} aria-current={screen === 'harmony' ? 'page' : undefined} onClick={() => setScreen('harmony')} title="Harmonia">
+              <Icon name="chords" size={18} />
+              <span>Harmonia</span>
+            </button>
+          </div>
+        )}
+        {FEATURES.EAR_TRAINING && (
+          <div className="nav-section">
+            <div className="nav-title">Academia</div>
+            <button className={`nav-item ${screen === 'theory' ? 'active' : ''}`} onClick={() => setScreen('theory')} title="Teoria musical e leitura">
+              <Icon name="chords" size={18} />
+              <span>Teoria & leitura</span>
+            </button>
+            <button className={`nav-item ${screen === 'ear' ? 'active' : ''}`} onClick={() => setScreen('ear')} title="Laboratório e ear training">
+              <Icon name="wave" size={18} />
+              <span>Ear training</span>
+            </button>
+          </div>
+        )}
         <div className="nav-section">
           <div className="nav-title">Perfil & evolução</div>
           <button className={`nav-item ${screen === 'profiles' ? 'active' : ''}`} onClick={() => setScreen('profiles')} title="Trocar ou cadastrar músico">
