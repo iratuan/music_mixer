@@ -2,11 +2,13 @@ import { app, BrowserWindow, dialog, ipcMain, session, shell, type IpcMainInvoke
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { dbCall, openDatabase } from './db.js';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { copyFile, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
-import { Library, isSemitones } from './library.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { copyFile, cp, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
+import { Library, isSemitones, isSpeed } from './library.js';
 import { sanitizeMap, sanitizeSections, songMapHtml } from './songmap.js';
+import { exportLibrary, importLibrary } from './libtransfer.js';
 import { DEMUCS_STEMS, parseStemChoice } from './stems.js';
 import { VOICE_MODEL, downloadVoiceModel } from './voicemodel.js';
 import { busyKeys, initLog, killAll, killTree, logLine, requireFree, runTool, single, track } from './procs.js';
@@ -83,6 +85,12 @@ function guard(channel: (typeof import('./security.js'))['ALLOWED_CHANNELS'][num
 }
 
 function registerIpc(): void {
+  ipcMain.handle('db:call', (event, input: unknown) => {
+    guard('db:call', event);
+    const i = (input ?? {}) as { op?: unknown; args?: Record<string, unknown> };
+    return dbCall(i.op, i.args ?? {});
+  });
+
   ipcMain.handle('app:info', (event) => {
     guard('app:info', event);
     return { name: app.getName(), version: app.getVersion(), platform: process.platform };
@@ -110,14 +118,16 @@ function registerIpc(): void {
     const owner = ownerOf(event);
     const options = {
       title: 'Importar música',
-      properties: ['openFile' as const],
+      properties: ['openFile' as const, 'multiSelections' as const],
       filters: [{ name: 'Áudio', extensions: AUDIO_EXTENSIONS.map((e) => e.slice(1)) }],
     };
     const picked = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
     const file = picked.filePaths[0];
     if (picked.canceled || !file) return { canceled: true as const };
-    granted.grant(file);
-    return { canceled: false as const, path: file };
+    // Várias músicas de uma vez: cada arquivo escolhido fica liberado para importar.
+    const paths = picked.filePaths.slice(0, 200);
+    for (const p of paths) granted.grant(p);
+    return { canceled: false as const, path: file, paths };
   });
 
   ipcMain.handle('audio:read', async (event, input: unknown) => {
@@ -136,7 +146,7 @@ function registerIpc(): void {
     if (!isExportKind(req.kind)) throw new Error('tipo de exportação inválido');
     const kind: ExportKind = req.kind;
     const ext = EXPORT_KINDS[kind].slice(1);
-    const LABELS: Record<ExportKind, string> = { midi: 'MIDI', wav: 'Áudio WAV', pdf: 'PDF', txt: 'Texto' };
+    const LABELS: Record<ExportKind, string> = { midi: 'MIDI', wav: 'Áudio WAV', pdf: 'PDF', txt: 'Texto', json: 'JSON (mapa estruturado)' };
     const options = {
       title: `Exportar ${LABELS[kind]}`,
       defaultPath: `${sanitizeSuggestedName(req.suggestedName)}${EXPORT_KINDS[kind]}`,
@@ -179,7 +189,21 @@ function registerIpc(): void {
     const check = granted.check(req.path);
     if (!check.ok) throw new Error(check.reason);
     const name = typeof req.name === 'string' ? req.name : path.parse(check.value).name;
-    const rec = await library.add(name, check.value);
+    let rec = await library.add(name, check.value);
+    // A biblioteca fica completa na pasta escolhida: o áudio importado é copiado para a pasta da música.
+    if (rec.sourcePath === check.value && !rec.importedFrom) {
+      try {
+        await requireFree(libraryRoot, (await stat(check.value)).size + 50 * 1024 ** 2, 'copiar a música para a biblioteca');
+        await mkdir(library.songDir(rec.id), { recursive: true });
+        const copy = path.join(library.songDir(rec.id), `original${path.extname(check.value).toLowerCase()}`);
+        await copyFile(check.value, copy);
+        await library.setSource(rec.id, copy, check.value);
+        await library.organize(rec.id);
+        rec = (await library.get(rec.id)) ?? rec;
+      } catch (e) {
+        logLine(`cópia do áudio para a biblioteca falhou (segue usando o original): ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
     return { id: rec.id, name: rec.name, path: rec.sourcePath, stems: rec.stems ? Object.keys(rec.stems).sort() : null };
   });
 
@@ -195,14 +219,16 @@ function registerIpc(): void {
 
   ipcMain.handle('library:read-stem', async (event, input: unknown) => {
     guard('library:read-stem', event);
-    const req = (input ?? {}) as { id?: unknown; stem?: unknown; semitones?: unknown };
+    const req = (input ?? {}) as { id?: unknown; stem?: unknown; semitones?: unknown; speed?: unknown };
     const id = String(req.id ?? '');
     const stem = String(req.stem ?? '');
     const semitones = req.semitones ?? 0;
+    const speed = req.speed ?? 100;
     if (!isSemitones(semitones)) throw new Error('transposição inválida');
+    if (!isSpeed(speed)) throw new Error('velocidade inválida');
     const original = await library.stemPath(id, stem);
     if (!original) throw new Error('faixa não separada');
-    const p = semitones === 0 ? original : library.transposedPath(id, stem, semitones);
+    const p = semitones === 0 && speed === 100 ? original : library.transposedPath(id, stem, semitones, speed);
     if (!existsSync(p)) throw new Error('faixa transposta ainda não gerada');
     const info = await stat(p);
     if (info.size > MAX_IMPORT_BYTES) throw new Error('faixa acima do limite');
@@ -225,7 +251,10 @@ function registerIpc(): void {
   async function analyzeSong(event: IpcMainInvokeEvent, id: string, tempoReq?: 'auto' | 'fixed') {
     const rec = await library.get(id);
     if (!rec?.stems) throw new Error('separe a música antes de analisar');
-    const demucsDir = demucsDirOf(id, rec.sourcePath);
+    // Faixas do Demucs para a análise: na pasta de saída, ou (depois de organizadas) na pasta da música.
+    const raw = demucsDirOf(id, rec.sourcePath);
+    const has = (d: string) => existsSync(d) && ['bass', 'drums', 'vocals', 'other'].some((n) => ['.flac', '.wav'].some((x) => existsSync(path.join(d, n + x))));
+    const demucsDir = has(raw) ? raw : library.songDir(id);
     const win = ownerOf(event);
     const send = (percent: number) => {
       if (win && !win.isDestroyed()) win.webContents.send('song:progress', { songId: id, task: 'analyze', percent });
@@ -254,10 +283,11 @@ function registerIpc(): void {
   /** Gera (uma vez) todas as faixas transpostas em `semitones` meios tons, com Rubber Band, em paralelo. */
   ipcMain.handle('stems:transpose', async (event, input: unknown) => {
     guard('stems:transpose', event);
-    const req = (input ?? {}) as { id?: unknown; semitones?: unknown };
+    const req = (input ?? {}) as { id?: unknown; semitones?: unknown; speed?: unknown };
     const id = String(req.id ?? '');
     const semitones = req.semitones;
-    if (!isSemitones(semitones) || semitones === 0) throw new Error('transposição inválida');
+    const speed = req.speed ?? 100;
+    if (!isSemitones(semitones) || !isSpeed(speed) || (semitones === 0 && speed === 100)) throw new Error('transposição inválida');
     const rec = await library.get(id);
     const map = rec?.stems;
     if (!map) throw new Error('faixas não separadas');
@@ -270,11 +300,11 @@ function registerIpc(): void {
     send();
     await Promise.all(
       stems.map(async (stem) => {
-        const out = library.transposedPath(id, stem, semitones);
+        const out = library.transposedPath(id, stem, semitones, speed);
         if (!existsSync(out)) {
           await mkdir(path.dirname(out), { recursive: true });
           const tmp = `${out}.tmp.flac`; // o Rubber Band escolhe o formato pela extensão
-          await runRubberbandPitch(map[stem]!, tmp, semitones, stem === 'vocals');
+          await runRubberbandPitch(map[stem]!, tmp, semitones, ['vocals', 'lead', 'backing'].includes(stem), speed);
           await rename(tmp, out);
         }
         done++;
@@ -330,7 +360,7 @@ function registerIpc(): void {
     guard('stems:separate', event);
     const req = (input ?? {}) as { id?: unknown; quality?: unknown; stems?: unknown };
     const id = String(req.id ?? '');
-    const quality: 'fast' | 'best' | undefined = req.quality === 'fast' || req.quality === 'best' ? req.quality : undefined;
+    const quality: 'fast' | 'best' | 'max' | undefined = req.quality === 'fast' || req.quality === 'best' || req.quality === 'max' ? req.quality : undefined;
     const keep = parseStemChoice(req.stems);
     const rec = await library.get(id);
     if (!rec) throw new Error('música não encontrada na biblioteca');
@@ -382,6 +412,8 @@ function registerIpc(): void {
       send(99, 'Compactando as faixas (FLAC)');
       const compact = await compressSongStems(id, rec.sourcePath, map);
       await library.setStems(id, compact.map);
+      // Pasta com o nome da música e faixas com o nome da parte (Voz principal, Backing vocals, Baixo…).
+      await library.organize(id).catch((e: unknown) => logLine(`organizar a pasta falhou: ${e instanceof Error ? e.message : String(e)}`));
       send(100, 'Pronto');
       return { stems: Object.keys(compact.map).sort(), elapsedMs: Date.now() - started };
     } catch (e) {
@@ -429,6 +461,127 @@ function registerIpc(): void {
     } finally {
       compacting = false;
     }
+  });
+
+  /**
+   * Exportar a biblioteca: o usuário escolhe a pasta; as músicas saem separadas por faixas, com a
+   * análise e o biblioteca.json para reimportar. Nenhum caminho vem do renderer.
+   */
+  ipcMain.handle('library:export', async (event, input: unknown) => {
+    guard('library:export', event);
+    if (separating || compacting || transferring) throw new Error('espere a separação, a compactação ou a outra cópia terminar');
+    const o = (input ?? {}) as { includeOriginal?: unknown; ids?: unknown; collection?: unknown };
+    const collection = typeof o.collection === 'string' && o.collection.trim() ? o.collection.trim().slice(0, 80) : undefined;
+    const ids = Array.isArray(o.ids) ? o.ids.filter((x): x is string => typeof x === 'string' && /^[0-9a-f]{16}$/.test(x)) : undefined;
+    const owner = ownerOf(event);
+    const options = { title: 'Onde salvar a biblioteca exportada', properties: ['openDirectory', 'createDirectory'] as Array<'openDirectory' | 'createDirectory'> };
+    const res = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+    const picked = res.filePaths[0];
+    if (res.canceled || !picked) return { canceled: true as const };
+    transferring = true;
+    try {
+      const r = await exportLibrary(library, path.resolve(picked), { includeOriginal: o.includeOriginal === true, ...(ids ? { ids } : {}), ...(collection ? { collection } : {}), appVersion: app.getVersion() }, (p) => {
+        if (owner && !owner.isDestroyed()) owner.webContents.send('library:transfer-progress', { ...p, phase: 'export' });
+      });
+      lastExport = r.folder;
+      logLine(`biblioteca exportada: ${r.songs} músicas, ${r.stems} faixas, ${(r.bytes / 1024 ** 2).toFixed(0)} MB em ${r.folder}`);
+      return { canceled: false as const, ...r };
+    } finally {
+      transferring = false;
+    }
+  });
+
+  /** Reimportar uma biblioteca exportada: as músicas novas entram; as que já estão ficam como estão. */
+  ipcMain.handle('library:import', async (event) => {
+    guard('library:import', event);
+    if (separating || compacting || transferring) throw new Error('espere a separação, a compactação ou a outra cópia terminar');
+    const owner = ownerOf(event);
+    const options = { title: 'Escolha a pasta da biblioteca exportada', properties: ['openDirectory'] as Array<'openDirectory'> };
+    const res = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+    const picked = res.filePaths[0];
+    if (res.canceled || !picked) return { canceled: true as const };
+    transferring = true;
+    try {
+      const r = await importLibrary(library, path.resolve(picked), (p) => {
+        if (owner && !owner.isDestroyed()) owner.webContents.send('library:transfer-progress', { ...p, phase: 'import' });
+      });
+      await library.organizeAll().catch(() => undefined);
+      logLine(`biblioteca importada de ${picked}: ${r.added} novas, ${r.existing.length} já existiam, ${r.failed.length} com falha`);
+      return { canceled: false as const, ...r };
+    } finally {
+      transferring = false;
+    }
+  });
+
+  /** Onde a biblioteca está e se o usuário já escolheu a pasta. */
+  ipcMain.handle('library:location', async (event) => {
+    guard('library:location', event);
+    return { root: libraryRoot, chosen: existsSync(libraryLocationPath()) };
+  });
+
+  /**
+   * Escolher a pasta da biblioteca. Se a pasta já tem uma biblioteca do mixerCraft, passa a usar essa.
+   * Senão, a biblioteca atual é copiada para "mixerCraft - biblioteca" dentro da pasta escolhida (a
+   * antiga fica onde estava, para apagar quando quiser). Com keep, só confirma a pasta atual.
+   */
+  ipcMain.handle('library:choose-location', async (event, input: unknown) => {
+    guard('library:choose-location', event);
+    if ((input as { keep?: unknown })?.keep === true) {
+      await mkdir(libraryRoot, { recursive: true });
+      if (!separating && !busyKeys().length) await library.organizeAll().catch(() => undefined);
+      await saveLibraryLocation(libraryRoot);
+      return { canceled: false as const, root: libraryRoot, copied: 0, opened: false };
+    }
+    if (separating || compacting || transferring || busyKeys().length) throw new Error('espere a separação, a análise ou a cópia em andamento terminar');
+    const owner = ownerOf(event);
+    const options = { title: 'Pasta onde a biblioteca vai ficar', properties: ['openDirectory', 'createDirectory'] as Array<'openDirectory' | 'createDirectory'> };
+    const res = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+    const picked = res.filePaths[0];
+    if (res.canceled || !picked) return { canceled: true as const };
+    const chosen = path.resolve(picked);
+    const target = existsSync(path.join(chosen, 'index.json')) ? chosen : path.join(chosen, 'mixerCraft - biblioteca');
+    const cur = path.resolve(libraryRoot);
+    if (target.toLowerCase() === cur.toLowerCase()) {
+      await saveLibraryLocation(cur);
+      return { canceled: false as const, root: cur, copied: 0, opened: false };
+    }
+    if (target.toLowerCase().startsWith(cur.toLowerCase() + path.sep)) throw new Error('escolha uma pasta fora da biblioteca atual');
+    let copied = 0;
+    const opened = existsSync(path.join(target, 'index.json'));
+    if (!opened) {
+      const songs = await library.list();
+      if (existsSync(cur) && songs.length) {
+        transferring = true;
+        try {
+          await cp(cur, target, { recursive: true, errorOnExist: false, force: false });
+          await new Library(target).relocateFrom(cur);
+          copied = songs.length;
+        } finally {
+          transferring = false;
+        }
+      } else await mkdir(target, { recursive: true });
+    }
+    libraryRoot = target;
+    library = new Library(target);
+    // Na pasta escolhida, cada música com o nome dela e as faixas com o nome da parte.
+    await library.organizeAll().catch((e: unknown) => logLine(`organizar a biblioteca falhou: ${e instanceof Error ? e.message : String(e)}`));
+    await saveLibraryLocation(target);
+    logLine(`pasta da biblioteca: ${target} (${opened ? 'biblioteca existente' : `${copied} músicas copiadas`})`);
+    return { canceled: false as const, root: target, copied, opened };
+  });
+
+  ipcMain.handle('library:open-location', async (event) => {
+    guard('library:open-location', event);
+    await mkdir(libraryRoot, { recursive: true });
+    await shell.openPath(libraryRoot);
+    return { ok: true };
+  });
+
+  /** Abre no Explorer a última pasta exportada. */
+  ipcMain.handle('library:show-export', async (event) => {
+    guard('library:show-export', event);
+    if (lastExport && existsSync(lastExport)) await shell.openPath(lastExport);
+    return { ok: true };
   });
 
   /** Modelo de divisão da voz: instalado? baixando? */
@@ -969,6 +1122,9 @@ const STEM_MODEL = 'htdemucs_6s';
 const STEM_TIMEOUT_MS = 30 * 60 * 1000;
 let separating = false;
 let compacting = false;
+/** Exportação ou importação da biblioteca em andamento, e a última pasta exportada. */
+let transferring = false;
+let lastExport: string | null = null;
 
 /** Pastas com faixas de uma música: Demucs, faixas escolhidas (restante, voz dividida) e transpostas. */
 function stemFolders(id: string, sourcePath: string): string[] {
@@ -1033,8 +1189,16 @@ function stemsPython(): { exe: string; bundled: boolean } {
 const ANALYZE_TIMEOUT_MS = 15 * 60 * 1000;
 const SEPARATE_EXTRA_TIMEOUT_MS = 60 * 60 * 1000;
 
+/**
+ * Pasta de saída do Demucs. Separações novas usam um nome fixo ("musica"): o nome do arquivo podia
+ * ter pontos no fim, acentos ou ser longo demais, e o Windows mudava a pasta (o app não achava as
+ * faixas: "No such file or directory"). Músicas separadas antes continuam na pasta com o nome do arquivo.
+ */
+const DEMUCS_TRACK = 'musica';
 function demucsDirOf(id: string, sourcePath: string): string {
-  return path.join(library.songDir(id), 'demucs', STEM_MODEL, path.parse(sourcePath).name);
+  const fixed = path.join(library.songDir(id), 'demucs', STEM_MODEL, DEMUCS_TRACK);
+  const legacy = path.join(library.songDir(id), 'demucs', STEM_MODEL, path.parse(sourcePath).name);
+  return existsSync(fixed) || !existsSync(legacy) ? fixed : legacy;
 }
 
 /** Modelos do audio-separator (karaokê): tooling/stems/models-sep (desenvolvimento) ou resources/models/separator. */
@@ -1075,6 +1239,27 @@ function ffprobeExe(): string | null {
   if (!dir) return null;
   const exe = path.join(dir, 'ffprobe.exe');
   return existsSync(exe) ? exe : null;
+}
+
+/* ------------------------------ pasta da biblioteca ------------------------------ */
+function defaultLibraryRoot(): string {
+  return path.join(app.getPath('userData'), 'library');
+}
+function libraryLocationPath(): string {
+  return path.join(app.getPath('userData'), 'library-location.json');
+}
+/** Pasta escolhida pelo usuário (se ainda existe). null = nunca escolheu: usa a padrão. */
+function readLibraryLocation(): string | null {
+  try {
+    const raw = JSON.parse(readFileSync(libraryLocationPath(), 'utf8')) as { root?: unknown };
+    const r = typeof raw.root === 'string' ? path.resolve(raw.root) : '';
+    return r && existsSync(r) ? r : null;
+  } catch {
+    return null;
+  }
+}
+async function saveLibraryLocation(r: string): Promise<void> {
+  await writeFile(libraryLocationPath(), JSON.stringify({ root: r }, null, 2), 'utf8');
 }
 
 function grabSettingsPath(): string {
@@ -1120,9 +1305,36 @@ function bfToolsPath(): string {
   return candidates.find((c) => existsSync(c)) ?? candidates[1]!;
 }
 
+/**
+ * A placa de vídeo (CUDA) falhou nesta sessão ("device-side assert", memória da GPU, driver): daqui em
+ * diante o Python roda só no processador (mais lento, mas termina).
+ */
+let gpuFailed = false;
+const CUDA_ERROR = /CUDA|cuda|device-side|cudnn|cuDNN|CUBLAS|out of memory/;
+
+/** Roda de novo no processador quando a GPU falha (uma vez); repassa qualquer outro erro. */
+async function withCpuFallback<T>(what: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (gpuFailed || !CUDA_ERROR.test(msg) || /cancelad/.test(msg)) throw e;
+    gpuFailed = true;
+    logLine(`${what}: a placa de vídeo falhou (${msg.slice(0, 200)}); tentando de novo no processador`);
+    return run();
+  }
+}
+
 function pythonEnv(bundled: boolean): NodeJS.ProcessEnv {
   const ff = ffmpegDir();
-  const base = { ...process.env, PYTHONIOENCODING: 'utf-8', TF_CPP_MIN_LOG_LEVEL: '3', ...(ff ? { PATH: `${ff}${path.delimiter}${process.env.PATH ?? ''}` } : {}) };
+  const base = {
+    ...process.env,
+    PYTHONIOENCODING: 'utf-8',
+    TF_CPP_MIN_LOG_LEVEL: '3',
+    ...(ff ? { PATH: `${ff}${path.delimiter}${process.env.PATH ?? ''}` } : {}),
+    // Sem GPU visível, o torch (Demucs, divisão da voz, Basic Pitch) usa o processador.
+    ...(gpuFailed ? { CUDA_VISIBLE_DEVICES: '-1' } : {}),
+  };
   return bundled
     ? { ...base, HF_HOME: path.join(process.resourcesPath, 'models', 'huggingface'), HF_HUB_OFFLINE: '1', PYTHONNOUSERSITE: '1' }
     : base;
@@ -1130,6 +1342,9 @@ function pythonEnv(bundled: boolean): NodeJS.ProcessEnv {
 
 /** Roda um script no Python do separador; lê "PROGRESS n" do stderr. */
 function runPython(args: string[], onProgress: (percent: number) => void, timeoutMs: number, onSpawn?: (child: ChildProcess) => void): Promise<string> {
+  return withCpuFallback(`python ${args[1] ?? ''}`, () => runPythonOnce(args, onProgress, timeoutMs, onSpawn));
+}
+function runPythonOnce(args: string[], onProgress: (percent: number) => void, timeoutMs: number, onSpawn?: (child: ChildProcess) => void): Promise<string> {
   return new Promise((resolve, reject) => {
     const { exe, bundled } = stemsPython();
     if (!existsSync(exe)) {
@@ -1333,14 +1548,15 @@ function rubberbandExe(): string {
 }
 
 /** Muda a altura em meios tons sem mudar o andamento. Voz: preserva formantes (timbre natural). */
-function runRubberbandPitch(input: string, output: string, semitones: number, formant: boolean): Promise<void> {
+function runRubberbandPitch(input: string, output: string, semitones: number, formant: boolean, speed = 100): Promise<void> {
   return new Promise((resolve, reject) => {
     const exe = rubberbandExe();
     if (!existsSync(exe)) {
       reject(new Error('Rubber Band não instalado (faltam tooling/rubberband ou BF_RUBBERBAND)'));
       return;
     }
-    const args = ['--pitch', String(semitones), ...(formant ? ['--formant'] : []), '--quiet', input, output];
+    // --tempo < 1 deixa mais lento sem mudar o tom; --pitch muda o tom sem mudar o andamento.
+    const args = ['--pitch', String(semitones), ...(speed !== 100 ? ['--tempo', String(speed / 100)] : []), ...(formant && semitones !== 0 ? ['--formant'] : []), '--quiet', input, output];
     const child = track(spawn(exe, args, { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] }));
     let tail = '';
     child.stderr.on('data', (d: Buffer) => {
@@ -1372,7 +1588,16 @@ function runDemucs(
   input: string,
   outRoot: string,
   onProgress: (percent: number) => void,
-  quality?: 'fast' | 'best',
+  quality?: 'fast' | 'best' | 'max',
+  onSpawn?: (child: ChildProcess) => void,
+): Promise<void> {
+  return withCpuFallback('demucs', () => runDemucsOnce(input, outRoot, onProgress, quality, onSpawn));
+}
+function runDemucsOnce(
+  input: string,
+  outRoot: string,
+  onProgress: (percent: number) => void,
+  quality?: 'fast' | 'best' | 'max',
   onSpawn?: (child: ChildProcess) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -1384,8 +1609,9 @@ function runDemucs(
     // No runtime embutido, os pesos do htdemucs_6s vêm junto do instalador: nada é baixado.
     const env = pythonEnv(bundled);
     const q = quality ?? (bundled ? 'fast' : 'best');
-    const extra = q === 'best' ? ['--shifts', '2', '--overlap', '0.5'] : [];
-    const child = spawn(py, ['-m', 'demucs', '-n', STEM_MODEL, ...extra, '-o', outRoot, input], {
+    // Máxima: 5 passadas deslocadas e sobreposição maior (menos vazamento entre faixas, ~5× mais lenta).
+    const extra = q === 'max' ? ['--shifts', '5', '--overlap', '0.75'] : q === 'best' ? ['--shifts', '2', '--overlap', '0.5'] : [];
+    const child = spawn(py, ['-m', 'demucs', '-n', STEM_MODEL, ...extra, '-o', outRoot, '--filename', `${DEMUCS_TRACK}/{stem}.{ext}`, input], {
       env,
       windowsHide: true,
       stdio: ['ignore', 'ignore', 'pipe'],
@@ -1394,7 +1620,7 @@ function runDemucs(
     onSpawn?.(child);
     let tail = '';
     // Com --shifts, o tqdm mostra uma barra por passada (0→100 de novo): vira um progresso único.
-    const passes = q === 'best' ? 2 : 1;
+    const passes = q === 'max' ? 5 : q === 'best' ? 2 : 1;
     let pass = 0;
     let lastPct = 0;
     child.stderr.on('data', (d: Buffer) => {
@@ -1441,10 +1667,11 @@ function configureSession(): void {
     const url = (details as { requestingUrl?: string }).requestingUrl ?? '';
     const types = (details as { mediaTypes?: string[] }).mediaTypes ?? [];
     const ok = permission === 'media' && url.startsWith(APP_ORIGIN) && types.every((t) => t === 'audio');
-    callback(ok);
+    // Teclado/instrumento MIDI no modo Palco (sem SysEx).
+    callback(ok || (permission === 'midi' && url.startsWith(APP_ORIGIN)));
   });
   ses.setPermissionCheckHandler((_wc, permission, requestingOrigin) => {
-    return permission === 'media' && requestingOrigin.startsWith(APP_ORIGIN);
+    return (permission === 'media' || permission === 'midi') && requestingOrigin.startsWith(APP_ORIGIN);
   });
 }
 
@@ -1516,11 +1743,13 @@ app.whenReady().then(() => {
   if (!primary) return;
   initLog(path.join(app.getPath('userData'), 'logs'));
   logLine(`início ${app.getVersion()} ${process.platform} ${process.arch}`);
-  libraryRoot = path.join(app.getPath('userData'), 'library');
+  libraryRoot = readLibraryLocation() ?? defaultLibraryRoot();
   library = new Library(libraryRoot);
   configureSession();
   registerIpc();
-  createWindow();
+  openDatabase()
+    .catch((e) => logLine(`banco: ${String(e)}`))
+    .finally(() => createWindow());
 });
 
 app.on('window-all-closed', () => {

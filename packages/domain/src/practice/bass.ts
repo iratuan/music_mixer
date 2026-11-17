@@ -16,6 +16,29 @@ export const BASS_TUNINGS: readonly BassTuning[] = [
   { id: 'b6', label: '6 cordas (B E A D G C)', strings: [23, 28, 33, 38, 43, 48], frets: 24 },
 ];
 
+/** Afinações de guitarra (mesmo formato: cordas da mais grave para a mais aguda). */
+export const GUITAR_TUNINGS: readonly BassTuning[] = [
+  { id: 'g6', label: '6 cordas (E A D G B E)', strings: [40, 45, 50, 55, 59, 64], frets: 24 },
+  { id: 'g7', label: '7 cordas (B E A D G B E)', strings: [35, 40, 45, 50, 55, 59, 64], frets: 24 },
+];
+
+/** Violão (aço ou nylon): 6 cordas, 19 casas até o corpo. */
+export const ACOUSTIC_TUNINGS: readonly BassTuning[] = [{ id: 'v6', label: 'Violão 6 cordas (E A D G B E)', strings: [40, 45, 50, 55, 59, 64], frets: 19 }];
+
+export type PracticeInstrument = 'bass' | 'guitar' | 'acoustic';
+
+/** Afinações do instrumento escolhido. */
+export function tuningsFor(instrument: PracticeInstrument): readonly BassTuning[] {
+  return instrument === 'guitar' ? GUITAR_TUNINGS : instrument === 'acoustic' ? ACOUSTIC_TUNINGS : BASS_TUNINGS;
+}
+
+/** Quantidades de cordas possíveis e a faixa de frequência para detectar a altura da nota tocada. */
+export const INSTRUMENT_INFO: Record<PracticeInstrument, { label: string; strings: readonly number[]; defaultStrings: number; fminHz: number; fmaxHz: number }> = {
+  bass: { label: 'Baixo', strings: [4, 5, 6], defaultStrings: 4, fminHz: 28, fmaxHz: 450 },
+  guitar: { label: 'Guitarra', strings: [6, 7], defaultStrings: 6, fminHz: 60, fmaxHz: 1400 },
+  acoustic: { label: 'Violão', strings: [6], defaultStrings: 6, fminHz: 70, fmaxHz: 1400 },
+};
+
 export interface FretPos {
   readonly string: number;
   readonly fret: number;

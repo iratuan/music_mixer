@@ -20,6 +20,7 @@
   --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
   --font-display: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+  --fs-2xs: 10.5px;
   --fs-xs: 11.5px;
   --fs-sm: 13px;
   --fs-md: 14.5px;
@@ -27,6 +28,8 @@
   --fs-xl: 26px;
   --fs-hero: 44px;
 
+  /* Texto sobre preenchimento de cor forte (tecla acesa, etiqueta da mão). */
+  --on-color: #ffffff;
   --hand-left: #c97a12;
   --key-white: #f7f6f2;
   --key-black: #1b1c20;
@@ -80,6 +83,7 @@
   --stem-other: #a7b0be;
   --stem-rest: #7d8592;
   --stem-metro: #ffd166;
+  --stem-accomp: #b8e986;
   --mute: #7cc4ff;
 }
 
@@ -120,6 +124,7 @@
   --stem-other: #6c7480;
   --stem-rest: #8a919c;
   --stem-metro: #b58900;
+  --stem-accomp: #4d8c1f;
   --mute: #1f78d1;
 }
 
@@ -162,6 +167,7 @@
   --stem-other: #c2b49a;
   --stem-rest: #9c8c72;
   --stem-metro: #f4ead2;
+  --stem-accomp: #cfe0a0;
 }
 
 /* Papel: creme, tinta escura, flat (tema Draw do ScaleMonster) */
@@ -203,6 +209,7 @@
   --stem-other: #5f5a50;
   --stem-rest: #8a8475;
   --stem-metro: #1d1c1a;
+  --stem-accomp: #4d6b2f;
   --r-sm: 2px;
   --r-md: 3px;
   --r-lg: 4px;

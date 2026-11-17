@@ -4,7 +4,7 @@ import { contextBridge, ipcRenderer } from 'electron';
  * API mínima exposta ao renderer. Nenhum acesso genérico a ipcRenderer, fs ou shell.
  * Cada função corresponde a um canal de ALLOWED_CHANNELS no processo principal.
  */
-export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt';
+export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt' | 'json';
 export interface LibrarySong {
   readonly id: string;
   readonly name: string;
@@ -114,7 +114,7 @@ export interface StemsProgress {
 
 /** Escolha de faixas: bass, drums, guitar, piano, other e vocals (voz inteira) ou lead + backing. */
 export interface SeparateOptions {
-  readonly quality?: 'fast' | 'best';
+  readonly quality?: 'fast' | 'best' | 'max';
   readonly stems?: readonly string[];
 }
 
@@ -157,9 +157,11 @@ export interface SongAnalysis {
 }
 
 export interface BaixariaApi {
+  db(op: string, args?: Record<string, unknown>): Promise<unknown>;
   getAppInfo(): Promise<{ name: string; version: string; platform: string }>;
   openAppFolder(which: 'logs' | 'licenses'): Promise<{ ok: true }>;
-  pickAudioFile(): Promise<{ canceled: true } | { canceled: false; path: string }>;
+  /** Um ou vários arquivos (`paths`); `path` é o primeiro. */
+  pickAudioFile(): Promise<{ canceled: true } | { canceled: false; path: string; paths: string[] }>;
   readAudioFile(path: string): Promise<Uint8Array>;
   chooseExportPath(kind: ExportKindName, suggestedName: string): Promise<{ canceled: true } | { canceled: false; path: string }>;
   writeExportFile(path: string, bytes: Uint8Array): Promise<{ bytes: number }>;
@@ -174,13 +176,14 @@ export interface BaixariaApi {
   libraryAdd(path: string, name?: string): Promise<LibrarySong>;
   libraryReadOriginal(id: string): Promise<{ name: string; path: string; bytes: Uint8Array }>;
   /** Faixa separada; com `semitones` ≠ 0, a versão transposta (gerada antes por stemsTranspose). */
-  libraryReadStem(id: string, stem: string, semitones?: number): Promise<Uint8Array>;
+  libraryReadStem(id: string, stem: string, semitones?: number, speed?: number): Promise<Uint8Array>;
   libraryReadAnalysis(id: string): Promise<SongAnalysis | null>;
   libraryRemove(id: string): Promise<void>;
   /** Analisa a música inteira (andamento, compassos, acordes, tom) e guarda na biblioteca. */
   analyzeSong(id: string, opts?: { tempo?: 'auto' | 'fixed' }): Promise<SongAnalysis>;
   /** Gera as faixas transpostas (Rubber Band), em cache. −6…+6 meios tons. */
-  stemsTranspose(id: string, semitones: number): Promise<{ stems: string[] }>;
+  /** Gera as faixas no tom e na velocidade pedidos (velocidade em %, 50–100; 100 = original). */
+  stemsTranspose(id: string, semitones: number, speed?: number): Promise<{ stems: string[] }>;
   /** MIDI da faixa (Basic Pitch), já transposto. */
   stemsMidi(id: string, stem: string, semitones: number): Promise<Uint8Array>;
   onStemsProgress(listener: (p: StemsProgress) => void): () => void;
@@ -189,6 +192,20 @@ export interface BaixariaApi {
   /** Compacta as faixas em FLAC (todas as músicas); progresso por onCompactProgress. */
   libraryCompact(): Promise<{ songs: number; freed: number }>;
   onCompactProgress(listener: (p: { done: number; total: number; freed: number; name?: string }) => void): () => void;
+  /** Exporta a biblioteca (ou só as músicas em `ids`) para uma pasta escolhida pelo usuário. */
+  libraryExport(opts: { includeOriginal: boolean; ids?: readonly string[]; collection?: string }): Promise<
+    { canceled: true } | { canceled: false; folder: string; songs: number; stems: number; bytes: number; skipped: readonly string[] }
+  >;
+  /** Reimporta uma biblioteca exportada (pasta escolhida pelo usuário). */
+  libraryImport(): Promise<{ canceled: true } | { canceled: false; added: number; existing: readonly string[]; failed: readonly string[] }>;
+  /** Pasta da biblioteca e se o usuário já a escolheu. */
+  libraryLocation(): Promise<{ root: string; chosen: boolean }>;
+  /** Escolhe a pasta da biblioteca (keep: confirma a atual). */
+  libraryChooseLocation(opts?: { keep?: boolean }): Promise<{ canceled: true } | { canceled: false; root: string; copied: number; opened: boolean }>;
+  libraryOpenLocation(): Promise<{ ok: true }>;
+  /** Abre a última pasta exportada. */
+  libraryShowExport(): Promise<{ ok: true }>;
+  onTransferProgress(listener: (p: { phase: 'export' | 'import'; done: number; total: number; name?: string }) => void): () => void;
   onSongProgress(listener: (p: SongProgress) => void): () => void;
   /** Lê título, canal, duração e miniatura de um vídeo (yt-dlp), sem baixar. */
   videoInfo(url: string): Promise<VideoPreview>;
@@ -235,6 +252,7 @@ function subscribe<T>(channel: string, listener: (p: T) => void): () => void {
 }
 
 const api: BaixariaApi = {
+  db: (op, args) => ipcRenderer.invoke('db:call', { op, args }),
   getAppInfo: () => ipcRenderer.invoke('app:info'),
   openAppFolder: (which) => ipcRenderer.invoke('app:open-folder', { which }),
   pickAudioFile: () => ipcRenderer.invoke('dialog:pick-audio'),
@@ -246,16 +264,23 @@ const api: BaixariaApi = {
   libraryList: () => ipcRenderer.invoke('library:list'),
   libraryAdd: (path, name) => ipcRenderer.invoke('library:add', { path, name }),
   libraryReadOriginal: (id) => ipcRenderer.invoke('library:read-original', { id }),
-  libraryReadStem: (id, stem, semitones = 0) => ipcRenderer.invoke('library:read-stem', { id, stem, semitones }),
+  libraryReadStem: (id, stem, semitones = 0, speed = 100) => ipcRenderer.invoke('library:read-stem', { id, stem, semitones, speed }),
   libraryReadAnalysis: (id) => ipcRenderer.invoke('library:read-analysis', { id }),
   libraryRemove: (id) => ipcRenderer.invoke('library:remove', { id }),
   analyzeSong: (id, opts) => ipcRenderer.invoke('song:analyze', { id, tempo: opts?.tempo }),
-  stemsTranspose: (id, semitones) => ipcRenderer.invoke('stems:transpose', { id, semitones }),
+  stemsTranspose: (id, semitones, speed = 100) => ipcRenderer.invoke('stems:transpose', { id, semitones, speed }),
   stemsMidi: (id, stem, semitones) => ipcRenderer.invoke('stems:midi', { id, stem, semitones }),
   onStemsProgress: (listener) => subscribe('stems:progress', listener),
   libraryStorage: () => ipcRenderer.invoke('library:storage'),
   libraryCompact: () => ipcRenderer.invoke('library:compact'),
   onCompactProgress: (listener) => subscribe('library:compact-progress', listener),
+  libraryExport: (opts) => ipcRenderer.invoke('library:export', { includeOriginal: opts.includeOriginal, ...(opts.ids ? { ids: [...opts.ids] } : {}), ...(opts.collection ? { collection: opts.collection } : {}) }),
+  libraryImport: () => ipcRenderer.invoke('library:import'),
+  libraryShowExport: () => ipcRenderer.invoke('library:show-export'),
+  libraryLocation: () => ipcRenderer.invoke('library:location'),
+  libraryChooseLocation: (opts) => ipcRenderer.invoke('library:choose-location', { keep: opts?.keep === true }),
+  libraryOpenLocation: () => ipcRenderer.invoke('library:open-location'),
+  onTransferProgress: (listener) => subscribe('library:transfer-progress', listener),
   onSongProgress: (listener) => subscribe('song:progress', listener),
   videoInfo: (url) => ipcRenderer.invoke('import:url-info', { url }),
   importUrl: (url, format, startMix) => ipcRenderer.invoke('import:url', { url, format, startMix }),

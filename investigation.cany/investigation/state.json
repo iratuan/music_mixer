@@ -1,0 +1,48 @@
+{
+  "revision": 10,
+  "brief": {
+    "question": "Review and improve mixerCraft's core: audio track (stem) playback, accompaniment assembly by harmony and by instrument, library organization, visual consistency, and the exercise library.",
+    "purpose": "The person (non-coder) owns this Electron/React app for bass study and wants its basic features reviewed and made solid.",
+    "targets": [
+      "E:\\SANDBOX_CLAUDE\\rocksmith_craft\\baixaria-fina (own project, edited in place)"
+    ],
+    "constraints": [
+      "Keep the existing stack (Electron 33, React 18, TypeScript, Vite, Vitest)",
+      "Edit in place; don't delete user work",
+      "No dev servers",
+      "Build and tests must pass"
+    ],
+    "done_when": "Concrete fixes/improvements in the five areas are implemented, typecheck+tests+build pass, and a summary of what was reviewed and changed is given."
+  },
+  "plan": [
+    {
+      "title": "Revisar e corrigir o player de faixas",
+      "status": "done"
+    },
+    {
+      "title": "Acompanhamento: combinações prontas de faixas e acompanhamento tocado pelos acordes",
+      "status": "done"
+    },
+    {
+      "title": "Organizar a biblioteca (ordenar e filtrar)",
+      "status": "done"
+    },
+    {
+      "title": "Padronizar o visual (cores e estilos repetidos)",
+      "status": "done"
+    },
+    {
+      "title": "Criar a biblioteca de exercícios prontos, com recorde pessoal",
+      "status": "done"
+    },
+    {
+      "title": "Testar, compilar e conferir",
+      "status": "done",
+      "why": "169 testes, build ok, rebuild_check passou, verificação visual no app real com biblioteca sintética"
+    }
+  ],
+  "hypotheses": [],
+  "findings": [],
+  "handoff": "Turn 6 (uncommitted): Stage/challenge mode + Harmony refactor. Domain: packages/domain/src/practice/highway/{fofChartTypes,exerciseToFofChart,fofHighwayEngine}.ts (chart model, song.ini + notes.mid parser, HOPO = fast same-string different fret, sustain >=0.6s, engine: 50pts x mult(streak before note /10, max4), energy +4%/hit -> overdrive x2 for 10s, octave = half, overstrum breaks streak, verdict/strike/tap/midiOn, onJudged). music/bassRole.ts (root 1&3 / triad 1-3-5-3 / arpeggio 1-3-5-7|8). Tests highway.test.ts(12), bassRole.test.ts(3); 236 total pass. Renderer: components/ArcadeStageCanvas.tsx (canvas 60fps, feed ref), ChallengeResultsModal.tsx, styles/stage.css; Exercises.tsx: Desafio opens split screen (ex-split), input mode audio/midi/keys (keys 1-6/F1-F6 + Enter/Space), subdivision select, scheduler produces 2.6s ahead into queue; +5 BPM restart. practice.ts openMidi; main.ts allows 'midi' permission. Harmony.tsx: instrument card moved to bottom (.harmony-dock), 'Baixo marca' Tônica/Tríade/Arpejo + 'Tocar o baixo'; harmonyAudioEngine playProgression bass option (pluckAt on own bus). Visual check: E:/tmp/craft_scripts/visual-check13.cjs. Open: sound of synth accompaniment; real-instrument timing of the stage untested (no bass here); notes.mid loading has no UI yet.",
+  "updated": "2026-11-16T18:20:47Z"
+}

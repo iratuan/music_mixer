@@ -13,7 +13,7 @@ import { chordTones } from './piano.js';
  *
  * Modos:
  * - normal: formas nas primeiras casas (aberto ou com pestana perto do 0), o que existe em qualquer livro.
- * - CAGED: formas móveis com a fundamental na 6ª, 5ª ou 4ª corda, perto da zona da mão. Aproximação
+ * - CAGED: formas móveis (sem cordas soltas) com a fundamental na 6ª, 5ª ou 4ª corda, perto da zona da mão. Aproximação
  *   do princípio CAGED (a forma é escolhida pela corda da fundamental), não tabela fixa de formas.
  */
 
@@ -63,6 +63,61 @@ interface Raw {
   /** Índice da corda mais grave que soa. */
   readonly low: number;
   readonly score: number;
+  /** Molde CAGED usado ("forma de Mi (E)"…), quando a forma veio de um molde. */
+  readonly shape?: string;
+}
+
+/**
+ * Moldes CAGED: as formas famosas, móveis, como desvio de casa a partir da casa da fundamental `r`
+ * na corda indicada (6ª → 1ª; null = muda). Ex.: forma de Mi maior = r, r+2, r+2, r+1, r, r.
+ */
+interface Template {
+  readonly name: string;
+  /** Corda da fundamental (índice 0 = 6ª). */
+  readonly rootString: number;
+  readonly offs: ReadonlyArray<number | null>;
+  /** Dificuldade extra (as formas de Dó e Sol com pestana são mais difíceis). */
+  readonly cost: number;
+}
+const T = (name: string, rootString: number, offs: ReadonlyArray<number | null>, cost = 0): Template => ({ name, rootString, offs, cost });
+const TEMPLATES: Readonly<Record<string, readonly Template[]>> = {
+  '': [T('forma de Mi (E)', 0, [0, 2, 2, 1, 0, 0]), T('forma de Lá (A)', 1, [null, 0, 2, 2, 2, 0]), T('forma de Ré (D)', 2, [null, null, 0, 2, 3, 2], 0.5), T('forma de Dó (C)', 1, [null, 0, -1, -3, -2, -3], 1.5), T('forma de Sol (G)', 0, [0, -1, -3, -3, -3, 0], 2)],
+  m: [T('forma de Mi menor (Em)', 0, [0, 2, 2, 0, 0, 0]), T('forma de Lá menor (Am)', 1, [null, 0, 2, 2, 1, 0]), T('forma de Ré menor (Dm)', 2, [null, null, 0, 2, 3, 1], 0.5)],
+  '7': [T('forma de Mi com sétima (E7)', 0, [0, 2, 0, 1, 0, 0]), T('forma de Lá com sétima (A7)', 1, [null, 0, 2, 0, 2, 0]), T('forma de Ré com sétima (D7)', 2, [null, null, 0, 2, 1, 2], 0.5), T('forma de Dó com sétima (C7)', 1, [null, 0, -1, 0, -2, null], 1)],
+  m7: [T('forma de Mi menor com sétima (Em7)', 0, [0, 2, 0, 0, 0, 0]), T('forma de Lá menor com sétima (Am7)', 1, [null, 0, 2, 0, 1, 0]), T('forma de Ré menor com sétima (Dm7)', 2, [null, null, 0, 2, 1, 1], 0.5)],
+  maj7: [T('forma de Mi com sétima maior (Emaj7)', 0, [0, null, 1, 1, 0, null]), T('forma de Lá com sétima maior (Amaj7)', 1, [null, 0, 2, 1, 2, 0]), T('forma de Ré com sétima maior (Dmaj7)', 2, [null, null, 0, 2, 2, 2], 0.5)],
+  m7b5: [T('meio-diminuto, raiz na 5ª corda', 1, [null, 0, 1, 0, 1, null]), T('meio-diminuto, raiz na 6ª corda', 0, [0, null, 0, 0, -1, null], 0.5)],
+  dim: [T('diminuto, raiz na 5ª corda', 1, [null, 0, 1, -1, 1, null])],
+  sus4: [T('forma de Mi sus4', 0, [0, 2, 2, 2, 0, 0]), T('forma de Lá sus4', 1, [null, 0, 2, 2, 3, 0])],
+  sus2: [T('forma de Lá sus2', 1, [null, 0, 2, 2, 0, 0]), T('forma de Ré sus2', 2, [null, null, 0, 2, 3, 0], 0.5)],
+};
+
+/** Formas CAGED dos moldes famosos para o acorde, sem corda solta, com a fundamental perto de `near`. */
+function fromTemplates(chord: Chord, near: number): Raw | null {
+  if (chord.bass !== undefined && pc(chord.bass) !== pc(chord.root)) return null;
+  const list = TEMPLATES[chord.quality];
+  if (!list) return null;
+  const tones = chordTones(chord);
+  let bestRaw: Raw | null = null;
+  let bestCost = Infinity;
+  for (const t of list) {
+    const open = GUITAR_TUNING[t.rootString]!;
+    for (let r = 1; r <= 15; r++) {
+      if ((open + r) % 12 !== pc(chord.root)) continue;
+      const frets = t.offs.map((o) => (o === null ? null : r + o));
+      if (frets.some((f) => f !== null && (f < 1 || f > 17))) continue; // sem corda solta, dentro do braço
+      const raw = evaluate(frets, chord, tones);
+      if (!raw) continue;
+      const played = frets.filter((f): f is number => f !== null);
+      const center = (Math.min(...played) + Math.max(...played)) / 2;
+      const cost = Math.abs(center - (near + 1.5)) * 0.8 + t.cost + raw.score * 0.05;
+      if (cost < bestCost) {
+        bestCost = cost;
+        bestRaw = { ...raw, shape: `${t.name} · casa ${r}` };
+      }
+    }
+  }
+  return bestRaw;
 }
 
 /** Casas possíveis numa corda: muda, solta (se for nota do acorde) e as casas na janela que tocam uma nota do acorde. */
@@ -172,6 +227,8 @@ function pickNormal(chord: Chord): Raw | null {
 }
 
 function pickCaged(chord: Chord, near: number): Raw | null {
+  const famous = fromTemplates(chord, near);
+  if (famous) return famous;
   const root = pc(chord.root);
   // Fundamental no baixo, na 6ª, 5ª ou 4ª corda: são as formas CAGED que se tocam a partir do grave.
   const rootLow = (r: Raw): boolean => r.low <= 2 && (GUITAR_TUNING[r.low]! + r.frets[r.low]!) % 12 === root;
@@ -179,10 +236,15 @@ function pickCaged(chord: Chord, near: number): Raw | null {
   const lo = Math.max(0, near - 1);
   const hi = near + 3;
   const inZone = (r: Raw): boolean => rootLow(r) && r.frets[r.low]! >= lo && r.frets[r.low]! <= hi;
-  const zone = all(chord, 1, near + 6).filter(inZone);
+  // Formas móveis: sem corda solta (a nota solta vira casa presa na corda de cima, dentro da forma).
+  const fretted = (r: Raw): boolean => r.frets.every((f) => f !== 0);
+  const pool = all(chord, 1, near + 6);
+  const zone = pool.filter((r) => inZone(r) && fretted(r));
   if (zone.length) return best(zone, (r) => r.score);
-  const any = all(chord, 1, 12).filter(rootLow);
-  if (any.length) return best(any, (r) => r.score + 0.6 * Math.abs(r.frets[r.low]! - near));
+  const wide = all(chord, 1, 14).filter((r) => rootLow(r) && fretted(r));
+  if (wide.length) return best(wide, (r) => r.score + 0.6 * Math.abs(r.frets[r.low]! - near));
+  const zoneOpen = pool.filter(inZone);
+  if (zoneOpen.length) return best(zoneOpen, (r) => r.score);
   return pickNormal(chord);
 }
 
@@ -192,7 +254,11 @@ function toVoicing(r: Raw, chord: Chord, caged: boolean): GuitarVoicing {
   const maxF = fretted.length ? Math.max(...fretted) : 0;
   const hasOpen = r.frets.some((f) => f === 0);
   let form: string;
-  if (caged) {
+  if (caged && r.shape) {
+    // "raiz na 6ª corda · casa 5 · forma de Mi menor (Em)" (+ pestana)
+    form = `raiz na ${6 - r.low}ª corda · casa ${r.frets[r.low]} · ${r.shape.replace(/ · casa \d+$/, '')}`;
+    if (r.barre) form += ' · pestana';
+  } else if (caged) {
     form = `raiz na ${6 - r.low}ª corda · casa ${r.frets[r.low]}`;
     if (r.barre) form += ' · pestana';
   } else if (r.barre) {

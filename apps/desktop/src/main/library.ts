@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -12,6 +13,10 @@ import path from 'node:path';
 export const LIBRARY_VERSION = 1;
 /** Transposição oferecida: meio tom a meio tom, até uma quarta aumentada para cada lado. */
 export const MAX_SEMITONES = 6;
+/** Velocidade do player em % (50 a 100, de 5 em 5): mais lento sem mudar o tom. */
+export function isSpeed(v: unknown): v is number {
+  return typeof v === 'number' && Number.isInteger(v) && v >= 50 && v <= 100 && v % 5 === 0;
+}
 export function isSemitones(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v) && Math.abs(v) <= MAX_SEMITONES;
 }
@@ -36,6 +41,36 @@ export interface SongRecord {
   readonly sections?: ReadonlyArray<{ readonly startBar: number; readonly name: string }>;
   /** Coleções (etiquetas livres) em que a música está. */
   readonly collections?: readonly string[];
+  /** Arquivo de onde a música foi importada (a cópia fica em songs/<id>/); evita importar duas vezes. */
+  readonly importedFrom?: string;
+  /** Pasta da música dentro da biblioteca, com o nome da música (ex.: "Minha música"). Sem valor: songs/<id>. */
+  readonly folder?: string;
+}
+
+/** Nome de cada faixa no disco, pela parte separada. */
+export const STEM_FILE_LABELS: Readonly<Record<string, string>> = {
+  vocals: 'Voz',
+  lead: 'Voz principal',
+  backing: 'Backing vocals',
+  guitar: 'Guitarra',
+  piano: 'Piano',
+  bass: 'Baixo',
+  drums: 'Bateria',
+  other: 'Outros',
+  rest: 'Restante',
+};
+
+/** Nome de pasta seguro no Windows (sem caracteres proibidos nem ponto no fim). */
+export function folderName(name: string): string {
+  const s = name
+    .replace(/\.[a-z0-9]{2,5}$/i, '')
+    .replace(/[\u0000-\u001f<>:"/\\|?*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[. ]+$/, '')
+    .slice(0, 80)
+    .trim();
+  return !s || /^(con|prn|aux|nul|com\d|lpt\d|songs)$/i.test(s) ? 'Música' : s;
 }
 
 const MAX_COLLECTIONS = 100;
@@ -98,13 +133,80 @@ const MIDI_DEFAULT_VERSION = 2;
 export class Library {
   constructor(private readonly root: string) {}
 
+  /** Pasta de cada música (id → caminho), lida do índice. */
+  private dirs: Map<string, string> | null = null;
+  private fillDirs(songs: readonly SongRecord[]): void {
+    this.dirs = new Map(songs.filter((s) => s.folder).map((s) => [s.id, path.join(this.root, s.folder!)]));
+  }
+
   private get indexPath(): string {
     return path.join(this.root, 'index.json');
   }
 
   songDir(id: string): string {
     if (!ID_RE.test(id)) throw new Error('id de música inválido');
-    return path.join(this.root, 'songs', id);
+    if (!this.dirs) {
+      try {
+        const data = JSON.parse(readFileSync(this.indexPath, 'utf8')) as Partial<IndexFile>;
+        this.fillDirs(Array.isArray(data.songs) ? data.songs : []);
+      } catch {
+        this.dirs = new Map();
+      }
+    }
+    return this.dirs!.get(id) ?? path.join(this.root, 'songs', id);
+  }
+
+  /**
+   * Organiza a música com nomes legíveis: a pasta passa a ter o nome da música (dentro da pasta da
+   * biblioteca) e cada faixa o nome da parte separada (Voz principal.flac, Backing vocals.flac, Baixo.flac…).
+   * As faixas ainda em WAV (antes da compactação) ficam onde estão. Nada é apagado.
+   */
+  async organize(id: string): Promise<void> {
+    const index = await this.load();
+    const rec = index.songs.find((s) => s.id === id);
+    if (!rec) return;
+    let dir = this.songDir(id);
+    let folder = rec.folder;
+    if (!folder) {
+      const base = folderName(rec.name);
+      const taken = new Set(index.songs.filter((s) => s.folder && s.id !== id).map((s) => s.folder!.toLowerCase()));
+      let name = base;
+      for (let k = 2; taken.has(name.toLowerCase()) || existsSync(path.join(this.root, name)); k++) name = `${base} (${k})`;
+      const target = path.join(this.root, name);
+      if (existsSync(dir)) await rename(dir, target);
+      else await mkdir(target, { recursive: true });
+      folder = name;
+      const move = (p: string) => (path.resolve(p).toLowerCase().startsWith(path.resolve(dir).toLowerCase() + path.sep) ? path.join(target, path.resolve(p).slice(path.resolve(dir).length + 1)) : p);
+      Object.assign(rec, {
+        folder,
+        sourcePath: move(rec.sourcePath),
+        stems: rec.stems ? Object.fromEntries(Object.entries(rec.stems).map(([k, v]) => [k, move(v)])) : null,
+      });
+      dir = target;
+    }
+    if (rec.stems) {
+      const stems: Record<string, string> = {};
+      for (const [k, p] of Object.entries(rec.stems)) {
+        const ext = path.extname(p).toLowerCase();
+        const want = path.join(dir, `${STEM_FILE_LABELS[k] ?? k}${ext}`);
+        if (ext === '.flac' && path.resolve(p) !== path.resolve(want) && existsSync(p) && !existsSync(want)) {
+          await rename(p, want);
+          stems[k] = want;
+        } else stems[k] = p;
+      }
+      Object.assign(rec, { stems });
+    }
+    await this.save({ version: LIBRARY_VERSION, songs: index.songs });
+  }
+
+  /** Organiza todas as músicas (nomes de pasta e de faixa); devolve quantas. */
+  async organizeAll(): Promise<number> {
+    const songs = await this.list();
+    for (const s of songs) await this.organize(s.id);
+    // A pasta "songs" antiga fica vazia: some.
+    const old = path.join(this.root, 'songs');
+    if (existsSync(old) && (await readdir(old)).length === 0) await rm(old, { recursive: true, force: true });
+    return songs.length;
   }
 
   private async load(): Promise<IndexFile> {
@@ -117,14 +219,54 @@ export class Library {
     }
     const data = JSON.parse(raw) as Partial<IndexFile>;
     if (data.version !== LIBRARY_VERSION || !Array.isArray(data.songs)) throw new Error('índice da biblioteca inválido');
-    return { version: LIBRARY_VERSION, songs: data.songs.map(migrateRecord) };
+    const songs = data.songs.map(migrateRecord);
+    this.fillDirs(songs);
+    return { version: LIBRARY_VERSION, songs };
   }
 
   private async save(index: IndexFile): Promise<void> {
+    this.fillDirs(index.songs);
     await mkdir(this.root, { recursive: true });
     const tmp = `${this.indexPath}.tmp`;
     await writeFile(tmp, JSON.stringify(index, null, 2), 'utf8');
     await rename(tmp, this.indexPath); // troca atômica: o índice nunca fica pela metade
+    // Lista legível para quem abrir a pasta: nome da música → pasta dela.
+    const lines = ['Biblioteca do mixerCraft. Cada música fica em songs/<pasta>, com as faixas em "faixas".', ''];
+    for (const s of index.songs) lines.push(`${s.name}  ->  ${s.folder ?? `songs/${s.id}`}`);
+    await writeFile(path.join(this.root, 'MUSICAS.txt'), lines.join('\r\n'), 'utf8').catch(() => undefined);
+  }
+
+  get folder(): string {
+    return this.root;
+  }
+
+  /**
+   * Biblioteca copiada de outra pasta: os caminhos guardados (faixas e áudio) que apontavam para a
+   * pasta antiga passam a apontar para esta.
+   */
+  async relocateFrom(oldRoot: string): Promise<void> {
+    const from = path.resolve(oldRoot);
+    const to = path.resolve(this.root);
+    const move = (p: string) => {
+      const r = path.resolve(p);
+      return r.toLowerCase().startsWith(from.toLowerCase() + path.sep) ? path.join(to, r.slice(from.length + 1)) : p;
+    };
+    const index = await this.load();
+    const songs = index.songs.map((s) => ({
+      ...s,
+      sourcePath: move(s.sourcePath),
+      stems: s.stems ? Object.fromEntries(Object.entries(s.stems).map(([k, v]) => [k, move(v)])) : null,
+    }));
+    await this.save({ version: LIBRARY_VERSION, songs });
+  }
+
+  /** Guarda a cópia do áudio dentro da pasta da música (o original continua onde estava). */
+  async setSource(id: string, sourcePath: string, importedFrom: string): Promise<void> {
+    const dir = path.resolve(this.songDir(id));
+    if (!path.resolve(sourcePath).startsWith(dir + path.sep)) throw new Error('áudio fora da pasta da música');
+    const index = await this.load();
+    if (!index.songs.some((s) => s.id === id)) throw new Error('música não encontrada');
+    await this.save({ version: LIBRARY_VERSION, songs: index.songs.map((s) => (s.id === id ? { ...s, sourcePath, importedFrom } : s)) });
   }
 
   private get collectionsPath(): string {
@@ -225,6 +367,24 @@ export class Library {
     return record;
   }
 
+  /**
+   * Registra músicas reimportadas de uma biblioteca exportada. Os arquivos já foram copiados para
+   * songs/<id>/; ids repetidos ou faixas fora da pasta da música são recusados.
+   */
+  async addRecords(records: readonly SongRecord[]): Promise<void> {
+    const index = await this.load();
+    if (index.songs.length + records.length > MAX_SONGS) throw new Error('biblioteca cheia');
+    for (const r of records) {
+      const dir = path.resolve(this.songDir(r.id));
+      if (index.songs.some((s) => s.id === r.id)) throw new Error('id repetido');
+      for (const [k, p] of Object.entries(r.stems ?? {})) {
+        if (!STEM_RE.test(k)) throw new Error(`nome de faixa inválido: ${k}`);
+        if (!path.isAbsolute(p) || !path.resolve(p).startsWith(dir + path.sep)) throw new Error('faixa fora da pasta da música');
+      }
+    }
+    await this.save({ version: LIBRARY_VERSION, songs: [...records, ...index.songs] });
+  }
+
   async setStartMix(id: string, startMix: Record<string, boolean>): Promise<void> {
     if (!ID_RE.test(id)) throw new Error('id de música inválido');
     const index = await this.load();
@@ -250,7 +410,7 @@ export class Library {
     if (!path.isAbsolute(sourcePath)) throw new Error('caminho de origem deve ser absoluto');
     const index = await this.load();
     if (index.songs.length >= MAX_SONGS) throw new Error('biblioteca cheia');
-    const existing = index.songs.find((s) => s.sourcePath === sourcePath);
+    const existing = index.songs.find((s) => s.sourcePath === sourcePath || s.importedFrom === sourcePath);
     if (existing) return existing; // mesma origem: não duplica
     const record: SongRecord = {
       id: randomBytes(8).toString('hex'),
@@ -311,10 +471,12 @@ export class Library {
   }
 
   /** Faixa transposta (cache): songs/<id>/tom/<faixa>_<+N|-N>.flac (o Rubber Band grava pela extensão). */
-  transposedPath(id: string, stem: string, semitones: number): string {
+  transposedPath(id: string, stem: string, semitones: number, speed = 100): string {
     if (!STEM_RE.test(stem)) throw new Error('nome de faixa inválido');
-    if (!isSemitones(semitones) || semitones === 0) throw new Error('transposição inválida');
-    return path.join(this.songDir(id), 'tom', `${stem}_${semitones > 0 ? '+' : ''}${semitones}.flac`);
+    if (!isSemitones(semitones) || !isSpeed(speed) || (semitones === 0 && speed === 100)) throw new Error('transposição inválida');
+    // Andamento reduzido: songs/<pasta>/tom/<faixa>_<tom>_v<velocidade>.flac
+    const v = speed === 100 ? '' : `_v${speed}`;
+    return path.join(this.songDir(id), 'tom', `${stem}_${semitones > 0 ? '+' : ''}${semitones}${v}.flac`);
   }
 
   /** MIDI de uma faixa (cache): songs/<id>/midi/<faixa>_<N>.mid */

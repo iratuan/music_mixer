@@ -44,7 +44,9 @@ export type IconName =
   | 'external'
   | 'midi'
   | 'close'
-  | 'trash';
+  | 'trash'
+  | 'chords'
+  | 'mixer';
 
 interface Props {
   name: IconName;
@@ -56,6 +58,26 @@ interface Props {
 const S = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
 const GLYPHS: Record<IconName, ReactNode> = {
+  // Acorde: três notas empilhadas numa haste.
+  chords: (
+    <>
+      <ellipse cx="9" cy="18.2" rx="3.4" ry="2.5" />
+      <ellipse cx="9" cy="12" rx="3.4" ry="2.5" />
+      <ellipse cx="9" cy="5.8" rx="3.4" ry="2.5" />
+      <rect x="11.5" y="3" width="2" height="15.4" rx="1" />
+    </>
+  ),
+  // Mesa de som: três faders em alturas diferentes.
+  mixer: (
+    <>
+      <rect x="4.6" y="3" width="2" height="18" rx="1" />
+      <rect x="11" y="3" width="2" height="18" rx="1" />
+      <rect x="17.4" y="3" width="2" height="18" rx="1" />
+      <rect x="2.6" y="13" width="6" height="3.6" rx="1.2" />
+      <rect x="9" y="6" width="6" height="3.6" rx="1.2" />
+      <rect x="15.4" y="10.4" width="6" height="3.6" rx="1.2" />
+    </>
+  ),
   play: <path d="M7 4.2v15.6a.8.8 0 0 0 1.2.7l12.3-7.8a.8.8 0 0 0 0-1.4L8.2 3.5a.8.8 0 0 0-1.2.7z" />,
   pause: (
     <>

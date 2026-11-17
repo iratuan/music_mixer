@@ -17,13 +17,23 @@
     "build": "npm run build:renderer && npm run build:electron",
     "start": "npm run build && electron .",
     "pack:win": "npm run build && electron-builder --win --dir",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:win": "npm run build && electron-builder --win",
+    "build:mixer": "cross-env PROFILE=mixer npm run build:renderer && npm run build:electron",
+    "build:academy:desktop": "cross-env PROFILE=academy npm run build:renderer && npm run build:electron",
+    "build:academy:web": "cross-env PROFILE=academy vite build",
+    "start:mixer": "cross-env PROFILE=mixer npm run build && electron .",
+    "start:academy": "cross-env PROFILE=academy npm run build && electron .",
+    "pack:mixer": "cross-env PROFILE=mixer npm run build:mixer && electron-builder --win --dir -c.build.files=dist/**/* -c.build.extraMetadata.name=mixer",
+    "pack:academy": "cross-env PROFILE=academy npm run build:academy:desktop && electron-builder --win --dir -c.build.files=dist/**/*",
+    "dist:mixer": "cross-env PROFILE=mixer npm run build:mixer && electron-builder --win -c electron-builder.mixer.json5",
+    "dist:academy": "cross-env PROFILE=academy npm run build:academy:desktop && electron-builder --win -c electron-builder.academy.json5"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "cross-env": "^10.1.0",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
     "esbuild": "^0.24.2",
@@ -34,7 +44,8 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.16.0"
   },
   "build": {
     "appId": "br.local.mixercraft",

@@ -276,12 +276,48 @@ export interface SongMap {
   /** Andamento variável (gravação ao vivo): faixa p5–p95. */
   readonly bpmRange?: readonly [number, number];
   readonly transpose: number;
+  /** Cordas do baixo da tablatura, da mais grave para a mais aguda. */
+  readonly strings?: readonly string[];
+  /** Levada do baixo da tablatura. */
+  readonly bassStyle?: string;
+  /** Formas dos acordes no violão (casa por corda, da 6ª à 1ª; null = muda). */
+  readonly shapes?: ReadonlyArray<{ readonly name: string; readonly frets: ReadonlyArray<number | null>; readonly base: number }>;
   readonly sections: ReadonlyArray<{
     readonly name: string;
     readonly from: number;
     readonly to: number;
-    readonly bars: ReadonlyArray<{ readonly n: number; readonly chords: readonly string[]; readonly bass: readonly string[] }>;
+    readonly letter?: string;
+    readonly repeatOf?: string;
+    readonly bars: ReadonlyArray<{
+      readonly n: number;
+      readonly chords: readonly string[];
+      readonly bass: readonly string[];
+      /** Tablatura do baixo do acompanhamento: corda (0 = grave), casa e posição no compasso (0–1). */
+      readonly tab?: ReadonlyArray<{ readonly s: number; readonly f: number; readonly x: number }>;
+    }>;
   }>;
+}
+
+/**
+ * Forma da música: partes com a mesma sequência de acordes recebem a mesma letra (A, B, C… na
+ * ordem em que aparecem); a repetição aponta para a primeira parte com aquela letra.
+ */
+export function sectionLetters(signatures: ReadonlyArray<readonly string[]>): Array<{ letter: string; repeatOf: number | null }> {
+  const seen = new Map<string, { letter: string; first: number }>();
+  return signatures.map((sig, i) => {
+    const key = sig.join(' ');
+    const hit = seen.get(key);
+    if (hit) return { letter: hit.letter, repeatOf: hit.first };
+    const n = seen.size;
+    const letter = n < 26 ? String.fromCharCode(65 + n) : `Z${n - 25}`;
+    seen.set(key, { letter, first: i });
+    return { letter, repeatOf: null };
+  });
+}
+
+/** Tablatura de um compasso em texto: "A3 D5 · A3" (corda e casa, na ordem do tempo). */
+export function tabText(tab: ReadonlyArray<{ readonly s: number; readonly f: number }>, strings: readonly string[]): string {
+  return tab.map((t) => `${strings[t.s] ?? t.s}${t.f}`).join(' ');
 }
 
 /** "112 BPM" ou, com andamento variável, "86–123 BPM (variável)". */
@@ -294,17 +330,95 @@ export function bpmLabel(map: Pick<SongMap, 'bpm' | 'bpmRange'>): string {
 export function songMapText(map: SongMap): string {
   const lines: string[] = [];
   lines.push(map.title);
-  lines.push(`Tom: ${map.key} · ${bpmLabel(map)}${map.transpose ? ` · transposto ${map.transpose > 0 ? '+' : ''}${map.transpose}` : ''}`);
+  lines.push(`Tom: ${map.key} · ${bpmLabel(map)} · 4/4${map.transpose ? ` · transposto ${map.transpose > 0 ? '+' : ''}${map.transpose}` : ''}`);
+  const strings = map.strings ?? [];
+  const hasTab = strings.length >= 4 && map.sections.some((s) => s.bars.some((b) => b.tab?.length));
+  if (hasTab) lines.push(`Baixo${map.bassStyle ? `: ${map.bassStyle}` : ''} · cordas ${strings.join(' ')} · sem corda solta`);
+  if (map.sections.some((s) => s.letter)) lines.push(`Forma: ${map.sections.map((s) => s.letter ?? '?').join(' ')}`);
   lines.push('');
   for (const s of map.sections) {
-    lines.push(`${s.name.toUpperCase()}  (compassos ${s.from + 1}–${s.to + 1})`);
+    lines.push(`${s.letter ? `[${s.letter}] ` : ''}${s.name.toUpperCase()}  (compassos ${s.from + 1}–${s.to + 1}${s.repeatOf ? ` · repete ${s.repeatOf}` : ''})`);
     const cells = s.bars.map((b) => {
       const ch = b.chords.length ? b.chords.join(' ') : '%';
-      return `${b.n}: ${ch}${b.bass.length ? ` [${b.bass.join(' ')}]` : ''}`;
+      const tab = hasTab && b.tab?.length ? ` {${tabText(b.tab, strings)}}` : '';
+      return `${b.n}: ${ch}${tab}${b.bass.length ? ` [${b.bass.join(' ')}]` : ''}`;
     });
     for (let i = 0; i < cells.length; i += 4) lines.push('| ' + cells.slice(i, i + 4).join(' | ') + ' |');
     lines.push('');
   }
-  lines.push('Acordes por compasso; entre colchetes, as notas do baixo (estimadas).');
+  if (map.shapes?.length) {
+    lines.push('Acordes no violão (6ª → 1ª corda; x = não toca):');
+    for (const sh of map.shapes) lines.push(`  ${sh.name}: ${sh.frets.map((f) => (f === null ? 'x' : String(f))).join(' ')}`);
+    lines.push('');
+  }
+  lines.push(`Acordes por compasso${hasTab ? '; entre chaves, a linha do baixo (corda e casa)' : ''}; entre colchetes, as notas do baixo da gravação (estimadas).`);
   return lines.join('\r\n');
+}
+
+/**
+ * Nomes de músico a partir da forma (letras das partes, ver sectionLetters):
+ * - a primeira parte curta (até 4 compassos) que não volta é a Intro; a última nessas condições, o Outro;
+ * - a forma que mais se repete (com 2 vezes ou mais) é o Refrão; se houver energia, a mais forte entre as repetidas;
+ * - as outras formas que repetem são Parte A, Parte B…, na ordem em que aparecem;
+ * - uma forma que aparece uma vez só no meio é a Ponte (a segunda, Solo; depois Interlúdio);
+ * - uma parte curta logo antes do Refrão que não é Parte A vira Pré-refrão.
+ * As repetições recebem o mesmo nome; quem quiser numera ("Refrão 2") editando.
+ */
+export function nameByForm(
+  spans: ReadonlyArray<{ readonly from: number; readonly to: number }>,
+  letters: ReadonlyArray<{ readonly letter: string }>,
+  energy?: readonly number[],
+): string[] {
+  const n = spans.length;
+  if (!n) return [];
+  const len = (i: number) => spans[i]!.to - spans[i]!.from + 1;
+  const count = new Map<string, number>();
+  for (const l of letters) count.set(l.letter, (count.get(l.letter) ?? 0) + 1);
+  const names: Array<string | null> = new Array(n).fill(null);
+  const once = (i: number) => (count.get(letters[i]!.letter) ?? 0) === 1;
+  if (n > 2 && once(0) && len(0) <= 4) names[0] = 'Intro';
+  if (n > 2 && once(n - 1) && len(n - 1) <= 8 && !names[n - 1]) names[n - 1] = 'Outro';
+  // Refrão: a forma repetida mais vezes; empate → mais energia média → a que aparece por último.
+  const repeated = [...count.entries()].filter(([, c]) => c >= 2).map(([l]) => l);
+  const avgEnergy = (l: string) => {
+    if (!energy) return 0;
+    const idx = letters.map((x, i) => (x.letter === l ? i : -1)).filter((i) => i >= 0);
+    return idx.reduce((s, i) => s + (energy[i] ?? 0), 0) / Math.max(1, idx.length);
+  };
+  let chorus: string | null = null;
+  for (const l of repeated) {
+    if (!chorus) chorus = l;
+    else {
+      const dc = (count.get(l) ?? 0) - (count.get(chorus) ?? 0);
+      if (dc > 0 || (dc === 0 && avgEnergy(l) > avgEnergy(chorus))) chorus = l;
+    }
+  }
+  const partNames = ['Parte A', 'Parte B', 'Parte C', 'Parte D', 'Parte E'];
+  const bridgeNames = ['Ponte', 'Solo', 'Interlúdio'];
+  const given = new Map<string, string>();
+  let parts = 0;
+  let bridges = 0;
+  for (let i = 0; i < n; i++) {
+    if (names[i]) continue;
+    const l = letters[i]!.letter;
+    if (l === chorus) names[i] = 'Refrão';
+    else if (given.has(l)) names[i] = given.get(l)!;
+    else if (once(i) && chorus) {
+      const nm = bridgeNames[Math.min(bridges++, bridgeNames.length - 1)]!;
+      given.set(l, nm);
+      names[i] = nm;
+    } else {
+      const nm = partNames[Math.min(parts++, partNames.length - 1)]!;
+      given.set(l, nm);
+      names[i] = nm;
+    }
+  }
+  // Pré-refrão: parte curta, que não é a Parte A, logo antes de um Refrão.
+  for (let i = 0; i + 1 < n; i++) {
+    if (names[i + 1] === 'Refrão' && names[i] !== 'Refrão' && names[i] !== 'Parte A' && names[i] !== 'Intro' && len(i) <= 4) {
+      const l = letters[i]!.letter;
+      for (let j = 0; j < n; j++) if (letters[j]!.letter === l && names[j] !== 'Intro' && names[j] !== 'Outro') names[j] = 'Pré-refrão';
+    }
+  }
+  return names.map((x) => x ?? 'Parte');
 }

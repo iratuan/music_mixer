@@ -162,12 +162,19 @@ def viterbi(log_emit: np.ndarray, switch_cost: float) -> np.ndarray:
     return path
 
 
+# Faixas organizadas pelo app têm o nome da parte (Baixo.flac, Voz.flac…).
+STEM_LABELS = {"vocals": "Voz", "bass": "Baixo", "drums": "Bateria", "guitar": "Guitarra", "piano": "Piano", "other": "Outros"}
+
+
 def stem_file(folder: str, name: str):
-    """Faixa `name` na pasta, em FLAC (biblioteca compactada) ou WAV (antes de compactar)."""
-    for ext in (".flac", ".wav"):
-        p = os.path.join(folder, name + ext)
-        if os.path.exists(p):
-            return p
+    """Faixa `name` na pasta, em FLAC (biblioteca compactada) ou WAV (antes de compactar); aceita o nome da parte."""
+    for base in (name, STEM_LABELS.get(name)):
+        if not base:
+            continue
+        for ext in (".flac", ".wav"):
+            p = os.path.join(folder, base + ext)
+            if os.path.exists(p):
+                return p
     return None
 
 

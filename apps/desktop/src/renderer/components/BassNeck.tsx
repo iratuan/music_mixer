@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { pcName, type BassTuning, type FretPos } from '@domain';
-import { Neck } from './Neck.js';
+import { Neck, type NeckMark } from './Neck.js';
 
 /**
  * Braço do painel inferior do player: o braço inteiro (da pestana à última casa), ocupando toda a
@@ -25,9 +25,11 @@ interface Props {
   nextZone?: number | null;
   /** Painel lateral: o braço gira 90° (casas descendo). */
   vertical?: boolean;
+  /** Marcas extras por baixo das notas (ex.: notas do acorde escolhido no mapa e as notas-alvo). */
+  hints?: readonly NeckMark[];
 }
 
-export function BassNeck({ tuning, notes, flats, label, zone, nextZone, vertical }: Props) {
+export function BassNeck({ tuning, notes, flats, label, zone, nextZone, vertical, hints }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -49,13 +51,15 @@ export function BassNeck({ tuning, notes, flats, label, zone, nextZone, vertical
           tuning={tuning}
           fromFret={0}
           toFret={tuning.frets}
-          width={vertical ? Math.min(w, 260) : w}
+          // Na vertical, o comprimento do braço não depende da largura do painel: cada casa tem espaço
+          // para o número e a nota (o painel lateral rola).
+          width={vertical ? 60 + tuning.frets * 26 : w}
           zone={zone ?? null}
           nextZone={nextZone ?? null}
           rowH={rowH}
           flats={flats}
           vertical={!!vertical}
-          marks={notes.map((x) => ({ pos: x.pos, state: x.state, label: label === 'fret' ? String(x.pos.fret) : label === 'finger' ? String(x.finger ?? '') : pcName(x.midi, flats) }))}
+          marks={[...(hints ?? []), ...notes.map((x) => ({ pos: x.pos, state: x.state, label: label === 'fret' ? String(x.pos.fret) : label === 'finger' ? String(x.finger ?? '') : pcName(x.midi, flats) }))]}
         />
       )}
     </div>

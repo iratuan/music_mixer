@@ -21,7 +21,7 @@ describe('mapa no processo principal', () => {
     const html = songMapHtml(map);
     expect(html).not.toMatch(/<script>|<img|<b>/);
     expect(html).toContain('&lt;script&gt;');
-    expect(html).toContain('Tom G menor · 118 BPM · transposto +2');
+    expect(html).toContain('Tom G menor · 118 BPM · 4/4 · transposto +2');
     expect(html).toContain("default-src 'none'");
   });
 
@@ -43,5 +43,36 @@ describe('mapa: andamento variável', () => {
     expect(sanitizeMap({ ...base, bpmRange: [130, 90] }).bpmRange).toBeUndefined();
     expect(sanitizeMap({ ...base, bpmRange: ['x', 1] }).bpmRange).toBeUndefined();
     expect(songMapHtml(sanitizeMap(base))).toContain('112 BPM');
+  });
+});
+
+describe('mapa: tablatura do baixo, formas e repetições', () => {
+  const base = {
+    title: 'Groove',
+    key: 'C maior',
+    bpm: 100,
+    transpose: 0,
+    strings: ['E', 'A', 'D', 'G'],
+    bassStyle: 'Fundamental e quinta',
+    shapes: [{ name: 'C', frets: [null, 3, 5, 5, 5, 3], base: 3 }, { name: '<x>', frets: [1, 2], base: 1 }],
+    sections: [
+      { name: 'Verso', letter: 'A', from: 0, to: 0, bars: [{ n: 1, chords: ['C'], bass: [], tab: [{ s: 1, f: 3, x: 0 }, { s: 9, f: 2, x: 0.5 }, { s: 0, f: 5, x: 3 }] }] },
+      { name: 'Verso 2', letter: 'A', repeatOf: 'Verso', from: 1, to: 1, bars: [{ n: 2, chords: ['C'], bass: [] }] },
+    ],
+  };
+  it('valida a tablatura (corda, casa, posição) e as formas', () => {
+    const m = sanitizeMap(base);
+    expect(m.sections[0]!.bars[0]!.tab).toEqual([{ s: 1, f: 3, x: 0 }, { s: 0, f: 5, x: 1 }]);
+    expect(m.shapes).toHaveLength(1);
+    expect(m.strings).toEqual(['E', 'A', 'D', 'G']);
+  });
+  it('PDF traz a tablatura, a forma da música, as repetições e os diagramas', () => {
+    const html = songMapHtml(sanitizeMap(base));
+    expect(html).toContain('class="tab"');
+    expect(html).toContain('Forma: <span>A</span> <span>A</span>');
+    expect(html).toContain('repete Verso');
+    expect(html).toContain('Acordes no violão');
+    expect(html).toContain('sem corda solta');
+    expect(html).not.toMatch(/<script/);
   });
 });

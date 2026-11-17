@@ -100,3 +100,24 @@ describe('violão: nível simples e completo', () => {
     expect(simple.quality).toBe('');
   });
 });
+
+describe('violão: moldes CAGED famosos', () => {
+  it('Lá menor na região da casa 5: forma de Mi menor com pestana na 5 (5 7 7 5 5 5)', () => {
+    const v = guitarVoicing({ root: 9, quality: 'm' }, { mode: 'caged', near: 5 })!;
+    expect(v.frets).toEqual([5, 7, 7, 5, 5, 5]);
+    expect(v.form).toMatch(/forma de Mi menor/);
+  });
+  it('Dó maior perto da casa 3: forma de Lá com pestana na 3 (x 3 5 5 5 3)', () => {
+    const v = guitarVoicing({ root: 0, quality: '' }, { mode: 'caged', near: 3 })!;
+    expect(v.frets).toEqual([null, 3, 5, 5, 5, 3]);
+  });
+  it('toda forma CAGED sai de um molde famoso para as qualidades comuns, sem corda solta', () => {
+    for (const quality of ['', 'm', '7', 'm7', 'maj7']) {
+      for (let root = 0; root < 12; root++) {
+        const v = guitarVoicing({ root, quality }, { mode: 'caged', near: 5 })!;
+        expect(v.form, `${root}${quality}`).toMatch(/forma de/);
+        expect(v.frets.every((f) => f !== 0)).toBe(true);
+      }
+    }
+  });
+});

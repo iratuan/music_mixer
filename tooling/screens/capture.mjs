@@ -74,12 +74,34 @@ try {
   const laneNames = await win.locator('.lane .lane-title > span:not(.lane-num)').allInnerTexts();
   const expected = splitVoice ? ['Voz principal', 'Backing vocals', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'] : ['Voz', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'];
   check(JSON.stringify(laneNames) === JSON.stringify(expected), `faixas escolhidas + restante + metrônomo: ${laneNames.join(', ')}`);
-  const fill = await win.evaluate(() => {
+  const laneLayout = await win.evaluate(() => {
     const sc = document.querySelector('.tl-scroll');
-    const rows = [...document.querySelectorAll('.tl-row')].reduce((a, r) => a + r.getBoundingClientRect().height, 0);
-    return sc.scrollHeight > sc.clientHeight + 1 ? 99 : rows / sc.clientHeight;
+    const tracks = [...document.querySelectorAll('.tl-row.lane:not(.stem-metro)')];
+    return {
+      maxTrackHeight: Math.max(...tracks.map((row) => row.getBoundingClientRect().height)),
+      overflowY: getComputedStyle(sc).overflowY,
+    };
   });
-  check(fill > 0.99 && fill < 1.01, `faixas ocupam a área da linha do tempo (${Math.round(fill * 100)}%)`);
+  check(Math.round(laneLayout.maxTrackHeight) === 62, `faixas com 62 px de altura (${Math.round(laneLayout.maxTrackHeight)} px)`);
+  check(laneLayout.overflowY === 'auto', 'rolagem vertical disponível para as faixas');
+  const playVisible = async (label) =>
+    win.getByRole('button', { name: label }).evaluate((button) => {
+      const rect = button.getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    });
+  const shell = win.locator('.shell');
+  const setSidebarCollapsed = async (collapsed) => {
+    const current = await shell.evaluate((el) => el.classList.contains('side-collapsed'));
+    if (current === collapsed) return;
+    await win.getByRole('button', { name: collapsed ? 'Recolher a barra lateral' : 'Abrir a barra lateral' }).click();
+    await win.locator(collapsed ? '.shell.side-collapsed' : '.shell:not(.side-collapsed)').waitFor();
+  };
+  const initialSidebarCollapsed = await shell.evaluate((el) => el.classList.contains('side-collapsed'));
+  for (const collapsed of [false, true]) {
+    await setSidebarCollapsed(collapsed);
+    check(await playVisible('Tocar'), `botão de play visível com a lateral ${collapsed ? 'recolhida' : 'aberta'}`);
+  }
+  await setSidebarCollapsed(initialSidebarCollapsed);
   const keyText = await win.locator('.song-facts .fact.key b').innerText();
   check(/^[A-G][#b]? (maior|menor)$/.test(keyText), `tom da música exibido: ${keyText}`);
   await win.screenshot({ path: join(outDir, '03-player.png') });
@@ -87,6 +109,10 @@ try {
   // 4. Tocar: painel inferior com compasso e acorde
   await win.getByRole('button', { name: 'Tocar' }).click();
   await win.locator('.dock').waitFor();
+  check(await playVisible('Pausar'), 'botão de pause visível durante a reprodução');
+  await setSidebarCollapsed(!initialSidebarCollapsed);
+  check(await playVisible('Pausar'), 'botão de pause continua visível com a lateral no outro estado');
+  await setSidebarCollapsed(initialSidebarCollapsed);
   await win.waitForTimeout(5000);
   const bar1 = Number(await win.locator('.dock-big').first().innerText());
   await win.waitForTimeout(4000);

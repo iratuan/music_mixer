@@ -15,6 +15,12 @@ export interface ScaleMode {
   readonly offset: number;
 }
 
+/**
+ * Banco de escalas: as conhecidas na prática do baixo (pentatônicas, blues, modos gregos, menores
+ * harmônica e melódica com seus modos mais usados, bebop, simétricas e exóticas). O `offset` encaixa
+ * as janelas das posições: escalas de terça maior como o modo maior (0), de terça menor como o menor
+ * natural (3); os modos usam o deslocamento do modo grego de mesma tônica.
+ */
 export const SCALE_BANK: Readonly<Record<string, Readonly<Record<string, ScaleMode>>>> = {
   Pentatônica: { Maior: { intervals: [0, 2, 4, 7, 9], offset: 0 }, Menor: { intervals: [0, 3, 5, 7, 10], offset: 3 } },
   'Escala Blues': { Maior: { intervals: [0, 2, 3, 4, 7, 9], offset: 0 }, Menor: { intervals: [0, 3, 5, 6, 7, 10], offset: 3 } },
@@ -27,12 +33,32 @@ export const SCALE_BANK: Readonly<Record<string, Readonly<Record<string, ScaleMo
     'Eólio (Menor)': { intervals: [0, 2, 3, 5, 7, 8, 10], offset: 3 },
     Lócrio: { intervals: [0, 1, 3, 5, 6, 8, 10], offset: 1 },
   },
-  'Menor Harmônica': { Padrão: { intervals: [0, 2, 3, 5, 7, 8, 11], offset: 3 } },
-  'Menor Melódica': { Padrão: { intervals: [0, 2, 3, 5, 7, 9, 11], offset: 3 } },
+  'Menor Harmônica': {
+    Padrão: { intervals: [0, 2, 3, 5, 7, 8, 11], offset: 3 },
+    'Frígio Dominante (5º modo)': { intervals: [0, 1, 4, 5, 7, 8, 10], offset: -4 },
+  },
+  'Menor Melódica': {
+    Padrão: { intervals: [0, 2, 3, 5, 7, 9, 11], offset: 3 },
+    'Lídio b7 (Nordestina)': { intervals: [0, 2, 4, 6, 7, 9, 10], offset: -5 },
+    'Alterada (Superlócria)': { intervals: [0, 1, 3, 4, 6, 8, 10], offset: 1 },
+    'Mixolídio b6': { intervals: [0, 2, 4, 5, 7, 8, 10], offset: -7 },
+    'Lócrio #2 (Meio-diminuta)': { intervals: [0, 2, 3, 5, 6, 8, 10], offset: 1 },
+    'Lídio Aumentado': { intervals: [0, 2, 4, 6, 8, 9, 11], offset: -5 },
+  },
+  Bebop: {
+    Dominante: { intervals: [0, 2, 4, 5, 7, 9, 10, 11], offset: -7 },
+    Maior: { intervals: [0, 2, 4, 5, 7, 8, 9, 11], offset: 0 },
+  },
   'Escalas Simétricas': {
     'Diminuta (Tom-Semitom)': { intervals: [0, 2, 3, 5, 6, 8, 9, 11], offset: 0 },
     'Dom Diminuta (Semitom-Tom)': { intervals: [0, 1, 3, 4, 6, 7, 9, 10], offset: 0 },
     'Hexafônica (Tons Inteiros)': { intervals: [0, 2, 4, 6, 8, 10], offset: 0 },
+    Cromática: { intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], offset: 0 },
+  },
+  Exóticas: {
+    'Húngara Menor': { intervals: [0, 2, 3, 6, 7, 8, 11], offset: 3 },
+    'Dupla Harmônica (Árabe)': { intervals: [0, 1, 4, 5, 7, 8, 11], offset: -4 },
+    'Hirajoshi (Japonesa)': { intervals: [0, 2, 3, 7, 8], offset: 3 },
   },
 };
 
@@ -71,13 +97,13 @@ export interface StringGroup {
 }
 
 /**
- * Grupos de cordas: todas, e blocos de 2 e 3 cordas vizinhas. Os rótulos usam a numeração do músico
- * (corda 1 = a mais aguda), como no ScaleMonster.
+ * Grupos de cordas: todas, e blocos de 2, 3, 4… cordas vizinhas (até uma a menos que o total). Os
+ * rótulos usam a numeração do músico (corda 1 = a mais aguda), como no ScaleMonster.
  */
 export function stringGroups(count: number): StringGroup[] {
   const num = (i: number) => count - i; // índice (0 = grave) → número da corda (1 = aguda)
   const out: StringGroup[] = [{ id: 'all', label: 'Todas', strings: Array.from({ length: count }, (_, i) => i) }];
-  for (const size of [2, 3]) {
+  for (let size = 2; size < count; size++) {
     for (let lo = count - size; lo >= 0; lo--) {
       const strings = Array.from({ length: size }, (_, k) => lo + k);
       out.push({ id: `${num(lo + size - 1)}-${num(lo)}`, label: `${num(lo + size - 1)}–${num(lo)}`, strings });
@@ -261,6 +287,46 @@ export function positionWindows(root: number, offset: number, maxFret: number): 
   return windows.filter(([s]) => (seen.has(s) ? false : (seen.add(s), true))).slice(0, 5);
 }
 
+/**
+ * Regiões do braço inteiro: as 5 posições e, onde o braço deixa, as mesmas posições uma oitava acima
+ * (casa 12 em diante). Em ordem de casa.
+ */
+export function neckWindows(root: number, offset: number, maxFret: number): Array<[number, number]> {
+  const base = positionWindows(root, offset, maxFret);
+  const out: Array<[number, number]> = [...base];
+  for (const [s, e] of base) {
+    if (s + 12 > 0 && e + 12 <= maxFret && !out.some(([x]) => x === s + 12)) out.push([s + 12, e + 12]);
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
+/**
+ * Região do braço que o aluno quer usar: casas de `lo` a `hi`. As regiões (janelas de posição) que
+ * cabem nela — com uma casa de folga para cada lado — são as usadas; se nenhuma couber, a que mais
+ * se sobrepõe a ela.
+ */
+export type FretRange = readonly [number, number];
+
+export const FRET_RANGES: ReadonlyArray<{ readonly id: string; readonly label: string; readonly range: FretRange | null }> = [
+  { id: 'all', label: 'Braço todo', range: null },
+  { id: '0-5', label: 'Primeiras casas (0–5)', range: [0, 5] },
+  { id: '3-8', label: 'Casas 3–8', range: [3, 8] },
+  { id: '5-10', label: 'Casas 5–10', range: [5, 10] },
+  { id: '7-12', label: 'Casas 7–12', range: [7, 12] },
+  { id: '0-12', label: 'Até a casa 12 (uma oitava)', range: [0, 12] },
+  { id: '12-24', label: 'Depois da casa 12 (agudos)', range: [12, 24] },
+];
+
+export function windowsInRange(windows: ReadonlyArray<readonly [number, number]>, range: FretRange | null | undefined): number[] {
+  const all = windows.map((_, k) => k);
+  if (!range) return all;
+  const [lo, hi] = range;
+  const inside = all.filter((k) => windows[k]![0] >= lo - 1 && windows[k]![1] <= hi + 1);
+  if (inside.length) return inside;
+  const overlap = (k: number) => Math.min(hi, windows[k]![1]) - Math.max(lo, windows[k]![0]);
+  return [all.reduce((a, b) => (overlap(b) > overlap(a) ? b : a), 0)];
+}
+
 export interface ScaleExercise {
   readonly sequence: ScaleNote[];
   /** Todas as notas da escala na região (para mostrar no braço). */
@@ -274,9 +340,10 @@ export interface ScaleExercise {
  * Monta o exercício. `region` = número da posição (0–4) ou 'all' para o braço inteiro:
  * percorre as posições 1…5…1, tocando o padrão em cada uma, com as notas de passagem entre elas.
  */
-export function buildScaleExercise(ctx: ScaleContext, exercise: ExerciseId, group: readonly number[], region: number | 'all'): ScaleExercise {
+export function buildScaleExercise(ctx: ScaleContext, exercise: ExerciseId, group: readonly number[], region: number | 'all', range?: FretRange | null): ScaleExercise {
   const frets = ctx.tuning.frets;
-  const windows = positionWindows(ctx.root, ctx.mode.offset, frets);
+  // Regiões selecionáveis: as 5 posições e as da oitava de cima; o percurso contínuo usa as 5.
+  const windows = neckWindows(ctx.root, ctx.mode.offset, frets);
   const count = ctx.tuning.strings.length;
   const all = candidateNotes(ctx, 0, frets, group, true);
 
@@ -288,13 +355,13 @@ export function buildScaleExercise(ctx: ScaleContext, exercise: ExerciseId, grou
 
   const nearest = (h: number, prevFret: number) => {
     let best: ScaleNote | undefined;
-    for (const c of all) if (c.midi === h && (!best || Math.abs(c.fret - prevFret) < Math.abs(best.fret - prevFret))) best = c;
+    for (const c of all) if (inRange(c) && c.midi === h && (!best || Math.abs(c.fret - prevFret) < Math.abs(best.fret - prevFret))) best = c;
     return best;
   };
   const passing = (from: ScaleNote, to: ScaleNote): ScaleNote[] => {
     const lo = Math.min(from.midi, to.midi);
     const hi = Math.max(from.midi, to.midi);
-    const heights = [...new Set(all.map((n) => n.midi))].filter((h) => h > lo && h < hi).sort((a, b) => (to.midi > from.midi ? a - b : b - a));
+    const heights = [...new Set(all.filter(inRange).map((n) => n.midi))].filter((h) => h > lo && h < hi).sort((a, b) => (to.midi > from.midi ? a - b : b - a));
     const out: ScaleNote[] = [];
     let prev = from;
     for (const h of heights) {
@@ -307,12 +374,17 @@ export function buildScaleExercise(ctx: ScaleContext, exercise: ExerciseId, grou
     return out;
   };
 
-  // Ordem das posições: 1…n e volta pelo meio.
-  const order = [...windows.keys(), ...Array.from({ length: Math.max(0, windows.length - 2) }, (_, i) => windows.length - 2 - i)];
+  // Ordem das posições: 1…n e volta pelo meio. Com região escolhida, só as posições dentro dela
+  // (e o percurso fica entre as casas da região).
+  const five = range ? windowsInRange(windows, range).map((k) => windows[k]!) : positionWindows(ctx.root, ctx.mode.offset, frets);
+  const lowEdge = range ? Math.max(0, range[0]) : 0;
+  const highEdge = range ? Math.min(frets, range[1]) : frets;
+  const inRange = (n: ScaleNote) => !range || (n.fret >= Math.min(lowEdge, five[0]![0]) && n.fret <= Math.max(highEdge, five[five.length - 1]![1]));
+  const order = [...five.keys(), ...Array.from({ length: Math.max(0, five.length - 2) }, (_, i) => five.length - 2 - i)];
   const sequence: ScaleNote[] = [];
   for (const k of order) {
-    const [s, e] = windows[k]!;
-    const seq = buildSequence(candidateNotes(ctx, k === 0 ? 0 : s, k === windows.length - 1 ? frets : e, group, false), exercise, ctx.root, count);
+    const [s, e] = five[k]!;
+    const seq = buildSequence(candidateNotes(ctx, k === 0 ? Math.min(lowEdge, s) : s, k === five.length - 1 ? Math.max(highEdge, e) : e, group, false), exercise, ctx.root, count);
     seq.forEach((note, i) => {
       const prev = sequence[sequence.length - 1];
       if (prev && i === 0) {
@@ -323,7 +395,99 @@ export function buildScaleExercise(ctx: ScaleContext, exercise: ExerciseId, grou
     });
   }
   while (sequence.length > 1 && sequence[sequence.length - 1]!.midi === sequence[0]!.midi) sequence.pop();
+  if (range) {
+    const fs = sequence.map((n) => n.fret);
+    const from = Math.max(0, Math.min(...fs));
+    const to = Math.max(...fs);
+    return { sequence, scaleNotes: all.filter((n) => n.fret >= from && n.fret <= to), fromFret: from, toFret: Math.max(to, from + 4), windows };
+  }
   return { sequence, scaleNotes: all, fromFret: 0, toFret: Math.min(frets, 17), windows };
+}
+
+/**
+ * Percurso pelo braço: o mesmo padrão tocado etapa por etapa, avançando sozinho.
+ * - 'positions': no grupo de cordas escolhido, região por região, da pestana ao fim do braço.
+ * - 'groups': na região escolhida, grupo por grupo do mesmo tamanho (das cordas graves às agudas).
+ * - 'full': em cada região, todos os grupos do tamanho escolhido (indo e voltando pelas cordas).
+ * Cada etapa toca `repeats` vezes. A sequência inteira é um ciclo; `stages` diz onde cada etapa começa.
+ */
+export type TourKind = 'off' | 'positions' | 'groups' | 'full';
+
+export const TOUR_KINDS: ReadonlyArray<{ readonly id: TourKind; readonly label: string }> = [
+  { id: 'off', label: 'Fixo (uma região)' },
+  { id: 'positions', label: 'Avançar pelas regiões' },
+  { id: 'groups', label: 'Avançar pelos grupos de cordas' },
+  { id: 'full', label: 'Regiões × grupos (braço todo)' },
+];
+
+export interface TourStage {
+  /** Índice, na sequência, da primeira nota da etapa; `to` é exclusivo. */
+  readonly from: number;
+  readonly to: number;
+  readonly region: number;
+  readonly window: readonly [number, number];
+  readonly group: StringGroup;
+  /** Notas da escala na etapa (para o braço). */
+  readonly scaleNotes: ScaleNote[];
+}
+
+export interface NeckTour extends ScaleExercise {
+  readonly stages: TourStage[];
+}
+
+/** Grupos de cordas do mesmo tamanho, das cordas graves para as agudas. */
+export function groupsOfSize(count: number, size: number): StringGroup[] {
+  return stringGroups(count)
+    .filter((g) => g.strings.length === size)
+    .sort((a, b) => a.strings[0]! - b.strings[0]!);
+}
+
+export function buildNeckTour(
+  ctx: ScaleContext,
+  exercise: ExerciseId,
+  kind: Exclude<TourKind, 'off'>,
+  group: StringGroup,
+  region: number,
+  repeats = 1,
+  range?: FretRange | null,
+): NeckTour {
+  const frets = ctx.tuning.frets;
+  const windows = neckWindows(ctx.root, ctx.mode.offset, frets);
+  // Só as regiões dentro da parte do braço escolhida.
+  const allowed = windowsInRange(windows, range);
+  const count = ctx.tuning.strings.length;
+  const sameSize = groupsOfSize(count, group.strings.length);
+  const sizeGroups = sameSize.length ? sameSize : [group];
+  const plan: Array<{ region: number; group: StringGroup }> = [];
+  const reg = Math.max(0, Math.min(windows.length - 1, region));
+  if (kind === 'positions') allowed.forEach((k) => plan.push({ region: k, group }));
+  else if (kind === 'groups') sizeGroups.forEach((g) => plan.push({ region: reg, group: g }));
+  else
+    allowed.forEach((k, j) => {
+      const gs = j % 2 === 0 ? sizeGroups : [...sizeGroups].reverse();
+      gs.forEach((g) => plan.push({ region: k, group: g }));
+    });
+  const sequence: ScaleNote[] = [];
+  const stages: TourStage[] = [];
+  for (const st of plan) {
+    const ex = buildScaleExercise(ctx, exercise, st.group.strings, st.region);
+    if (ex.sequence.length < 2) continue;
+    const from = sequence.length;
+    for (let r = 0; r < Math.max(1, repeats); r++) sequence.push(...ex.sequence);
+    stages.push({ from, to: sequence.length, region: st.region, window: windows[st.region]!, group: st.group, scaleNotes: ex.scaleNotes });
+  }
+  // O braço mostra só a parte usada pelo percurso.
+  const used = (stages.length ? stages.map((st) => st.window) : allowed.map((k) => windows[k]!)) as ReadonlyArray<readonly [number, number]>;
+  const minStart = Math.min(...used.map(([a]) => a));
+  const maxEnd = Math.max(...used.map(([, e]) => e));
+  return {
+    sequence,
+    scaleNotes: candidateNotes(ctx, minStart, maxEnd, stringGroups(count)[0]!.strings, true),
+    fromFret: minStart,
+    toFret: Math.min(frets, maxEnd),
+    windows,
+    stages,
+  };
 }
 
 /**

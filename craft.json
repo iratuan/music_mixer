@@ -1,0 +1,838 @@
+{
+  "version": 5,
+  "name": "baixaria-fina",
+  "request": "PReciso que você leia o projeto, reveja a funcionalidade básica das trilhas de audio, montagem do acompanhamento da musica por harmonia e por instrumento. Organizacao da biblioteca. Padronizacao visual e biblioteca de exercicios.",
+  "target": {
+    "kind": "none"
+  },
+  "stack": "Electron",
+  "status": "ready",
+  "note": "Ready: all 2 checks pass. 1 question about the original is still open.",
+  "created_ms": 1794699084377,
+  "updated_ms": 1794935281301,
+  "checks": [
+    {
+      "round": 1,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794700624318
+    },
+    {
+      "round": 1,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794700629545
+    },
+    {
+      "round": 2,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794730306265
+    },
+    {
+      "round": 2,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794730309784
+    },
+    {
+      "round": 3,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794748695253
+    },
+    {
+      "round": 3,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794748699475
+    },
+    {
+      "round": 4,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794749203810
+    },
+    {
+      "round": 4,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794749208187
+    },
+    {
+      "round": 5,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794766592391
+    },
+    {
+      "round": 5,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794766596788
+    },
+    {
+      "round": 6,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794767722431
+    },
+    {
+      "round": 6,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794767727443
+    },
+    {
+      "round": 7,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794785803606
+    },
+    {
+      "round": 7,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794785807615
+    },
+    {
+      "round": 8,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794786644526
+    },
+    {
+      "round": 8,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794786649571
+    },
+    {
+      "round": 9,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794789541522
+    },
+    {
+      "round": 9,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794789545607
+    },
+    {
+      "round": 10,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794791552251
+    },
+    {
+      "round": 10,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794791556726
+    },
+    {
+      "round": 11,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794792128344
+    },
+    {
+      "round": 11,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794792132612
+    },
+    {
+      "round": 12,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794792875509
+    },
+    {
+      "round": 12,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794792879667
+    },
+    {
+      "round": 13,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794793231477
+    },
+    {
+      "round": 13,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794793235694
+    },
+    {
+      "round": 14,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794794106247
+    },
+    {
+      "round": 14,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794794110611
+    },
+    {
+      "round": 15,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794836307836
+    },
+    {
+      "round": 15,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794836312438
+    },
+    {
+      "round": 16,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794836307836
+    },
+    {
+      "round": 16,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794836312438
+    },
+    {
+      "round": 17,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794836307836
+    },
+    {
+      "round": 17,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794836312438
+    },
+    {
+      "round": 18,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794836307836
+    },
+    {
+      "round": 18,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794836312438
+    },
+    {
+      "round": 19,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794848316676
+    },
+    {
+      "round": 19,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794848322174
+    },
+    {
+      "round": 20,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794853234094
+    },
+    {
+      "round": 20,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794853238684
+    },
+    {
+      "round": 21,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794854718210
+    },
+    {
+      "round": 21,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794854722985
+    },
+    {
+      "round": 22,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794855044353
+    },
+    {
+      "round": 22,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794855049736
+    },
+    {
+      "round": 23,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794855262464
+    },
+    {
+      "round": 23,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794855266913
+    },
+    {
+      "round": 24,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794856192603
+    },
+    {
+      "round": 24,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794856198157
+    },
+    {
+      "round": 25,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794857129563
+    },
+    {
+      "round": 25,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794857134107
+    },
+    {
+      "round": 26,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794912124714
+    },
+    {
+      "round": 26,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794912129160
+    },
+    {
+      "round": 27,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794912656158
+    },
+    {
+      "round": 27,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794912660748
+    },
+    {
+      "round": 28,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794913057320
+    },
+    {
+      "round": 28,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794913061794
+    },
+    {
+      "round": 29,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794913362770
+    },
+    {
+      "round": 29,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794913367472
+    },
+    {
+      "round": 30,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794913467787
+    },
+    {
+      "round": 30,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794913475551
+    },
+    {
+      "round": 31,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794913931275
+    },
+    {
+      "round": 31,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794913935912
+    },
+    {
+      "round": 32,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794915225753
+    },
+    {
+      "round": 32,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794915230152
+    },
+    {
+      "round": 33,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794915390770
+    },
+    {
+      "round": 33,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794915395153
+    },
+    {
+      "round": 34,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794915576307
+    },
+    {
+      "round": 34,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794915580741
+    },
+    {
+      "round": 35,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794916025255
+    },
+    {
+      "round": 35,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794916032426
+    },
+    {
+      "round": 36,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794916268289
+    },
+    {
+      "round": 36,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794916272978
+    },
+    {
+      "round": 37,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794916793162
+    },
+    {
+      "round": 37,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794916798100
+    },
+    {
+      "round": 38,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794917006270
+    },
+    {
+      "round": 38,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794917010903
+    },
+    {
+      "round": 39,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794917798241
+    },
+    {
+      "round": 39,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794917803395
+    },
+    {
+      "round": 40,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794918774722
+    },
+    {
+      "round": 40,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794918779550
+    },
+    {
+      "round": 41,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794920105732
+    },
+    {
+      "round": 41,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794920110561
+    },
+    {
+      "round": 42,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794926309704
+    },
+    {
+      "round": 42,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794926317016
+    },
+    {
+      "round": 43,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794935181670
+    },
+    {
+      "round": 43,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794935190841
+    },
+    {
+      "round": 44,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794935181670
+    },
+    {
+      "round": 44,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794935190841
+    }
+  ],
+  "agent_session": "7001de73-142e-4ac9-ba3c-67392caad50c",
+  "agent_session_by": "claude-code",
+  "agent_session_deep": false,
+  "capture_deep": false,
+  "allowed_actions": [],
+  "last_reply": "Fiz só leitura, sem alterar nada. O relatório abaixo é um **resumo, não os 12 itens completos**, e a análise foi superficial: li o `package.json`, a lista de pastas e as tabelas do banco.\n\n**1–2. Diagnóstico**\n- `[EVIDÊNCIA]` Há um único app Electron (`package.json`: `appId br.local.mixercraft`, `productName mixerCraft`). Ele usa React, Vite, esbuild, `sql.js` e electron-builder.\n- `[EVIDÊNCIA]` A branch `main` tem cerca de 120 alterações locais ou arquivos novos ainda sem commit. Elas são suas e não devem ser descartadas.\n- `[EVIDÊNCIA]` A estrutura já é um monorepo: `apps/desktop`, `apps/mobile`, `packages/{domain,application,platform,ui,config}` e `tooling/{stems,ytdlp,rubberband,…}`.\n- `[EVIDÊNCIA]` O banco (`apps/desktop/src/main/db.ts`) mistura os dois mundos. `tracks` e `exercises` são do Mixer. `users`, `user_progress`, `practice_sessions`, `theory_topics`, `ear_training_stats`, `daily_quests` e `user_achievements` são do Aprendizado.\n\n**3. Alocação (parcial, inferida pelos nomes de arquivos; falta checar as dependências)**\n- **Mixer:** `Library`, `Import`, `GrabMp3`, `Song` e o main com `stems`, `grab`, `library`, `libtransfer`, `songmap`, `procs` e `video`. Em ferramentas, `tooling/stems`, `ytdlp` e `rubberband`.\n- **Aprendizado:** `Academy`, `Trails`, `Exercises`, `SongExercise`, `EarTraining`, `Harmony`, `Achievements`, `Profiles`, `Home`/progresso e `voicemodel`. No `packages/domain`, a parte `practice/*`.\n- **Compartilhado (técnico):** o áudio em `renderer/lib/audio.ts`, a teoria musical em `packages/domain/music/*` e `packages/ui`.\n- **Integração opcional:** abrir uma música ou harmonia do Mixer como base de prática no Aprendizado, por um pacote de troca versionado (por exemplo `.mcraft-pack`).\n- `[HIPÓTESE]` `Song.tsx` e o braço do instrumento (`Neck`/`BassNeck`) são usados pelos dois lados. No Mixer ficariam só como inspetor passivo.\n\n**7. Arquitetura**\n- `[PROPOSTA]` Recomendo a opção 1: monorepo com dois apps (`apps/mixer` e `apps/learn`) e pacotes técnicos compartilhados.\n- Motivo: a estrutura de pacotes já existe, o custo de manutenção é baixo, dá para fazer uma migração reversível e cada produto leva só o seu peso. O Mixer carrega ffmpeg, separação de stems e yt-dlp, e o Aprendizado fica leve.\n- A opção 2 (dois repositórios) duplica CI e versionamento. A opção 3 (núcleo compartilhado) reacopla os processos.\n\n**8. Migração, em fatias**\n1. Fazer commit ou backup do estado atual.\n2. Dividir o banco em dois arquivos SQLite, cada um com seu `userData`, e fazer backup automático antes.\n3. Criar o shell do Aprendizado, mover as telas e fazer o `appId` e o `productName` serem distintos.\n4. Mover o Mixer para o seu próprio shell.\n5. Definir o contrato de troca.\n6. Fazer testes E2E de cada app sem o outro instalado.\n\nCada fatia se desfaz voltando ao commit anterior.\n\n**9. Dados**\n- Faça um backup do `userData` e do arquivo `.sqlite`.\n- Depois, copie as tabelas do Mixer para o novo banco do Mixer e as do Aprendizado para o novo banco do Aprendizado, sem apagar o banco original.\n\n**11. Decisões pendentes para você**\n- Os nomes finais dos dois produtos.\n- Se os produtos serão instalados separadamente ou um depende do outro.\n- Se o yt-dlp (download) vai ficar só no Mixer. Eu recomendo que sim.\n- Se haverá compatibilidade com o banco atual (recomendo migrar com backup).\n\n**12. Próximo passo, se você aprovar:** fazer o commit do estado atual numa branch de segurança e depois a fatia 2, que separa o banco. Aguardo o seu \"de acordo\" antes de mexer em qualquer coisa.\n\nPosso aprofundar as seções 3, 5, 6 e 10 se você quiser.",
+  "asset_budget_usd": 5.0,
+  "generate_assets": false,
+  "app_in_root": true,
+  "start_files": [
+    ".claude",
+    ".git",
+    ".gitattributes",
+    ".gitignore",
+    "README.md",
+    "apps",
+    "build",
+    "dist",
+    "docs",
+    "node_modules",
+    "package-lock.json",
+    "package.json",
+    "packages",
+    "release",
+    "release-next",
+    "tests",
+    "tooling",
+    "tsconfig.json",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

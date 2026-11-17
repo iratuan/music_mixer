@@ -71,7 +71,7 @@
 .stem-dot {
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   background: var(--c);
 }
 
@@ -88,7 +88,7 @@
   align-items: flex-start;
 }
 .sp-title {
-  font: 650 10.5px / 1 var(--font);
+  font: 650 var(--fs-2xs) / 1 var(--font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
@@ -166,7 +166,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font: 600 11px / 1 var(--font);
+  font: 600 var(--fs-xs) / 1 var(--font);
   padding: 4px 7px;
   border-radius: var(--r-sm);
   border: 1px solid var(--line);
@@ -384,7 +384,7 @@
   text-decoration-color: color-mix(in srgb, var(--faint) 60%, transparent);
 }
 .start-state {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--faint);
   text-decoration: none;
   display: inline-block;
@@ -448,7 +448,7 @@ button.danger-ghost:not(:disabled) {
   height: 20px;
   display: grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: 1.5px solid var(--line-strong);
   background: var(--surface);
   color: transparent;
@@ -482,7 +482,7 @@ button.coll-chip {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--fs-xs);
   gap: 6px;
 }
 button.coll-chip:hover:not(:disabled) {
@@ -548,4 +548,101 @@ button.coll-chip.add {
 }
 .compact-line .small-btn {
   margin-left: 8px;
+}
+
+/* Organizar a lista: contagem, filtro de estado e ordem */
+.lib-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  margin: calc(-1 * var(--s-2)) 0 var(--s-4);
+}
+.lib-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.lib-select select {
+  font: 550 var(--fs-sm) / 1 var(--font);
+  padding: 6px 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Exportar e importar a biblioteca */
+.transfer-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-5);
+  margin-bottom: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+}
+.transfer-panel section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+.transfer-panel h2 {
+  font-size: var(--fs-md);
+}
+.transfer-panel section > button {
+  margin-top: auto;
+}
+.ok-line .ghost.small-btn {
+  margin-left: var(--s-2);
+}
+
+/* Importar várias músicas */
+.batch-import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.batch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-sm);
+}
+.batch-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Pasta da biblioteca */
+.location-ask {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border-color: var(--accent);
+}
+.location-ask p {
+  max-width: 640px;
+}
+.transfer-panel .loc-sec {
+  grid-column: 1 / -1;
+}
+.loc-path {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  word-break: break-all;
+}
+.loc-acts {
+  display: flex;
+  gap: var(--s-2);
 }

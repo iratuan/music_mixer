@@ -1,4 +1,5 @@
-import { clicksBetween } from '@domain';
+import { clicksBetween, type AccompNote, type AccompPart } from '@domain';
+import { playAccompNotes } from './synth.js';
 
 /**
  * Camada de áudio do renderer. O relógio musical é o AudioContext (monotônico),
@@ -90,6 +91,65 @@ export function playAligned(items: ReadonlyArray<{ buffer: AudioBuffer; gain: nu
   };
 }
 
+export interface AccompHandle {
+  /** Volume do acompanhamento inteiro (0 = mudo). */
+  setGain(gain: number): void;
+  stop(): void;
+}
+
+/**
+ * Acompanhamento tocado a partir da harmonia, no mesmo relógio das faixas e do metrônomo.
+ * Agenda as notas com antecedência (janela de 0,3 s, renovada a cada 60 ms). `notesBetween` é
+ * consultado a cada janela: ligar ou trocar um instrumento no meio da música entra em seguida.
+ */
+export function startAccompaniment(
+  notesBetween: (from: number, to: number) => AccompNote[],
+  startAtCtx: number,
+  fromSongSec: number,
+  gain: number,
+  rate = 1,
+): AccompHandle {
+  const ctx = getAudioContext();
+  const out = ctx.createGain();
+  out.gain.value = gain;
+  out.connect(masterOut());
+  const parts: Record<AccompPart, AudioNode> = { bass: out, piano: out, guitar: out };
+  const LOOKAHEAD = 0.3;
+  let scheduledUntil = fromSongSec;
+  // Velocidade do player: um segundo da música dura 1/rate segundos de relógio.
+  const toCtx = (songSec: number) => startAtCtx + (songSec - fromSongSec) / rate;
+  const sources = new Set<AudioScheduledSourceNode>();
+  const pump = () => {
+    const nowSong = fromSongSec + (ctx.currentTime - startAtCtx) * rate;
+    const until = Math.max(scheduledUntil, nowSong) + LOOKAHEAD * rate;
+    const notes = notesBetween(scheduledUntil, until).map((n) => (rate === 1 ? n : { ...n, dur: n.dur / rate }));
+    for (const s of playAccompNotes(ctx, parts, notes, toCtx, ctx.currentTime)) {
+      sources.add(s);
+      s.addEventListener('ended', () => sources.delete(s));
+    }
+    scheduledUntil = until;
+  };
+  pump();
+  const timer = window.setInterval(pump, 60);
+  return {
+    setGain(g) {
+      out.gain.setTargetAtTime(g, ctx.currentTime, 0.02);
+    },
+    stop() {
+      window.clearInterval(timer);
+      for (const s of [...sources]) {
+        try {
+          s.stop();
+        } catch {
+          /* já encerrado */
+        }
+      }
+      sources.clear();
+      out.disconnect();
+    },
+  };
+}
+
 export interface MetronomeHandle {
   setGain(gain: number): void;
   stop(): void;
@@ -106,6 +166,7 @@ export function startMetronome(
   startAtCtx: number,
   fromSongSec: number,
   gain: number,
+  rate = 1,
 ): MetronomeHandle {
   const ctx = getAudioContext();
   const out = ctx.createGain();
@@ -113,7 +174,7 @@ export function startMetronome(
   out.connect(masterOut());
   const LOOKAHEAD = 0.2;
   let scheduledUntil = fromSongSec;
-  const toCtx = (songSec: number) => startAtCtx + (songSec - fromSongSec);
+  const toCtx = (songSec: number) => startAtCtx + (songSec - fromSongSec) / rate;
   const sources: OscillatorNode[] = [];
 
   const click = (at: number, accent: boolean) => {
@@ -135,8 +196,8 @@ export function startMetronome(
   };
 
   const pump = () => {
-    const nowSong = fromSongSec + (ctx.currentTime - startAtCtx);
-    const until = Math.max(scheduledUntil, nowSong) + LOOKAHEAD;
+    const nowSong = fromSongSec + (ctx.currentTime - startAtCtx) * rate;
+    const until = Math.max(scheduledUntil, nowSong) + LOOKAHEAD * rate;
     for (const c of clicksBetween(beats, firstDownbeat, scheduledUntil, until)) {
       const at = toCtx(c.t);
       if (at >= ctx.currentTime) click(at, c.accent);

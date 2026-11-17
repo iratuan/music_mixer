@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import { errorText } from '../lib/errors.js';
 import { Icon } from '../components/Icons.js';
 import { Progress } from '../components/Progress.js';
 import type { SongJob, UrlDownload } from '../App.js';
 import { cleanName } from '../App.js';
 import type { LibrarySong } from '../../preload/preload.js';
 import { sortStems, stemInfo } from '../lib/stems.js';
+import { readStore, writeStore } from '../lib/store.js';
 
 interface Props {
   jobs: Record<string, SongJob>;
@@ -16,6 +18,39 @@ interface Props {
   onImport(): void;
   /** Músicas excluídas (para fechar a que estiver aberta e tirar da fila). */
   onRemoved(ids: readonly string[]): void;
+}
+
+/** Filtro especial da barra de coleções: músicas que ainda não estão em nenhuma coleção. */
+const NO_COLLECTION = '\u0000sem-coleção';
+
+type SortBy = 'recent' | 'name' | 'key' | 'bpm';
+type Status = 'all' | 'ready' | 'pending';
+const SORTS: ReadonlyArray<{ id: SortBy; label: string }> = [
+  { id: 'recent', label: 'Mais recentes' },
+  { id: 'name', label: 'Nome (A–Z)' },
+  { id: 'key', label: 'Tom' },
+  { id: 'bpm', label: 'Andamento' },
+];
+const STATUSES: ReadonlyArray<{ id: Status; label: string }> = [
+  { id: 'all', label: 'Todas' },
+  { id: 'ready', label: 'Prontas para tocar' },
+  { id: 'pending', label: 'Ainda não separadas' },
+];
+
+/** Ordena a lista sem mudar o original. Sem dado (tom ou andamento), a música vai para o fim. */
+export function sortSongs(list: readonly LibrarySong[], by: SortBy): LibrarySong[] {
+  const name = (s: LibrarySong) => cleanName(s.name).toLocaleLowerCase('pt-BR');
+  const byName = (a: LibrarySong, b: LibrarySong) => name(a).localeCompare(name(b), 'pt-BR');
+  const bpm = (s: LibrarySong) => s.meta?.bpm ?? s.meta?.bpmRange?.[0] ?? Infinity;
+  const out = [...list];
+  if (by === 'name') return out.sort(byName);
+  if (by === 'key') return out.sort((a, b) => (a.meta?.key ?? '\uffff').localeCompare(b.meta?.key ?? '\uffff', 'pt-BR') || byName(a, b));
+  if (by === 'bpm') return out.sort((a, b) => bpm(a) - bpm(b) || byName(a, b));
+  // Recentes: pela data de entrada; sem data, vale a ordem do índice (as mais novas no fim dele).
+  return out
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => (b.s.addedAt ?? '').localeCompare(a.s.addedAt ?? '') || b.i - a.i)
+    .map((x) => x.s);
 }
 
 /** Cor de capa estável por música (matiz derivado do id). */
@@ -55,6 +90,89 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
   const [confirmDropColl, setConfirmDropColl] = useState(false);
   const [addMenu, setAddMenu] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  /** Ordem e filtro de estado, guardados entre as sessões. */
+  const [view, setView] = useState<{ sort: SortBy; status: Status }>(() => readStore('bf-lib-view', { sort: 'recent' as SortBy, status: 'all' as Status }));
+  useEffect(() => writeStore('bf-lib-view', view), [view]);
+
+  /** Exportar / reimportar a biblioteca: painel aberto, opções, progresso e se há pasta para abrir. */
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [xferOpts, setXferOpts] = useState(() => readStore('bf-lib-export', { original: false, onlyCollection: false }));
+  useEffect(() => writeStore('bf-lib-export', xferOpts), [xferOpts]);
+  const [transfer, setTransfer] = useState<{ phase: 'export' | 'import'; done: number; total: number; name?: string } | null>(null);
+  const [exported, setExported] = useState(false);
+  useEffect(() => window.baixaria.onTransferProgress((p) => setTransfer(p)), []);
+  const anyJob = Object.values(jobs).some((j) => j.state === 'separating' || j.state === 'analyzing');
+
+  async function exportSongs(ids?: readonly string[], collection?: string) {
+    setError(null);
+    setNotice(null);
+    setExported(false);
+    try {
+      setTransfer({ phase: 'export', done: 0, total: ids?.length ?? songs?.length ?? 0 });
+      const r = await window.baixaria.libraryExport({ includeOriginal: xferOpts.original, ...(ids ? { ids } : {}), ...(collection ? { collection } : {}) });
+      if (r.canceled) return;
+      const mb = r.bytes / 1024 ** 2;
+      const size = mb >= 1024 ? `${(mb / 1024).toFixed(1).replace('.', ',')} GB` : `${Math.max(1, Math.round(mb))} MB`;
+      setNotice(
+        `Biblioteca exportada: ${r.songs} ${r.songs === 1 ? 'música' : 'músicas'}, ${r.stems} faixas (${size}).${r.skipped.length ? ` Sem faixas para exportar: ${r.skipped.map(cleanName).join(', ')}.` : ''}`,
+      );
+      setExported(true);
+    } catch (e) {
+      setError(errorText(e, 'falha ao exportar a biblioteca'));
+    } finally {
+      setTransfer(null);
+    }
+  }
+
+  /** Pasta onde a biblioteca é montada (escolhida pelo usuário). */
+  const [location, setLocation] = useState<{ root: string; chosen: boolean } | null>(null);
+  useEffect(() => {
+    void window.baixaria
+      .libraryLocation()
+      .then(setLocation)
+      .catch(() => undefined);
+  }, []);
+  async function chooseLocation(keep = false) {
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await window.baixaria.libraryChooseLocation({ keep });
+      if (r.canceled) return;
+      setLocation({ root: r.root, chosen: true });
+      setNotice(
+        keep
+          ? `A biblioteca fica em ${r.root}.`
+          : r.opened
+            ? `Biblioteca aberta de ${r.root}.`
+            : `A biblioteca agora fica em ${r.root}${r.copied ? ` (${r.copied} ${r.copied === 1 ? 'música copiada' : 'músicas copiadas'}; a pasta antiga continua onde estava)` : ''}.`,
+      );
+      await refresh();
+    } catch (e) {
+      setError(errorText(e, 'falha ao mudar a pasta da biblioteca'));
+    }
+  }
+
+  async function importSongs() {
+    setError(null);
+    setNotice(null);
+    setExported(false);
+    try {
+      setTransfer({ phase: 'import', done: 0, total: 0 });
+      const r = await window.baixaria.libraryImport();
+      if (r.canceled) return;
+      const parts = [
+        `${r.added} ${r.added === 1 ? 'música importada' : 'músicas importadas'}`,
+        r.existing.length ? `${r.existing.length} já ${r.existing.length === 1 ? 'estava' : 'estavam'} na biblioteca` : '',
+        r.failed.length ? `não deu para trazer: ${r.failed.map(cleanName).join(', ')}` : '',
+      ].filter(Boolean);
+      setNotice(`Biblioteca importada: ${parts.join('; ')}.`);
+      await refresh();
+    } catch (e) {
+      setError(errorText(e, 'falha ao importar a biblioteca'));
+    } finally {
+      setTransfer(null);
+    }
+  }
 
   /** Faixas ainda em WAV (biblioteca de antes da compactação) e o progresso da compactação. */
   const [storage, setStorage] = useState<{ wavBytes: number; songs: number } | null>(null);
@@ -67,7 +185,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
       setSongs(list);
       setStorage(st);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao ler a biblioteca');
+      setError(errorText(e, 'falha ao ler a biblioteca'));
     }
   }, []);
 
@@ -92,7 +210,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
     try {
       await window.baixaria.libraryOpenOrigin(id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao abrir a origem');
+      setError(errorText(e, 'falha ao abrir a origem'));
     }
   }
 
@@ -106,7 +224,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
   }, [active]);
   // A coleção escolhida pode ter sido excluída/renomeada.
   useEffect(() => {
-    if (active && songs && !collections.includes(active)) setActive(null);
+    if (active && active !== NO_COLLECTION && songs && !collections.includes(active)) setActive(null);
   }, [active, collections, songs]);
 
   async function collectionOp(op: 'create' | 'rename' | 'delete' | 'add' | 'remove', name: string, extra?: { to?: string; ids?: readonly string[] }, okMsg?: string) {
@@ -118,7 +236,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
       await refresh();
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'falha na coleção');
+      setError(errorText(e, 'falha na coleção'));
       return false;
     }
   }
@@ -132,7 +250,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
         setActive(ids ? active : name);
         if (ids) (setSelecting(false), setSelected(new Set()));
       }
-    } else if (naming === 'rename' && active && name !== active) {
+    } else if (naming === 'rename' && active && active !== NO_COLLECTION && name !== active) {
       if (await collectionOp('rename', active, { to: name }, `Coleção renomeada para “${name}”.`)) setActive(name);
     }
     setNaming(null);
@@ -141,7 +259,17 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
   const counts = new Map<string, number>();
   for (const s of songs ?? []) for (const c of s.collections ?? []) counts.set(c, (counts.get(c) ?? 0) + 1);
 
-  const shown = (songs ?? []).filter((s) => s.name.toLowerCase().includes(query.trim().toLowerCase()) && (!active || (s.collections ?? []).includes(active)));
+  const uncollected = (songs ?? []).filter((s) => !s.collections?.length).length;
+  const inActive = (s: LibrarySong) => !active || (active === NO_COLLECTION ? !s.collections?.length : (s.collections ?? []).includes(active));
+  const ready = (s: LibrarySong) => !!s.stems && s.stems.length > 0;
+  const inStatus = (s: LibrarySong) => view.status === 'all' || (view.status === 'ready' ? ready(s) : !ready(s));
+  const q = query.trim().toLocaleLowerCase('pt-BR');
+  const shown = sortSongs(
+    (songs ?? []).filter((s) => s.name.toLocaleLowerCase('pt-BR').includes(q) && inActive(s) && inStatus(s)),
+    view.sort,
+  );
+  // Coleção de verdade escolhida (o filtro "Sem coleção" não se renomeia nem se exclui).
+  const realActive = active && active !== NO_COLLECTION ? active : null;
   // Separando ou analisando agora: não dá para excluir no meio (o processo está usando os arquivos).
   const busy = (id: string) => jobs[id]?.state === 'separating' || jobs[id]?.state === 'analyzing';
 
@@ -156,7 +284,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
         done.push(id);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao excluir');
+      setError(errorText(e, 'falha ao excluir'));
     } finally {
       setRemoving(false);
       setConfirmId(null);
@@ -198,11 +326,102 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
           </button>
         )}
         {!selecting && (
+          <button className={transferOpen ? 'ghost on' : 'ghost'} onClick={() => setTransferOpen((o) => !o)} aria-expanded={transferOpen} title="Salvar as músicas separadas por faixas no computador, ou trazer de volta uma biblioteca salva">
+            <Icon name="export" size={15} /> Exportar / importar
+          </button>
+        )}
+        {!selecting && (
           <button className="primary" onClick={onImport}>
             <Icon name="import" size={16} /> Importar música
           </button>
         )}
       </header>
+
+      {location && !location.chosen && (
+        <div className="card location-ask" role="region" aria-label="Pasta da biblioteca">
+          <Icon name="library" size={22} />
+          <div>
+            <b>Onde montar sua biblioteca?</b>
+            <p className="muted small">
+              Escolha uma pasta do seu computador (ou de um disco externo). Cada música importada é guardada nela, com o áudio, as faixas separadas e a análise: a
+              biblioteca fica sempre montada e pronta. Agora ela está em {location.root}.
+            </p>
+          </div>
+          <div className="spacer" />
+          <button className="primary small-btn" onClick={() => void chooseLocation()}>
+            Escolher a pasta
+          </button>
+          <button className="ghost small-btn" onClick={() => void chooseLocation(true)}>
+            Manter onde está
+          </button>
+        </div>
+      )}
+      {transferOpen && (
+        <div className="card transfer-panel" role="region" aria-label="Exportar e importar a biblioteca">
+          <section className="loc-sec">
+            <h2>Pasta da biblioteca</h2>
+            <p className="muted small">
+              Tudo fica em <b className="loc-path">{location?.root ?? '…'}</b>. Ao escolher outra pasta, a biblioteca é copiada para lá; se a pasta já tiver uma biblioteca do
+              mixerCraft, ela é aberta.
+            </p>
+            <div className="loc-acts">
+              <button className="ghost small-btn" disabled={!!transfer || anyJob} onClick={() => void chooseLocation()}>
+                <Icon name="library" size={14} /> Escolher outra pasta
+              </button>
+              <button className="ghost small-btn" onClick={() => void window.baixaria.libraryOpenLocation().catch(() => undefined)}>
+                <Icon name="external" size={14} /> Abrir a pasta
+              </button>
+            </div>
+          </section>
+          <section>
+            <h2>Exportar a biblioteca</h2>
+            <p className="muted small">
+              Cada música vira uma pasta com as faixas separadas (Baixo, Bateria, Voz…) em arquivos de áudio, a análise, o mapa e as coleções. Fica no seu computador e
+              abre em qualquer programa de música.
+            </p>
+            <label className="check">
+              <input type="checkbox" checked={xferOpts.original} onChange={() => setXferOpts((o) => ({ ...o, original: !o.original }))} /> Incluir o áudio original de cada música (a pasta fica maior)
+            </label>
+            {realActive && (
+              <label className="check">
+                <input type="checkbox" checked={xferOpts.onlyCollection} onChange={() => setXferOpts((o) => ({ ...o, onlyCollection: !o.onlyCollection }))} /> Só a coleção “{realActive}” ({counts.get(realActive) ?? 0})
+              </label>
+            )}
+            <button
+              className="primary small-btn"
+              disabled={!!transfer || anyJob || !songs?.length}
+              title={anyJob ? 'Espere a separação ou a análise terminar' : undefined}
+              onClick={() => void exportSongs(realActive && xferOpts.onlyCollection ? (songs ?? []).filter((x) => x.collections?.includes(realActive)).map((x) => x.id) : undefined, realActive && xferOpts.onlyCollection ? realActive : undefined)}
+            >
+              <Icon name="export" size={14} /> Escolher a pasta e exportar
+            </button>
+          </section>
+          <section>
+            <h2>Importar uma biblioteca</h2>
+            <p className="muted small">
+              Escolha a pasta de uma biblioteca exportada (a que tem o arquivo biblioteca.json). As músicas novas entram com as faixas, a análise e o mapa; as que já estão aqui
+              ficam como estão.
+            </p>
+            <button className="ghost small-btn" disabled={!!transfer || anyJob} onClick={() => void importSongs()}>
+              <Icon name="import" size={14} /> Escolher a pasta e importar
+            </button>
+          </section>
+        </div>
+      )}
+      {transfer && (
+        <div className="compact-line" role="status">
+          <Progress
+            value={transfer.total ? transfer.done / transfer.total : null}
+            label={
+              transfer.total
+                ? `${transfer.phase === 'export' ? 'Exportando' : 'Importando'} ${Math.min(transfer.done + 1, transfer.total)} de ${transfer.total}${transfer.name ? `: ${cleanName(transfer.name)}` : ''}`
+                : transfer.phase === 'export'
+                  ? 'Escolha a pasta onde salvar…'
+                  : 'Escolha a pasta da biblioteca exportada…'
+            }
+          />
+        </div>
+      )}
 
       {songs && songs.length > 0 && (
         <nav className="coll-bar" aria-label="Coleções">
@@ -234,6 +453,16 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
               <Icon name="library" size={12} /> {c} <span className="coll-n">{counts.get(c) ?? 0}</span>
             </button>
           ))}
+          {collections.length > 0 && uncollected > 0 && (
+            <button
+              className={`coll-chip ${active === NO_COLLECTION ? 'on' : ''}`}
+              aria-pressed={active === NO_COLLECTION}
+              onClick={() => (setActive(NO_COLLECTION), setConfirmDropColl(false), setNaming(null))}
+              title="Músicas que ainda não estão em nenhuma coleção"
+            >
+              Sem coleção <span className="coll-n">{uncollected}</span>
+            </button>
+          )}
           {naming ? (
             <form
               className="coll-name"
@@ -263,14 +492,14 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
               <Icon name="plus" size={12} /> Nova coleção
             </button>
           )}
-          {active && !naming && (
+          {realActive && !naming && (
             <span className="coll-actions">
-              <button className="ghost small-btn" onClick={() => (setNaming('rename'), setNameDraft(active))}>
+              <button className="ghost small-btn" onClick={() => (setNaming('rename'), setNameDraft(realActive))}>
                 Renomear
               </button>
               <button
                 className={confirmDropColl ? 'danger small-btn' : 'ghost small-btn'}
-                onClick={() => (confirmDropColl ? void collectionOp('delete', active, undefined, `Coleção “${active}” excluída. As músicas continuam na biblioteca.`).then(() => (setActive(null), setConfirmDropColl(false))) : setConfirmDropColl(true))}
+                onClick={() => (confirmDropColl ? void collectionOp('delete', realActive, undefined, `Coleção “${realActive}” excluída. As músicas continuam na biblioteca.`).then(() => (setActive(null), setConfirmDropColl(false))) : setConfirmDropColl(true))}
                 onBlur={() => setConfirmDropColl(false)}
                 title="As músicas continuam na biblioteca"
               >
@@ -279,6 +508,35 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
             </span>
           )}
         </nav>
+      )}
+
+      {songs && songs.length > 0 && (
+        <div className="lib-tools" role="toolbar" aria-label="Organizar a lista">
+          <span className="muted small">
+            {shown.length === songs.length ? `${songs.length} ${songs.length === 1 ? 'música' : 'músicas'}` : `${shown.length} de ${songs.length} músicas`}
+          </span>
+          <div className="spacer" />
+          <label className="lib-select">
+            <span>Mostrar</span>
+            <select value={view.status} onChange={(e) => setView((v) => ({ ...v, status: e.target.value as Status }))}>
+              {STATUSES.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="lib-select">
+            <span>Ordenar</span>
+            <select value={view.sort} onChange={(e) => setView((v) => ({ ...v, sort: e.target.value as SortBy }))}>
+              {SORTS.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       )}
 
       {selecting && (
@@ -317,19 +575,22 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
               </div>
             )}
           </span>
-          {active && (
+          {realActive && (
             <button
               className="ghost small-btn"
               disabled={selected.size === 0}
               onClick={() =>
-                void collectionOp('remove', active, { ids: [...selected] }, `${selected.size === 1 ? 'Música tirada' : `${selected.size} músicas tiradas`} de “${active}”.`).then(
+                void collectionOp('remove', realActive, { ids: [...selected] }, `${selected.size === 1 ? 'Música tirada' : `${selected.size} músicas tiradas`} de “${realActive}”.`).then(
                   (ok) => ok && (setSelecting(false), setSelected(new Set())),
                 )
               }
             >
-              Tirar de “{active}”
+              Tirar de “{realActive}”
             </button>
           )}
+          <button className="ghost small-btn" disabled={selected.size === 0 || !!transfer || anyJob} onClick={() => void exportSongs([...selected]).then(() => (setSelecting(false), setSelected(new Set())))}>
+            <Icon name="export" size={14} /> Exportar{selected.size ? ` (${selected.size})` : ''}
+          </button>
           <div className="spacer" />
           {confirmMany && <span className="small muted">Apaga as faixas, a análise e o mapa. Arquivos originais no seu computador ficam.</span>}
           <button className={confirmMany ? 'danger' : 'ghost danger-ghost'} disabled={selected.size === 0 || removing} onClick={() => (confirmMany ? void removeSongs([...selected]) : setConfirmMany(true))}>
@@ -365,7 +626,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
                   const r = await window.baixaria.libraryCompact();
                   setNotice(`Faixas compactadas em FLAC: ${gb(r.freed)} liberados.`);
                 } catch (e) {
-                  setError(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'falha ao compactar');
+                  setError(errorText(e, 'falha ao compactar'));
                 } finally {
                   setCompact(null);
                   await refresh();
@@ -380,6 +641,11 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
       {notice && !error && (
         <p className="ok-line" role="status">
           <Icon name="check" size={16} /> {notice}
+          {exported && (
+            <button className="ghost small-btn" onClick={() => void window.baixaria.libraryShowExport().catch(() => undefined)}>
+              Abrir a pasta
+            </button>
+          )}
         </p>
       )}
 
@@ -519,7 +785,11 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
       )}
       {songs !== null && songs.length > 0 && shown.length === 0 && (
         <p className="muted">
-          {active && !query.trim() ? `A coleção “${active}” está vazia. Arraste músicas para ela, ou use Selecionar → Adicionar à coleção.` : `Nenhuma música com “${query}”${active ? ` em “${active}”` : ''}.`}
+          {view.status !== 'all' && !query.trim()
+            ? `Nenhuma música ${view.status === 'ready' ? 'pronta para tocar' : 'por separar'} aqui.`
+            : realActive && !query.trim()
+              ? `A coleção “${realActive}” está vazia. Arraste músicas para ela, ou use Selecionar → Adicionar à coleção.`
+              : `Nenhuma música${query.trim() ? ` com “${query}”` : ''}${realActive ? ` em “${realActive}”` : active === NO_COLLECTION ? ' sem coleção' : ''}.`}
         </p>
       )}
     </section>

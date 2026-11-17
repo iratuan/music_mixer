@@ -117,3 +117,65 @@ describe('julgamento e detecção de altura', () => {
     expect(j.feed(midiToHz(35), 3.1, 0.3, 0.01)).toEqual({ verdict: 'miss', id: 'c' });
   });
 });
+
+describe('braço inteiro: grupos maiores e regiões da oitava de cima', () => {
+  it('baixo de 5 cordas tem grupos de 2, 3 e 4 cordas; 6 cordas também de 5', async () => {
+    const { groupsOfSize } = await import('../src/index.js');
+    expect(groupsOfSize(5, 4).map((g) => g.strings)).toEqual([
+      [0, 1, 2, 3],
+      [1, 2, 3, 4],
+    ]);
+    expect(groupsOfSize(6, 5)).toHaveLength(2);
+    expect(groupsOfSize(4, 2).map((g) => g.label)).toEqual(['3–4', '2–3', '1–2']);
+  });
+  it('regiões continuam depois da casa 12 até o fim do braço', async () => {
+    const { neckWindows } = await import('../src/index.js');
+    const w = neckWindows(9, 3, 20);
+    expect(w.length).toBeGreaterThan(5);
+    expect(Math.max(...w.map(([, e]) => e))).toBeLessThanOrEqual(20);
+    expect(w.some(([s]) => s >= 12)).toBe(true);
+  });
+  it('percurso por regiões: cada etapa fica na sua região e as etapas sobem pelo braço', async () => {
+    const { buildNeckTour } = await import('../src/index.js');
+    const tour = buildNeckTour(aMinorPent, 1, 'positions', stringGroups(4)[0]!, 0, 2);
+    let last = -1;
+    for (const st of tour.stages) {
+      expect(st.window[0]).toBeGreaterThan(last);
+      last = st.window[0];
+      for (const n of tour.sequence.slice(st.from, st.to)) {
+        expect(n.fret).toBeGreaterThanOrEqual(st.window[0]);
+        expect(n.fret).toBeLessThanOrEqual(st.window[1]);
+      }
+    }
+  });
+});
+
+describe('região do braço escolhida pelo aluno', () => {
+  it('percurso por regiões fica dentro das casas pedidas, em qualquer tom', async () => {
+    const { buildNeckTour, SCALE_BANK: BANK } = await import('../src/index.js');
+    for (let root = 0; root < 12; root++) {
+      for (const [cat, modes] of Object.entries(BANK)) {
+        for (const mode of Object.values(modes)) {
+          const tour = buildNeckTour({ tuning: b4, root, mode }, 1, 'positions', stringGroups(4)[0]!, 0, 1, [5, 10]);
+          expect(tour.sequence.length, `${cat} ${root}`).toBeGreaterThan(3);
+          for (const n of tour.sequence) {
+            expect(n.fret, `${cat} ${root}`).toBeGreaterThanOrEqual(4);
+            expect(n.fret, `${cat} ${root}`).toBeLessThanOrEqual(11);
+          }
+        }
+      }
+    }
+  });
+  it('braço inteiro contínuo também respeita a região', () => {
+    const ex = buildScaleExercise(aMinorPent, 1, ALL4, 'all', [0, 12]);
+    expect(Math.max(...ex.sequence.map((n) => n.fret))).toBeLessThanOrEqual(13);
+    expect(ex.sequence.length).toBeGreaterThan(10);
+  });
+  it('região alta (depois da casa 12) existe no baixo de 24 casas', async () => {
+    const { windowsInRange, neckWindows } = await import('../src/index.js');
+    const w = neckWindows(9, 3, 24);
+    const ks = windowsInRange(w, [12, 24]);
+    expect(ks.length).toBeGreaterThan(0);
+    for (const k of ks) expect(w[k]![0]).toBeGreaterThanOrEqual(11);
+  });
+});

@@ -51,12 +51,16 @@ try {
     await win.waitForTimeout(300);
     lit = await win.locator('.pkey.now').count();
   }
-  const fill = await win.evaluate(() => {
+  const laneLayout = await win.evaluate(() => {
     const sc = document.querySelector('.tl-scroll');
-    const rows = [...document.querySelectorAll('.tl-row')].reduce((a, r) => a + r.getBoundingClientRect().height, 0);
-    return { ratio: rows / sc.clientHeight, scroll: sc.scrollHeight > sc.clientHeight + 1, lanes: document.querySelectorAll('.lane:not(.stem-metro)').length, h: Math.round(document.querySelector('.lane').getBoundingClientRect().height) };
+    const tracks = [...document.querySelectorAll('.tl-row.lane:not(.stem-metro)')];
+    return {
+      maxTrackHeight: Math.max(...tracks.map((row) => row.getBoundingClientRect().height)),
+      overflowY: getComputedStyle(sc).overflowY,
+      lanes: tracks.length,
+    };
   });
-  check(!fill.scroll && fill.ratio > 0.99 && fill.ratio < 1.01, `${fill.lanes} faixas ocupam toda a área, sem rolagem (${(fill.ratio * 100).toFixed(1)}%, ${fill.h} px cada)`);
+  check(Math.round(laneLayout.maxTrackHeight) === 62 && laneLayout.overflowY === 'auto', `${laneLayout.lanes} faixas com 62 px e rolagem vertical disponível`);
   const keys = await win.locator('.pkey.white').count();
   const marked = await win.locator('.pkey.now, .pkey.next, .pkey.later, .pkey.done').count();
   const svgW = (await win.locator('svg.piano').boundingBox()).width;

@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
+import { errorText } from './lib/errors.js';
 import { Import } from './screens/Import.js';
 import { GrabMp3 } from './screens/GrabMp3.js';
 import { Library } from './screens/Library.js';
 import { Song } from './screens/Song.js';
 import { Exercises } from './screens/Exercises.js';
+import { Harmony } from './screens/Harmony.js';
+import { Home } from './screens/Home.js';
+import { Trails } from './screens/Trails.js';
+import { Profiles } from './screens/Profiles.js';
+import { Academy } from './screens/Academy.js';
+import { EarTraining } from './screens/EarTraining.js';
+import { Achievements } from './screens/Achievements.js';
+import { XpBar } from './components/XpBar.js';
+import { Splash } from './components/Splash.js';
 import { Icon, type IconName } from './components/Icons.js';
 import { applyTheme, readTheme, THEMES, type ThemeName } from './lib/theme.js';
 import type { AudioFormatName, GrabProgress, GrabQuality, GrabResult, SeparateOptions } from '../preload/preload.js';
 import { cleanIpcError } from './screens/Import.js';
-import markUrl from './assets/mark.png';
+import markUrl from './assets/logo.png';
+import { readStore, writeStore } from './lib/store.js';
 
 /**
  * Trabalho em segundo plano de uma música: separar em 6 faixas e depois analisar.
@@ -58,20 +69,24 @@ export interface GrabDownload extends GrabRequest {
   readonly result?: GrabResult;
 }
 
-type Screen = 'library' | 'import' | 'grab' | 'song' | 'exercises';
+type Screen = 'achievements' | 'trails' | 'profiles' | 'theory' | 'ear' | 'home' | 'library' | 'import' | 'grab' | 'song' | 'exercises' | 'harmony';
 
 /** Tela inicial. O parâmetro ?screen= só é usado no teste de fumaça (BF_SMOKE_SCREEN). */
 function initialScreen(): Screen {
   const requested = new URLSearchParams(window.location.search).get('screen');
-  return requested === 'import' || requested === 'grab' || requested === 'exercises' ? requested : 'library';
+  return requested === 'import' || requested === 'grab' || requested === 'exercises' || requested === 'harmony' ? requested : 'home';
 }
 
 export const cleanName = (n: string) => n.replace(/\.[a-z0-9]{2,5}$/i, '');
 
 export function App() {
   const [screen, setScreen] = useState<Screen>(initialScreen);
+  const [splash, setSplash] = useState(() => !new URLSearchParams(window.location.search).get('screen'));
   const [open, setOpen] = useState<{ id: string; name: string } | null>(null);
   const [theme, setTheme] = useState<ThemeName>(readTheme);
+  /** Barra lateral recolhida (só os ícones). */
+  const [sideCollapsed, setSideCollapsed] = useState(false);
+  
   const [version, setVersion] = useState('');
   useEffect(() => {
     void window.baixaria
@@ -132,7 +147,7 @@ export function App() {
         await window.baixaria.analyzeSong(songId, job.tempo ? { tempo: job.tempo } : undefined);
         setJobs((j) => ({ ...j, [songId]: { state: 'done' } }));
       } catch (e) {
-        const message = e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'falha';
+        const message = errorText(e, 'falha');
         // Cancelada pelo usuário: some da fila, sem mensagem de erro.
         if (/separação cancelada/.test(message))
           setJobs((j) => {
@@ -207,22 +222,39 @@ export function App() {
   const busyJob = openJob && (openJob.state === 'separating' || openJob.state === 'analyzing' || openJob.state === 'queued');
 
   return (
-    <div className="shell">
+    <>
+    {splash && <Splash onDone={() => setSplash(false)} />}
+    <div className={`shell ${sideCollapsed ? 'side-collapsed' : ''}`}>
       <nav className="side" aria-label="Navegação principal">
         <div className="brand">
-          <img className="brand-logo" src={markUrl} alt="" />
-          <span className="brand-name">
-            mixer<b>Craft</b>
-          </span>
+          <img className="brand-logo" src={markUrl} alt="ScaleMonster" />
+          <button
+            hidden
+            className="side-toggle"
+            onClick={() => setSideCollapsed(false)}
+            aria-expanded={!sideCollapsed}
+            aria-label={sideCollapsed ? 'Abrir a barra lateral' : 'Recolher a barra lateral'}
+            title={sideCollapsed ? 'Abrir a barra lateral' : 'Recolher a barra lateral'}
+          >
+            <span aria-hidden="true">{sideCollapsed ? '»' : '«'}</span>
+          </button>
         </div>
         <div className="nav-section">
-          <div className="nav-title">Músicas</div>
+          <div className="nav-title">Início</div>
+          <button className={`nav-item ${screen === 'home' ? 'active' : ''}`} aria-current={screen === 'home' ? 'page' : undefined} onClick={() => setScreen('home')} title="Início">
+            <Icon name="wave" size={18} />
+            <span>Início</span>
+          </button>
+        </div>
+        <div className="nav-section">
+          <div className="nav-title">Estúdio & Áudio</div>
           {nav.map((item) => (
             <button
               key={item.id}
               className={`nav-item ${screen === item.id ? 'active' : ''}`}
               aria-current={screen === item.id ? 'page' : undefined}
               onClick={() => setScreen(item.id)}
+              title={item.label}
             >
               <Icon name={item.icon} size={18} />
               <span>{item.label}</span>
@@ -231,22 +263,53 @@ export function App() {
           ))}
         </div>
         <div className="nav-section">
-          <div className="nav-title">Ferramentas</div>
-          <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')}>
+          <div className="nav-title">Ferramentas de estúdio</div>
+          <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')} title="Baixar MP3">
             <Icon name="import" size={18} />
             <span>Baixar MP3</span>
             {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
           </button>
         </div>
         <div className="nav-section">
-          <div className="nav-title">Prática</div>
+          <div className="nav-title">Formação & Trilhas</div>
+          <button className={`nav-item ${screen === 'trails' ? 'active' : ''}`} aria-current={screen === 'trails' ? 'page' : undefined} onClick={() => setScreen('trails')} title="Trilhas de aprendizado">
+            <Icon name="library" size={18} />
+            <span>Trilhas</span>
+          </button>
           <button
             className={`nav-item ${screen === 'exercises' ? 'active' : ''}`}
             aria-current={screen === 'exercises' ? 'page' : undefined}
             onClick={() => setScreen('exercises')}
+            title="Exercícios"
           >
             <Icon name="exercise" size={18} />
-            <span>Exercícios</span>
+            <span>Prática livre & desafios</span>
+          </button>
+          <button className={`nav-item ${screen === 'harmony' ? 'active' : ''}`} aria-current={screen === 'harmony' ? 'page' : undefined} onClick={() => setScreen('harmony')} title="Harmonia">
+            <Icon name="chords" size={18} />
+            <span>Harmonia</span>
+          </button>
+        </div>
+        <div className="nav-section">
+          <div className="nav-title">Academia</div>
+          <button className={`nav-item ${screen === 'theory' ? 'active' : ''}`} onClick={() => setScreen('theory')} title="Teoria musical e leitura">
+            <Icon name="chords" size={18} />
+            <span>Teoria & leitura</span>
+          </button>
+          <button className={`nav-item ${screen === 'ear' ? 'active' : ''}`} onClick={() => setScreen('ear')} title="Laboratório e ear training">
+            <Icon name="wave" size={18} />
+            <span>Ear training</span>
+          </button>
+        </div>
+        <div className="nav-section">
+          <div className="nav-title">Perfil & evolução</div>
+          <button className={`nav-item ${screen === 'profiles' ? 'active' : ''}`} onClick={() => setScreen('profiles')} title="Trocar ou cadastrar músico">
+            <Icon name="exercise" size={18} />
+            <span>Músicos</span>
+          </button>
+          <button className={`nav-item ${screen === 'achievements' ? 'active' : ''}`} onClick={() => setScreen('achievements')} title="Conquistas e missões">
+            <Icon name="exercise" size={18} />
+            <span>Conquistas & missões</span>
           </button>
         </div>
         {open && (
@@ -284,10 +347,22 @@ export function App() {
       </nav>
 
       <div className="main-col">
-        <main className={`content ${screen === 'song' ? 'full' : ''}`}>
+        {screen !== 'home' && <div className="topbar"><XpBar onOpen={() => setScreen('achievements')} /></div>}
+        <main key={screen} className={`content screen-in ${screen === 'song' ? 'full' : ''}`}>
+          {screen === 'home' && <Home onGo={(next) => setScreen(next)} />}
+          {screen === 'trails' && <Trails onPractice={() => setScreen('exercises')} />}
+          {screen === 'profiles' && <Profiles onChanged={() => setScreen('home')} />}
+          {screen === 'theory' && <Academy module="theory" onPractice={() => setScreen("exercises")} />}
+          {screen === 'ear' && <EarTraining />}
+          {screen === 'achievements' && <Achievements />}
           {screen === 'import' && (
             <Import
               onImported={(id, name) => openSong(id, name)}
+              onImportedMany={(list, separate) => {
+                // Várias músicas: todas na fila (uma separação por vez) e a biblioteca mostra o andamento.
+                if (separate) for (const x of list) enqueue(x.id, false, separate);
+                setScreen('library');
+              }}
               download={download}
               onStartUrl={startUrl}
               onCancelUrl={() => void window.baixaria.cancelImportUrl()}
@@ -304,6 +379,7 @@ export function App() {
             />
           )}
           {screen === 'exercises' && <Exercises />}
+          {screen === 'harmony' && <Harmony onPracticeScale={() => setScreen('exercises')} />}
           {screen === 'library' && <Library
               jobs={jobs}
               download={download}
@@ -327,10 +403,12 @@ export function App() {
                 setOpen(null);
                 setScreen('library');
               }}
+              onStudyExercise={() => setScreen('exercises')}
             />
           )}
         </main>
       </div>
     </div>
+    </>
   );
 }

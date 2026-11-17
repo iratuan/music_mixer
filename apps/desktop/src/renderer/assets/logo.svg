@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" width="400" height="320" fill="none">
+  <defs>
+    <!-- Gradiente principal da marca aplicado apenas nos traços (strokes) -->
+    <linearGradient id="mixerCraftStrokeGradient" x1="60" y1="60" x2="340" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF7A2F" />
+      <stop offset="28%" stop-color="#FFB067" />
+      <stop offset="52%" stop-color="#E56B9F" />
+      <stop offset="76%" stop-color="#3EC8FF" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Onda Sonora + Arco Superior Esquerdo (apenas contorno) -->
+  <path d="M 127 122 H 136 C 142 122, 146 104, 151 104 C 157 104, 162 150, 169 150 C 176 150, 181 74, 189 74 C 197 74, 202 166, 210 166 C 218 166, 223 102, 230 102 C 236 102, 241 136, 247 136 C 253 136, 261 112, 269 94" stroke="url(#mixerCraftStrokeGradient)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+  <!-- Círculo externo aberto (apenas contorno) -->
+  <path d="M 127 122 A 74 74 0 0 1 258 76" stroke="url(#mixerCraftStrokeGradient)" stroke-width="6.5" stroke-linecap="round" fill="none" />
+  <path d="M 273 116 A 74 74 0 1 1 129 140" stroke="url(#mixerCraftStrokeGradient)" stroke-width="6.5" stroke-linecap="round" fill="none" />
+
+  <!-- Headstock (Mão do instrumento) e Tarraxas vazadas (sem preenchimento) -->
+  <g transform="translate(263, 96) rotate(-42)">
+    <!-- Contorno do Headstock -->
+    <path d="M 0 -4 L 14 -6 C 22 -7, 32 -10, 40 -7 C 46 -4, 47 4, 41 8 C 35 11, 28 8, 22 9 C 16 10, 14 6, 8 5 L 0 4" stroke="url(#mixerCraftStrokeGradient)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <!-- 4 Tarraxas vazadas -->
+    <circle cx="15" cy="-11" r="2.2" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" fill="none" />
+    <circle cx="22" cy="-12" r="2.2" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" fill="none" />
+    <circle cx="29" cy="-13" r="2.2" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" fill="none" />
+    <circle cx="36" cy="-13.5" r="2.2" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" fill="none" />
+    <!-- Hastes das tarraxas -->
+    <line x1="15" y1="-6.5" x2="15" y2="-8.8" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" stroke-linecap="round" />
+    <line x1="22" y1="-7.5" x2="22" y2="-9.8" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" stroke-linecap="round" />
+    <line x1="29" y1="-8.5" x2="29" y2="-10.8" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" stroke-linecap="round" />
+    <line x1="36" y1="-8.5" x2="36" y2="-11.3" stroke="url(#mixerCraftStrokeGradient)" stroke-width="1.8" stroke-linecap="round" />
+  </g>
+
+  <!-- Tipografia "mixerCraft" apenas com contorno (outline) -->
+  <text x="200" y="265" text-anchor="middle" fill="none" stroke="url(#mixerCraftStrokeGradient)" stroke-width="2" stroke-linejoin="round" font-family="-apple-system, BlinkMacSystemFont, &#39;SF Pro Display&#39;, &#39;Inter&#39;, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="48" font-weight="700" letter-spacing="-1.2">
+    mixerCraft
+  </text>
+</svg>

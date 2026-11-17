@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { errorText } from '../lib/errors.js';
 import type { SeparateOptions } from '../../preload/preload.js';
 import { Icon } from './Icons.js';
 import { stemInfo } from '../lib/stems.js';
@@ -26,14 +27,15 @@ interface Props {
 
 const INSTRUMENTS = ['bass', 'drums', 'guitar', 'piano', 'other'] as const;
 type VoiceMode = 'none' | 'whole' | 'split';
-const KEY = 'bf-stem-choice';
+// Chave nova: o padrão passou a ser voz principal e backing separados (preferências antigas ficam de lado).
+const KEY = 'bf-stem-choice-2';
 
 interface Choice {
   instruments: string[];
   voice: VoiceMode;
   lead: boolean;
   backing: boolean;
-  quality: 'fast' | 'best';
+  quality: 'fast' | 'best' | 'max';
 }
 
 /** "a", "a e b", "a, b e c", com a primeira letra maiúscula. */
@@ -43,7 +45,8 @@ function joinPt(items: string[]): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-const DEFAULT: Choice = { instruments: [...INSTRUMENTS], voice: 'whole', lead: true, backing: true, quality: 'best' };
+/** Padrão: voz principal e backing vocals, baixo, piano, guitarra, bateria e outros. */
+const DEFAULT: Choice = { instruments: [...INSTRUMENTS], voice: 'split', lead: true, backing: true, quality: 'best' };
 
 function load(): Choice {
   try {
@@ -160,6 +163,15 @@ export function StemPicker({ busy, cpu, voiceSplit, submitLabel, onSubmit, onCan
           <button type="button" aria-pressed={c.quality === 'best'} disabled={busy} onClick={() => setC((x) => ({ ...x, quality: 'best' }))} title="Duas passadas deslocadas: menos vazamento entre faixas, cerca de 2× mais lenta">
             Precisa
           </button>
+          <button
+            type="button"
+            aria-pressed={c.quality === 'max'}
+            disabled={busy}
+            onClick={() => setC((x) => ({ ...x, quality: 'max' }))}
+            title={`Cinco passadas com sobreposição maior: o mínimo de vazamento (baixo mais limpo, sem bumbo nem voz), cerca de 5× mais lenta${cpu ? '. No processador pode levar mais de meia hora por música.' : '.'}`}
+          >
+            Máxima
+          </button>
         </div>
       </div>
       {children}
@@ -218,7 +230,7 @@ function VoiceModelCard({ onReady }: { onReady(): void }) {
       if (r.installed) onReady();
       else setState('idle');
     } catch (e) {
-      const m = e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : 'falha no download';
+      const m = errorText(e, 'falha no download');
       setErr(/cancelado/.test(m) ? null : m);
       setState(/cancelado/.test(m) ? 'idle' : 'error');
     }

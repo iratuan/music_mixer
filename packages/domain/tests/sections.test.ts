@@ -96,3 +96,51 @@ describe('mapa em texto: andamento', () => {
     expect(bpmLabel({ bpm: 112, bpmRange: [86.1, 123] })).toBe('86–123 BPM (variável)');
   });
 });
+
+describe('mapa: forma (letras) e tablatura em texto', () => {
+  it('partes com os mesmos acordes têm a mesma letra e apontam para a primeira', async () => {
+    const { sectionLetters } = await import('../src/index.js');
+    expect(sectionLetters([['C', 'G'], ['Am', 'F'], ['C', 'G'], ['Dm']])).toEqual([
+      { letter: 'A', repeatOf: null },
+      { letter: 'B', repeatOf: null },
+      { letter: 'A', repeatOf: 0 },
+      { letter: 'C', repeatOf: null },
+    ]);
+  });
+  it('texto do mapa traz a forma, a linha do baixo e as formas do violão', () => {
+    const txt = songMapText({
+      title: 'Groove',
+      key: 'C maior',
+      bpm: 100,
+      transpose: 0,
+      strings: ['E', 'A', 'D', 'G'],
+      bassStyle: 'Fundamental e quinta',
+      shapes: [{ name: 'C', frets: [null, 3, 5, 5, 5, 3], base: 3 }],
+      sections: [{ name: 'Verso', letter: 'A', from: 0, to: 0, bars: [{ n: 1, chords: ['C'], bass: [], tab: [{ s: 1, f: 3, x: 0 }, { s: 2, f: 5, x: 0.5 }] }] }],
+    });
+    expect(txt).toContain('Forma: A');
+    expect(txt).toContain('1: C {A3 D5}');
+    expect(txt).toContain('C: x 3 5 5 5 3');
+    expect(txt).toContain('sem corda solta');
+  });
+});
+
+describe('mapa: nomes pela forma', () => {
+  it('Intro, Parte A, Refrão, Ponte e Outro', async () => {
+    const { nameByForm, sectionLetters } = await import('../src/index.js');
+    // Intro(I) A R A R Ponte(P) R Outro(O)
+    const sig = [['I'], ['A'], ['R'], ['A'], ['R'], ['P'], ['R'], ['O']];
+    const lens = [4, 8, 8, 8, 8, 8, 8, 4];
+    let b = 0;
+    const spans = lens.map((l) => ({ from: b, to: (b += l) - 1 }));
+    expect(nameByForm(spans, sectionLetters(sig))).toEqual(['Intro', 'Parte A', 'Refrão', 'Parte A', 'Refrão', 'Ponte', 'Refrão', 'Outro']);
+  });
+  it('pré-refrão curto antes do refrão', async () => {
+    const { nameByForm, sectionLetters } = await import('../src/index.js');
+    const sig = [['A'], ['P'], ['R'], ['A'], ['P'], ['R'], ['R']];
+    const lens = [8, 4, 8, 8, 4, 8, 8];
+    let b = 0;
+    const spans = lens.map((l) => ({ from: b, to: (b += l) - 1 }));
+    expect(nameByForm(spans, sectionLetters(sig))).toEqual(['Parte A', 'Pré-refrão', 'Refrão', 'Parte A', 'Pré-refrão', 'Refrão', 'Refrão']);
+  });
+});

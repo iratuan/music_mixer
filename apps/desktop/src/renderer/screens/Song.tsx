@@ -1,6 +1,23 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { errorText } from '../lib/errors.js';
 import {
   BASS_TUNINGS,
+  CIRCLE,
+  analyzeMap,
+  chordSymbol,
+  circleSlotOf,
+  harmonicField,
+  positionsOf,
+  semitonesBetween,
+  type ChordInsight,
+  type HarmonicMapData,
+  type Ring,
+  buildAccompaniment,
+  cleanBassLine,
+  BASS_PATTERNS,
+  BASS_REGIONS,
+  type BassPattern,
+  type BassRegion,
   barAt,
   beatInBar,
   chordAt,
@@ -16,6 +33,8 @@ import {
   type ChordLevel,
   type GuitarMode,
   normalizeSections,
+  sectionLetters,
+  nameByForm,
   pcName,
   sectionSpans,
   songMapText,
@@ -44,8 +63,14 @@ import { Waveform } from '../components/Waveform.js';
 import { BassNeck, type NeckNote } from '../components/BassNeck.js';
 import { PianoKeys, keyboardRange, type KeyMark } from '../components/PianoKeys.js';
 import { GuitarChord } from '../components/GuitarChord.js';
+import { CircleOfFifthsWheel } from '../components/CircleOfFifthsWheel.js';
+import { VoiceLeadingInspector } from '../components/VoiceLeadingInspector.js';
+import type { MapDensity, MapView } from '../components/HarmonicGrid.js';
+import { playChord as playHarmonyChord } from '../lib/harmonyAudioEngine.js';
+import { harmonicStore } from '../lib/harmonicSyncStore.js';
 import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../lib/audio.js';
-import { MIDI_STEMS, sortStems, stemInfo } from '../lib/stems.js';
+import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../lib/stems.js';
+import { readStore, writeStore } from '../lib/store.js';
 
 /**
  * Página da música: player com as faixas separadas ocupando toda a área, régua de compassos com
@@ -60,6 +85,8 @@ interface Props {
   /** Refaz a análise; `tempo` força o modo do andamento (senão mantém o anterior). */
   onAnalyze(tempo?: 'auto' | 'fixed'): void;
   onRemoved(): void;
+  /** Linha do baixo enviada para os Exercícios (abre a tela de exercícios). */
+  onStudyExercise?(): void;
 }
 
 interface Lane {
@@ -77,10 +104,33 @@ interface LaneMix {
 }
 
 const HEADER_W = 252;
+/** Braço do violão/guitarra para estudar uma faixa (6 cordas, Mi Lá Ré Sol Si Mi). */
+const GUITAR_STUDY_TUNING = { id: 'g6', label: 'Violão (E A D G B E)', strings: [40, 45, 50, 55, 59, 64], frets: 19 } as const;
+/** Estado de uma faixa sem ajuste salvo. */
+const DEFAULT_MIX: LaneMix = { on: true, solo: false, vol: 0.8 };
+
+/** Preferências das guias harmônicas visuais (não geram uma faixa de áudio). */
+interface AccompSettings {
+  /** Linha harmônica mostrada no braço do baixo. */
+  bass: { pattern: BassPattern; region: BassRegion };
+  /** Região usada para escolher a forma do acorde no braço do violão. */
+  guitar: { region: number };
+}
+const DEFAULT_ACCOMP: AccompSettings = {
+  bass: { pattern: 'root-fifth', region: 'auto' },
+  guitar: { region: 5 },
+};
+/** Regiões do violão: casa perto da qual ficam as formas móveis (CAGED). */
+const GUITAR_REGIONS: ReadonlyArray<{ id: number; label: string }> = [
+  { id: 3, label: 'Casas 1–5' },
+  { id: 5, label: 'Casas 3–8' },
+  { id: 7, label: 'Casas 5–10' },
+  { id: 9, label: 'Casas 7–12' },
+];
 /** Abaixo disso a faixa fica compacta (knobs menores, sem legenda); abaixo de TINY_LANE_H, uma linha só. */
 const FULL_LANE_H = 58;
 const TINY_LANE_H = 40;
-const MIN_LANE_H = 28;
+const TRACK_H = 62;
 const RULER_H = 62;
 const METRO_H = 44;
 const MIN_PPS = 4;
@@ -114,35 +164,33 @@ function fmt(sec: number): string {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
-function readStore<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? ({ ...fallback, ...(JSON.parse(raw) as object) } as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function writeStore(key: string, value: unknown): void {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* sem persistência */
-  }
-}
-
 function cssVar(name: string, fallback: string): string {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return v || fallback;
 }
 
-export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Props) {
+export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved, onStudyExercise }: Props) {
   const [rec, setRec] = useState<LibrarySong | null>(null);
   const [analysis, setAnalysis] = useState<SongAnalysis | null>(null);
   const [lanes, setLanes] = useState<Lane[] | null>(null);
   const [semis, setSemis] = useState(0);
+  /** Velocidade do player em % (100 = original): tudo mais lento, sem mudar o tom. */
+  const [speed, setSpeed] = useState(100);
+  /** Velocidade das faixas carregadas agora (o relógio usa esta, não a pedida). */
+  const [laneRate, setLaneRate] = useState(1);
   const [transposing, setTransposing] = useState<{ target: number; percent: number } | null>(null);
   const [mix, setMix] = useState<Record<string, LaneMix>>(() => readStore(`bf-mix-${songId}`, {}));
   const [metro, setMetro] = useState(() => readStore('bf-metro', { on: false, vol: 0.6 }));
+  const [accomp, setAccomp] = useState<AccompSettings>(() => {
+    const a = readStore<{ bass?: Partial<AccompSettings['bass']>; guitar?: Partial<AccompSettings['guitar']> }>('bf-accomp', {});
+    return {
+      bass: {
+        pattern: a.bass?.pattern ?? DEFAULT_ACCOMP.bass.pattern,
+        region: a.bass?.region ?? DEFAULT_ACCOMP.bass.region,
+      },
+      guitar: { region: a.guitar?.region ?? DEFAULT_ACCOMP.guitar.region },
+    };
+  });
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
   const [loop, setLoop] = useState<{ from: number; to: number } | null>(null);
@@ -150,14 +198,14 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   const [picker, setPicker] = useState(false);
   const [cpu, setCpu] = useState(false);
   const [voiceSplit, setVoiceSplit] = useState(false);
-  const [bassNotes, setBassNotes] = useState<MidiNote[] | null>(null);
+  const [bassRaw, setBassNotes] = useState<MidiNote[] | null>(null);
   const [bassState, setBassState] = useState<{ percent: number } | 'error' | null>(null);
   const [pianoNotes, setPianoNotes] = useState<MidiNote[] | null>(null);
   const [pianoState, setPianoState] = useState<{ percent: number } | 'error' | null>(null);
   const [dockInst, setDockInst] = useState<'bass' | 'piano' | 'guitar'>(() => readStore('bf-dock', { i: 'bass' as 'bass' | 'piano' | 'guitar' }).i);
   // Nível dos acordes (simples = tríades e 7; completo = qualidades da análise) e formas do violão (normal ou CAGED).
   const [chordLevel, setChordLevel] = useState<ChordLevel>(() => readStore('bf-chord-level', { v: 'full' as ChordLevel }).v);
-  const [guitarMode, setGuitarMode] = useState<GuitarMode>(() => readStore('bf-guitar-mode', { v: 'normal' as GuitarMode }).v);
+  const [guitarMode, setGuitarMode] = useState<GuitarMode>(() => readStore('bf-guitar-mode-2', { v: 'caged' as GuitarMode }).v);
   // Painel de acordes: embaixo da linha do tempo ou à direita, na vertical (economiza altura).
   const [dockSide, setDockSide] = useState<boolean>(() => readStore('bf-dock-side', { v: false }).v);
   const [strings, setStrings] = useState<number>(() => readStore('bf-strings', { n: 4 }).n);
@@ -167,15 +215,17 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   useEffect(() => writeStore('bf-master', { v: masterVol }), [masterVol]);
   const [neckLabel, setNeckLabel] = useState<'note' | 'fret' | 'finger'>(() => readStore('bf-neck-label', { v: 'finger' as 'note' | 'fret' | 'finger' }).v);
   /** Piano: guiado pela harmonia (padrão) ou pelo que a faixa de piano toca (gravação). */
+  /** Baixo no painel: a linha da gravação (transcrita) ou a linha-guia gerada pela harmonia. */
+  const [bassMode, setBassMode] = useState<'rec' | 'acomp'>(() => readStore('bf-bass-mode', { v: 'rec' as 'rec' | 'acomp' }).v);
+  useEffect(() => writeStore('bf-bass-mode', { v: bassMode }), [bassMode]);
+  const [guidePanel, setGuidePanel] = useState(false);
   const [pianoMode, setPianoMode] = useState<'harmony' | 'rec'>(() => readStore('bf-piano-mode', { v: 'harmony' as 'harmony' | 'rec' }).v);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [laneH, setLaneH] = useState(64);
-
   const aligned = useRef<AlignedHandle | null>(null);
   const metroH = useRef<MetronomeHandle | null>(null);
-  const clock = useRef({ startedAt: 0, from: 0 });
+  const clock = useRef({ startedAt: 0, from: 0, rate: 1 });
   const scroller = useRef<HTMLDivElement | null>(null);
   const lanesBox = useRef<HTMLDivElement | null>(null);
   const loadSeq = useRef(0);
@@ -185,11 +235,13 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
 
   const separated = !!rec?.stems && rec.stems.length > 0;
   const busy = job?.state === 'queued' || job?.state === 'separating' || job?.state === 'analyzing';
-  const duration = lanes ? Math.max(...lanes.map((l) => l.buffer.duration)) : (analysis?.duration ?? 0);
+  // Duração em tempo da MÚSICA (as faixas mais lentas são mais longas no relógio).
+  const duration = lanes ? Math.max(...lanes.map((l) => l.buffer.duration)) * laneRate : (analysis?.duration ?? 0);
   const tuning = BASS_TUNINGS.find((t) => t.strings.length === strings) ?? BASS_TUNINGS[0]!;
 
   useEffect(() => writeStore(`bf-mix-${songId}`, mix), [mix, songId]);
   useEffect(() => writeStore('bf-metro', metro), [metro]);
+  useEffect(() => writeStore('bf-accomp', accomp), [accomp]);
   useEffect(() => writeStore('bf-strings', { n: strings }), [strings]);
   useEffect(() => {
     void window.baixaria.stemsAvailable().then((r) => {
@@ -213,7 +265,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
         setAnalysis(a);
         if (!a && !jobState) onAnalyze();
       }
-    })().catch((e: unknown) => setError(e instanceof Error ? e.message : 'falha ao abrir a música'));
+    })().catch((e: unknown) => setError(errorText(e, 'falha ao abrir a música')));
     return () => {
       cancelled = true;
     };
@@ -231,11 +283,12 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     void (async () => {
       const out: Lane[] = [];
       for (const k of sortStems(stemKey.split(','))) {
-        const bytes = await window.baixaria.libraryReadStem(songId, k, semis);
+        const bytes = await window.baixaria.libraryReadStem(songId, k, semis, speed);
         out.push({ key: k, buffer: await decodeAudio(bytes) });
         if (seq !== loadSeq.current) return;
       }
       if (seq !== loadSeq.current) return;
+      setLaneRate(speed / 100);
       setLanes(out);
       // Estado inicial salvo na música (ex.: baixo mudo para tocar junto) vale ao abrir o player.
       const start = startApplied.current ? undefined : recRef.current?.startMix;
@@ -243,29 +296,37 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       setMix((m) => {
         const next = { ...m };
         for (const l of out) {
-          next[l.key] ??= { on: true, solo: false, vol: 0.8 };
+          next[l.key] ??= DEFAULT_MIX;
           if (start && start[l.key] !== undefined) next[l.key] = { ...next[l.key]!, on: start[l.key]!, solo: false };
         }
         return next;
       });
-    })().catch((e: unknown) => setError(e instanceof Error ? e.message : 'falha ao carregar as faixas'));
+    })().catch((e: unknown) => setError(errorText(e, 'falha ao carregar as faixas')));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songId, stemKey, semis]);
+  }, [songId, stemKey, semis, speed]);
 
+  // Estudar uma faixa: as notas dela (Basic Pitch) no braço do baixo, no teclado ou no braço do violão.
+  const [studyStem, setStudyStem] = useState<string | null>(null);
+  const studyable = (rec?.stems ?? []).filter((k) => MIDI_STEMS.has(k));
+  // Linha do baixo limpa (fantasmas, notas partidas, oitava errada, encaixe na grade): tablatura, braço e exercício.
+  // Faixas de outros instrumentos (podem ter acordes) ficam como vieram.
+  const bassNotes = useMemo(() => (bassRaw && !studyStem && analysis ? cleanBassLine(bassRaw, analysis.beats) : bassRaw), [bassRaw, studyStem, analysis]);
   // Notas do baixo (MIDI pelo Basic Pitch, em cache): alimentam o braço do painel inferior.
   const hasBass = !!rec?.stems?.includes('bass');
+  const lineStem = studyStem ?? 'bass';
   useEffect(() => {
-    if (!hasBass) {
+    if (!hasBass && !studyStem) {
       setBassNotes(null);
       return;
     }
     let cancelled = false;
     setBassState({ percent: 0 });
     const off = window.baixaria.onSongProgress((p) => {
-      if (p.songId === songId && p.task === 'midi:bass' && !cancelled) setBassState({ percent: p.percent });
+      if (p.songId === songId && p.task === `midi:${lineStem}` && !cancelled) setBassState({ percent: p.percent });
     });
+    setBassNotes(null);
     void window.baixaria
-      .stemsMidi(songId, 'bass', semis)
+      .stemsMidi(songId, lineStem, semis)
       .then((bytes) => {
         if (cancelled) return;
         setBassNotes(readMidi(bytes));
@@ -276,29 +337,30 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       cancelled = true;
       off();
     };
-  }, [songId, hasBass, semis]);
+  }, [songId, hasBass, semis, lineStem, studyStem]);
 
   // Notas do piano: só são extraídas quando o painel mostra o teclado (o Basic Pitch leva um tempo).
   const hasPiano = !!rec?.stems?.includes('piano');
   const canPiano = !!analysis;
   const inst: 'bass' | 'piano' | 'guitar' = dockInst === 'guitar' && canPiano ? 'guitar' : canPiano && (dockInst === 'piano' || !hasBass) ? 'piano' : 'bass';
-  const pianoRec = hasPiano && pianoMode === 'rec';
+  const pianoRec = !!studyStem || (hasPiano && pianoMode === 'rec');
   useEffect(() => writeStore('bf-dock', { i: dockInst }), [dockInst]);
   useEffect(() => writeStore('bf-piano-mode', { v: pianoMode }), [pianoMode]);
   useEffect(() => writeStore('bf-neck-label', { v: neckLabel }), [neckLabel]);
   useEffect(() => writeStore('bf-chord-level', { v: chordLevel }), [chordLevel]);
-  useEffect(() => writeStore('bf-guitar-mode', { v: guitarMode }), [guitarMode]);
+  useEffect(() => writeStore('bf-guitar-mode-2', { v: guitarMode }), [guitarMode]);
   useEffect(() => writeStore('bf-dock-side', { v: dockSide }), [dockSide]);
   useEffect(() => {
     setPianoNotes(null);
-    if (!hasPiano || inst !== 'piano' || !pianoRec) return;
+    if ((!hasPiano && !studyStem) || inst !== 'piano' || !pianoRec) return;
+    const pianoStem = studyStem ?? 'piano';
     let cancelled = false;
     setPianoState({ percent: 0 });
     const off = window.baixaria.onSongProgress((p) => {
-      if (p.songId === songId && p.task === 'midi:piano' && !cancelled) setPianoState({ percent: p.percent });
+      if (p.songId === songId && p.task === `midi:${pianoStem}` && !cancelled) setPianoState({ percent: p.percent });
     });
     void window.baixaria
-      .stemsMidi(songId, 'piano', semis)
+      .stemsMidi(songId, pianoStem, semis)
       .then((bytes) => {
         if (cancelled) return;
         setPianoNotes(readMidi(bytes));
@@ -309,7 +371,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       cancelled = true;
       off();
     };
-  }, [songId, hasPiano, inst, pianoRec, semis]);
+  }, [songId, hasPiano, inst, pianoRec, semis, studyStem]);
 
   // Progresso da transposição.
   useEffect(
@@ -324,7 +386,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   const anySolo = Object.values(mix).some((m) => m.solo);
   const gainOf = useCallback(
     (key: string, m = mix) => {
-      const x = m[key] ?? { on: true, solo: false, vol: 0.8 };
+      const x = m[key] ?? DEFAULT_MIX;
       const solo = Object.values(m).some((v) => v.solo);
       return x.on && (!solo || x.solo) ? x.vol : 0;
     },
@@ -339,7 +401,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       setRec((r) => (r ? { ...r, startMix: start } : r));
       setMessage('Estado das faixas salvo: a música abre assim.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao salvar');
+      setError(errorText(e, 'falha ao salvar'));
     }
   }
 
@@ -358,18 +420,20 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     const at = ctx.currentTime + 0.06;
     const start = Math.max(0, Math.min(from, duration - 0.05));
     aligned.current = playAligned(
-      lanes.map((l) => ({ buffer: l.buffer, gain: gainOf(l.key), pan: mix[l.key]?.pan ?? 0, offset: start })),
+      lanes.map((l) => ({ buffer: l.buffer, gain: gainOf(l.key), pan: mix[l.key]?.pan ?? 0, offset: start / laneRate })),
       at,
     );
-    if (analysis) metroH.current = startMetronome(analysis.beats, analysis.firstDownbeat, at, start, metro.on ? metro.vol : 0);
-    clock.current = { startedAt: at, from: start };
+    if (analysis) {
+      metroH.current = startMetronome(analysis.beats, analysis.firstDownbeat, at, start, metro.on ? metro.vol : 0, laneRate);
+    }
+    clock.current = { startedAt: at, from: start, rate: laneRate };
     setPos(start);
     setPlaying(true);
   }
 
   function pause() {
     const ctx = getAudioContext();
-    const p = clock.current.from + (ctx.currentTime - clock.current.startedAt);
+    const p = clock.current.from + (ctx.currentTime - clock.current.startedAt) * clock.current.rate;
     stopAll();
     setPlaying(false);
     setPos(Math.max(0, Math.min(duration, p)));
@@ -400,13 +464,8 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
 
   useEffect(() => () => stopAll(), []);
 
-  // Instantes em que a tela muda (tempos e notas do baixo), em ordem.
+  // Instantes em que a tela muda (tempos e notas do baixo), em ordem: preenchidos mais abaixo.
   const events = useRef<Float64Array>(new Float64Array(0));
-  useEffect(() => {
-    const t: number[] = [...(analysis?.beats ?? [])];
-    for (const n of (inst === 'piano' ? (pianoRec ? pianoNotes : null) : inst === 'bass' ? bassNotes : null) ?? []) t.push(n.startSec, n.startSec + n.durSec);
-    events.current = Float64Array.from(t).sort();
-  }, [analysis, bassNotes, pianoNotes, inst, pianoRec]);
   const playheadRef = useRef<HTMLDivElement | null>(null);
   const pxRef = useRef(20);
 
@@ -424,7 +483,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     let lastP = -1;
     let nextEvent = -1;
     const tick = () => {
-      const p = clock.current.from + (ctx.currentTime - clock.current.startedAt);
+      const p = clock.current.from + (ctx.currentTime - clock.current.startedAt) * clock.current.rate;
       // Relógio parado: o dispositivo de saída não está processando áudio.
       if (ctx.currentTime !== lastCtx) {
         lastCtx = ctx.currentTime;
@@ -496,11 +555,11 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     if (target === semis) return;
     setError(null);
     const wasPlaying = playing;
-    const at = playing ? clock.current.from + (getAudioContext().currentTime - clock.current.startedAt) : pos;
+    const at = playing ? clock.current.from + (getAudioContext().currentTime - clock.current.startedAt) * clock.current.rate : pos;
     try {
-      if (target !== 0) {
+      if (target !== 0 || speed !== 100) {
         setTransposing({ target, percent: 0 });
-        await window.baixaria.stemsTranspose(songId, target);
+        await window.baixaria.stemsTranspose(songId, target, speed);
       }
       if (wasPlaying) pause();
       setLanes(null);
@@ -508,12 +567,35 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       if (wasPlaying) resumeAt.current = at;
       else setPos(at);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha na transposição');
+      setError(errorText(e, 'falha na transposição'));
     } finally {
       setTransposing(null);
       const next = pendingSemis.current;
       pendingSemis.current = null;
       if (next !== null && next !== target) void changeSemis(next);
+    }
+  }
+  /** Velocidade: gera as faixas mais lentas (Rubber Band, sem mudar o tom; ficam em cache) e segue do mesmo ponto. */
+  const [slowing, setSlowing] = useState<number | null>(null);
+  async function changeSpeed(target: number) {
+    if (target === speed || slowing !== null || transposing) return;
+    setError(null);
+    const wasPlaying = playing;
+    const at = playing ? clock.current.from + (getAudioContext().currentTime - clock.current.startedAt) * clock.current.rate : pos;
+    try {
+      if (target !== 100 || semis !== 0) {
+        setSlowing(target);
+        await window.baixaria.stemsTranspose(songId, semis, target);
+      }
+      if (wasPlaying) pause();
+      setLanes(null);
+      setSpeed(target);
+      if (wasPlaying) resumeAt.current = at;
+      else setPos(at);
+    } catch (e) {
+      setError(errorText(e, 'falha ao mudar a velocidade'));
+    } finally {
+      setSlowing(null);
     }
   }
   const resumeAt = useRef<number | null>(null);
@@ -527,24 +609,17 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   }, [lanes]);
 
   /* ------------------------------ zoom e rolagem ------------------------------ */
-  // Altura das faixas: dividem a área disponível.
-  const laneCount = lanes?.length ?? 0;
-  const hasMetroLane = !!analysis;
+  const laneH = TRACK_H;
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
-      // Régua e metrônomo têm altura fixa; as faixas dividem todo o resto, sem sobra (altura
-      // fracionária) e descontando a barra de rolagem horizontal (clientHeight já desconta). As
-      // bordas ficam dentro da altura de cada linha (box-sizing: border-box).
-      const free = el.clientHeight - RULER_H - (hasMetroLane ? METRO_H : 0);
-      setLaneH(Math.max(MIN_LANE_H, free / Math.max(1, laneCount)));
       // Zoom inicial: a música inteira cabe na largura.
       setPps((p) => p ?? (duration > 0 ? Math.max(MIN_PPS, (el.clientWidth - HEADER_W - 8) / duration) : null));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [laneCount, hasMetroLane, duration]);
+  }, [duration]);
   const pxPerSec = pps ?? 20;
   pxRef.current = pxPerSec;
   const density = laneH >= FULL_LANE_H ? '' : laneH >= TINY_LANE_H ? 'compact' : 'tiny';
@@ -607,16 +682,121 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     return null;
   }, [analysis, barIdx, current, semis, pos]);
 
-  // Notas do baixo: digitadas uma vez para a música toda (continuidade entre compassos).
-  const fingered = useMemo(() => {
+  /* ------------------------------ acordes corrigidos no mapa ------------------------------ */
+  // Correções do músico por compasso (tom original): valem no mapa, na exportação e nas guias visuais.
+  type BarEdit = Array<{ beat: number; beats: number; chord: Chord }>;
+  const [chordEdits, setChordEdits] = useState<Record<number, BarEdit>>(() => readStore<Record<number, BarEdit>>(`bf-chord-edits-${songId}`, {}));
+  useEffect(() => writeStore(`bf-chord-edits-${songId}`, chordEdits), [chordEdits, songId]);
+  const effectiveBars = useMemo(() => {
+    if (!analysis) return [];
+    return analysis.bars.map((b) => {
+      const e = chordEdits[b.index];
+      if (!e) return b;
+      const len = Math.max(0.1, b.end - b.start);
+      return { ...b, chords: e.map((x) => ({ beat: x.beat, start: b.start + (x.beat / 4) * len, beats: x.beats, chord: x.chord })) };
+    });
+  }, [analysis, chordEdits]);
+
+  // Linhas-guia visuais derivadas dos acordes da música, no tom e no nível escolhidos.
+  const accompaniment = useMemo(() => {
+    if (!analysis) return null;
+    const chords = effectiveBars.flatMap((b) => b.chords.map((c) => ({ start: c.start, chord: c.chord ? simplifyChord(transposeChord(c.chord, semis), chordLevel) : null })));
+    return buildAccompaniment(chords, analysis.beats, analysis.firstDownbeat, {
+      bass: { pattern: accomp.bass.pattern, region: accomp.bass.region, tuning },
+      guitar: { pattern: 'pop', mode: guitarMode, region: accomp.guitar.region },
+      piano: { pattern: 'block' },
+    });
+  }, [analysis, effectiveBars, semis, chordLevel, accomp.bass.pattern, accomp.bass.region, accomp.guitar.region, guitarMode, tuning]);
+  // A linha harmônica do baixo mantém continuidade entre compassos e digitação sem cordas soltas.
+  const bassAcomp = bassMode === 'acomp' && !!accompaniment && !studyStem;
+  // Faixa estudada no violão: braço de 6 cordas; no baixo, a afinação escolhida.
+  const neckTuning = inst === 'guitar' && studyStem ? GUITAR_STUDY_TUNING : tuning;
+  const accFingered = useMemo(
+    () =>
+      accompaniment
+        ? accompaniment.part('bass').map((n) => ({ midi: n.midi, startSec: n.t, durSec: n.dur, velocity: 100, pos: n.pos ?? null, zone: n.zone ?? null, finger: n.finger ?? 0 }))
+        : null,
+    [accompaniment],
+  );
+  const recFingered = useMemo(() => {
     if (!bassNotes) return null;
+    // Faixa de outro instrumento (voz, guitarra…): as notas vão para a oitava que cabe no braço.
+    const lo = neckTuning.strings[0]!;
+    const hi = neckTuning.strings[neckTuning.strings.length - 1]! + neckTuning.frets;
+    const fit = (m: number) => {
+      let x = m;
+      while (x > hi) x -= 12;
+      while (x < lo) x += 12;
+      return x;
+    };
+    const notes = bassNotes.map((n) => ({ ...n, midi: fit(n.midi) }));
     const z = fingerZones(
-      bassNotes.map((n) => n.midi),
-      tuning,
-      bassNotes.map((n) => n.startSec),
+      notes.map((n) => n.midi),
+      neckTuning,
+      notes.map((n) => n.startSec),
     );
-    return bassNotes.map((n, i) => ({ ...n, pos: z[i]?.pos ?? null, zone: z[i]?.zone ?? null }));
-  }, [bassNotes, tuning]);
+    return notes.map((n, i) => ({ ...n, pos: z[i]?.pos ?? null, zone: z[i]?.zone ?? null, finger: undefined as number | undefined }));
+  }, [bassNotes, neckTuning]);
+  const fingered = bassAcomp ? accFingered : recFingered;
+
+  /* ------------------------------ tablatura do baixo ------------------------------ */
+  const [tabOpen, setTabOpen] = useState(false);
+  const [tabSrc, setTabSrc] = useState<'rec' | 'acomp'>(() => readStore('bf-tab-src', { v: 'rec' as 'rec' | 'acomp' }).v);
+  useEffect(() => writeStore('bf-tab-src', { v: tabSrc }), [tabSrc]);
+  // Linha do baixo para a tablatura: a da gravação (transcrita) ou a guia harmônica.
+  const tabLine = useMemo(() => {
+    if (tabSrc === 'acomp' || !bassNotes) {
+      return (accompaniment?.part('bass') ?? []).filter((n) => n.pos).map((n) => ({ t: n.t, dur: n.dur, midi: n.midi, pos: n.pos!, finger: n.finger ?? 1 }));
+    }
+    const lo = tuning.strings[0]!;
+    const hi = tuning.strings[tuning.strings.length - 1]! + tuning.frets;
+    const fit = (m: number) => {
+      let x = m;
+      while (x > hi) x -= 12;
+      while (x < lo) x += 12;
+      return x;
+    };
+    const ms = bassNotes.map((n) => fit(n.midi));
+    const z = fingerZones(ms, tuning, bassNotes.map((n) => n.startSec));
+    return bassNotes.flatMap((n, i) => (z[i] ? [{ t: n.startSec, dur: n.durSec, midi: ms[i]!, pos: z[i]!.pos, finger: z[i]!.pos.fret === 0 ? 0 : z[i]!.pos.fret - z[i]!.zone + 1 }] : []));
+  }, [tabSrc, bassNotes, accompaniment, tuning]);
+  const tabSrcLabel = tabSrc === 'acomp' || !bassNotes ? `Linha harmônica (${(BASS_PATTERNS.find((x) => x.id === accomp.bass.pattern)?.label ?? '').toLowerCase()})` : studyStem ? `Faixa ${stemInfo(studyStem).label.toLowerCase()} (transcrita)` : 'Baixo da gravação (transcrito)';
+  const tabStrings = tuning.strings.map((m) => pcName(m % 12, false));
+  /** Notas da tablatura dentro de um compasso: corda, casa e posição (0–1). */
+  const tabInBar = (b: { start: number; end: number }) =>
+    tabLine
+      .filter((n) => n.t >= b.start - 0.02 && n.t < b.end - 0.02)
+      .slice(0, 24)
+      .map((n) => ({ s: n.pos.string, f: n.pos.fret, x: Math.max(0, Math.min(1, (n.t - b.start) / Math.max(0.1, b.end - b.start))), t: n.t, end: n.t + Math.max(0.08, n.dur) }));
+
+  /** Envia a linha do baixo, compasso a compasso com a harmonia, para os Exercícios. */
+  function studyAsExercise() {
+    if (!analysis) return;
+    const bars = analysis.bars.map((b) => {
+      const local = transposeKey(b.key, semis);
+      const names = b.chords.map((c) => (c.chord ? chordName(transposeChord(c.chord, semis), local) : '—'));
+      const len = Math.max(0.1, b.end - b.start);
+      return {
+        chords: names.filter((x, k) => k === 0 || x !== names[k - 1]),
+        notes: tabLine.filter((n) => n.t >= b.start - 0.02 && n.t < b.end - 0.02).map((n) => ({ midi: n.midi, beat: Math.max(0, ((n.t - b.start) / len) * 4), len: Math.max(0.25, Math.min(4, (n.dur / len) * 4)) })),
+      };
+    });
+    const sec = spans.map((sp) => ({ name: sp.name, from: sp.from, to: sp.to }));
+    writeStore('bf-song-exercise', { title: cleanName(name), source: tabSrcLabel, key: songKey ? keyName(songKey) : '', bpm: Math.round(analysis.bpm), bars, sections: sec });
+    writeStore('bf-ex-view', { ...readStore<Record<string, unknown>>('bf-ex-view', {}), tab: 'song' });
+    stopAll();
+    setPlaying(false);
+    onStudyExercise?.();
+  }
+  // Instantes em que a tela muda (tempos e notas do baixo), em ordem.
+  useEffect(() => {
+    const t: number[] = [...(analysis?.beats ?? [])];
+    const line = inst === 'piano' ? (pianoRec ? pianoNotes : null) : inst === 'bass' || studyStem ? (bassAcomp ? accFingered : bassNotes) : null;
+    for (const n of line ?? []) t.push(n.startSec, n.startSec + n.durSec);
+    // Tablatura aberta: começo e fim de cada nota dela, para a nota marcada trocar na hora.
+    if (tabOpen) for (const n of tabLine) t.push(n.t, n.t + Math.max(0.08, n.dur));
+    events.current = Float64Array.from(t).sort();
+  }, [analysis, bassNotes, pianoNotes, inst, pianoRec, bassAcomp, accFingered, studyStem, tabOpen, tabLine]);
 
   const neckNotes: NeckNote[] = useMemo(() => {
     if (!fingered || !bar) return [];
@@ -626,7 +806,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     return inBar.map((n, i) => ({
       pos: n.pos!,
       midi: n.midi,
-      finger: n.pos!.fret === 0 || n.zone === null ? 0 : n.pos!.fret - n.zone + 1,
+      finger: n.finger ?? (n.pos!.fret === 0 || n.zone === null ? 0 : n.pos!.fret - n.zone + 1),
       state: i === nowIdx ? 'now' : i === nextIdx ? 'next' : n.startSec + n.durSec <= pos ? 'done' : 'later',
     }));
   }, [fingered, bar, pos]);
@@ -656,6 +836,18 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     for (let k = 0; k < strip.length && strip[k]!.start <= pos + 1e-3; k++) i = k;
     return i;
   }, [strip, pos]);
+  // Tablatura e mapa rolam sozinhos: o compasso tocando fica sempre à vista (no meio do painel).
+  useEffect(() => {
+    if (barIdx < 0) return;
+    for (const sel of ['.tab-panel', '.map-panel.chart:not(.tab-panel)']) {
+      const box = document.querySelector<HTMLElement>(`${sel} .chart-sections`);
+      const cur = box?.querySelector<HTMLElement>('.chart-bar.cur');
+      if (!box || !cur) continue;
+      const top = cur.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+      const target = top - box.clientHeight / 2 + cur.clientHeight / 2;
+      if (Math.abs(box.scrollTop - target) > cur.clientHeight * 0.75) box.scrollTo({ top: Math.max(0, target), behavior: playing ? 'smooth' : 'auto' });
+    }
+  }, [barIdx, playing]);
   const stripRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const box = stripRef.current;
@@ -731,6 +923,9 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
 
   /* ------------------------------ mapa da música (partes) ------------------------------ */
   const [mapOpen, setMapOpen] = useState(false);
+  /** O que entra no mapa exportado (PDF e texto). */
+  const [mapOpts, setMapOpts] = useState(() => readStore('bf-map-opts', { tab: true, rec: true, shapes: true }));
+  useEffect(() => writeStore('bf-map-opts', mapOpts), [mapOpts]);
   const [sections, setSections] = useState<Section[] | null>(null);
   const nBars = analysis?.bars.length ?? 0;
   // Energia por compasso (voz e mix) a partir das faixas já carregadas: ajuda a separar as partes.
@@ -748,8 +943,9 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       }
       return out;
     };
-    const vocal = barEnergy(analysis.bars, mix(['vocals', 'lead', 'backing']), rate);
-    const total = barEnergy(analysis.bars, mix(lanes.map((l) => l.key)), rate);
+    // Faixas mais lentas: um segundo da música ocupa rate/laneRate amostras.
+    const vocal = barEnergy(analysis.bars, mix(['vocals', 'lead', 'backing']), rate / laneRate);
+    const total = barEnergy(analysis.bars, mix(lanes.map((l) => l.key)), rate / laneRate);
     return analysis.bars.map((_, i) => ({ vocal: vocal[i]!, total: total[i]! }));
   }, [analysis, lanes]);
   const hasVocals = !!lanes?.some((l) => ['vocals', 'lead', 'backing'].includes(l.key));
@@ -762,10 +958,125 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   }, [analysis, rec, lanes, detect]);
   const spans = useMemo(() => (sections && nBars ? sectionSpans(sections, nBars) : []), [sections, nBars]);
   const curSection = spans.findIndex((s) => barIdx >= s.from && barIdx <= s.to);
+  // Forma da música: partes com os mesmos acordes, compasso a compasso, recebem a mesma letra.
+  const letters = useMemo(() => {
+    if (!analysis) return [];
+    const sig = (b: (typeof analysis.bars)[number]) => b.chords.map((c) => (c.chord ? `${c.chord.root}${c.chord.quality}/${c.chord.bass ?? ''}` : '-')).join(',');
+    return sectionLetters(spans.map((x) => analysis.bars.slice(x.from, x.to + 1).map(sig)));
+  }, [analysis, spans]);
+  /* ------------------------------ mapa harmônico da música ------------------------------ */
+  const [mapLook, setMapLook] = useState(() => readStore('bf-song-map-look', { view: 'chords' as MapView, density: 'stage' as MapDensity, circle: false }));
+  useEffect(() => writeStore('bf-song-map-look', mapLook), [mapLook]);
+  const [selBar, setSelBar] = useState<number | null>(null);
+  const mapFlats = keyUsesFlats(songKey);
+  // Compassos com os acordes (tom de agora), tempo de início no compasso e duração em tempos.
+  const songHarm: HarmonicMapData | null = useMemo(() => {
+    if (!analysis || !songKey) return null;
+    const measures = effectiveBars.map((b) => {
+      const len = Math.max(0.1, b.end - b.start);
+      const raw = b.chords.filter((c) => c.chord);
+      const chords = raw.map((c, k) => {
+        const beat = Math.max(0, Math.min(3, Math.round(((c.start - b.start) / len) * 4)));
+        const next = raw[k + 1];
+        const endBeat = next ? Math.max(beat + 1, Math.min(4, Math.round(((next.start - b.start) / len) * 4))) : 4;
+        return { chord: transposeChord(c.chord!, semis), beat, beats: Math.max(1, endBeat - beat) };
+      });
+      // Acordes iguais seguidos no mesmo compasso viram um só.
+      const merged: Array<{ chord: Chord; beat: number; beats: number }> = [];
+      for (const c of chords) {
+        const p = merged[merged.length - 1];
+        if (p && chordSymbol(p.chord) === chordSymbol(c.chord)) merged[merged.length - 1] = { ...p, beats: p.beats + c.beats };
+        else merged.push(c);
+      }
+      return { index: b.index, beats: 4, chords: merged, start: b.start, end: b.end };
+    });
+    return {
+      title: cleanName(name),
+      key: songKey,
+      bpm: Math.round(analysis.bpm),
+      timeSig: [4, 4] as const,
+      measures,
+      sections: spans.map((sp, i) => ({ name: sp.name, from: sp.from, to: sp.to, ...(letters[i] ? { letter: letters[i]!.letter } : {}) })),
+    };
+  }, [analysis, songKey, effectiveBars, semis, spans, letters, name]);
+  const songInsight: ChordInsight[][] = useMemo(() => (songHarm ? analyzeMap(songHarm, mapFlats) : []), [songHarm, mapFlats]);
+  /** Correção de acorde feita no tom de agora: guardada no tom original da música. */
+  function editBar(bar: number, chordIdx: number, chord: Chord) {
+    const m = songHarm?.measures[bar];
+    if (!m) return;
+    const back = (c: Chord): Chord => transposeChord(c, -semis);
+    const list = m.chords.map((c, k) => ({ beat: c.beat, beats: c.beats, chord: back(k === chordIdx ? chord : c.chord) }));
+    setChordEdits((e) => ({ ...e, [bar]: list }));
+    setMessage(`Compasso ${bar + 1}: ${chordSymbol(chord, mapFlats)}. A correção vale no mapa, na exportação e nas guias harmônicas.`);
+  }
+  function splitBar(bar: number) {
+    const m = songHarm?.measures[bar];
+    if (!m || m.chords.length !== 1) return;
+    const c = transposeChord(m.chords[0]!.chord, -semis);
+    setChordEdits((e) => ({ ...e, [bar]: [{ beat: 0, beats: 2, chord: c }, { beat: 2, beats: 2, chord: c }] }));
+  }
+  // Ciclo sincronizado: o acorde soando acende; o compasso escolhido vai para o braço (notas-alvo).
+  useEffect(() => {
+    harmonicStore.set({ active: curChord });
+  }, [curChord?.root, curChord?.quality, curChord?.bass]);
+  const selChord = selBar !== null ? (songHarm?.measures[selBar]?.chords[0] ?? null) : null;
+  const selInsight = selBar !== null ? (songInsight[selBar]?.[0] ?? null) : null;
+  useEffect(() => {
+    harmonicStore.set({ selected: selChord && selInsight ? { chord: selChord.chord, degree: selInsight.roman, scale: selInsight.scale, targets: selInsight.targets.pcs } : null });
+  }, [selChord, selInsight]);
+  // Notas do acorde escolhido no braço do baixo (casas 1–12); alvos (1, 3, 7) em destaque.
+  const neckHints = useMemo(() => {
+    if (!selChord || !selInsight) return [];
+    const tones = new Set(harmonicFieldTones(selChord.chord));
+    const targets = new Set(selInsight.targets.pcs);
+    const out: Array<{ pos: { string: number; fret: number }; label: string; state: 'scale' | 'root' }> = [];
+    for (let m = tuning.strings[0]!; m <= tuning.strings[tuning.strings.length - 1]! + 12; m++) {
+      if (!tones.has(m % 12)) continue;
+      for (const p of positionsOf(m, tuning)) if (p.fret >= 1 && p.fret <= 12) out.push({ pos: p, label: '', state: targets.has(m % 12) ? 'root' : 'scale' });
+    }
+    return out;
+  }, [selChord, selInsight, tuning]);
+  /** Clique no ciclo: com compasso escolhido, troca o acorde; senão leva a música para aquele tom. */
+  function pickOnCircle(ring: Ring, index: number) {
+    const slot = CIRCLE[index]!;
+    const chord: Chord = ring === 'major' ? { root: slot.major.root, quality: '' } : ring === 'minor' ? { root: slot.minor.root, quality: 'm' } : { root: slot.dim.root, quality: 'dim' };
+    if (selBar !== null) {
+      editBar(selBar, 0, chord);
+      playHarmonyChord(chord);
+      return;
+    }
+    if (!analysis || ring === 'dim') return;
+    // Mesmo modo da música: o tom clicado; modo trocado: a relativa (Am numa música maior → Dó maior).
+    const target = ring === 'major' ? (analysis.key.mode === 'major' ? { tonic: slot.major.root, mode: 'major' as const } : { tonic: slot.minor.root, mode: 'minor' as const }) : analysis.key.mode === 'minor' ? { tonic: slot.minor.root, mode: 'minor' as const } : { tonic: slot.major.root, mode: 'major' as const };
+    void changeSemis(semitonesBetween(analysis.key, target));
+  }
+
+  /** Partes repetidas mostradas por inteiro no mapa (as outras ficam resumidas). */
+  const [expanded, setExpanded] = useState<ReadonlySet<number>>(new Set());
+  /** Nomes de músico pela forma: Intro, Parte A, Parte B, Pré-refrão, Refrão, Ponte, Outro. */
+  function nameSectionsByForm() {
+    if (!sections || !spans.length) return;
+    const en = energy ? spans.map((x) => energy.slice(x.from, x.to + 1).reduce((a, e) => a + e.total, 0) / (x.to - x.from + 1)) : undefined;
+    const names = nameByForm(spans, letters, en);
+    changeSections(sections.map((x) => {
+      const k = spans.findIndex((sp) => sp.from === x.startBar);
+      return k >= 0 ? { ...x, name: names[k]! } : x;
+    }));
+    setMessage('Partes nomeadas pela forma. Renomeie à vontade.');
+  }
+  /** Muda o começo de uma parte um compasso para trás ou para a frente (sem passar das vizinhas). */
+  function shiftSection(i: number, delta: number) {
+    if (!sections || i <= 0) return;
+    const sp = spans[i]!;
+    const prev = spans[i - 1]!;
+    const next = sp.from + delta;
+    if (next <= prev.from || next > sp.to) return;
+    changeSections(sections.map((x) => (x.startBar === sp.from ? { ...x, startBar: next } : x)));
+  }
   function changeSections(next: Section[]) {
     const norm = normalizeSections(next, nBars);
     setSections(norm);
-    void window.baixaria.librarySetSections(songId, norm).catch((e: unknown) => setError(e instanceof Error ? e.message : 'falha ao salvar o mapa'));
+    void window.baixaria.librarySetSections(songId, norm).catch((e: unknown) => setError(errorText(e, 'falha ao salvar o mapa')));
   }
   function buildMap(): SongMap | null {
     if (!analysis || !songKey) return null;
@@ -774,17 +1085,39 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       const names = (bassNotes ?? []).filter((n) => n.startSec >= b.start - 0.03 && n.startSec < b.end - 0.03).map((n) => pcName(n.midi % 12, flats));
       return names.filter((x, i) => i === 0 || x !== names[i - 1]).slice(0, 8);
     };
+    // Tablatura do baixo: a linha escolhida no painel Tablatura (gravação transcrita ou guia harmônica).
+    const accBass = mapOpts.tab ? tabLine : [];
+    const tabIn = (b: { start: number; end: number }) => (accBass.length ? tabInBar(b) : []);
+    // Formas do violão: um diagrama por acorde diferente da música, na ordem em que aparecem.
+    const shapes: Array<{ name: string; frets: ReadonlyArray<number | null>; base: number }> = [];
+    if (mapOpts.shapes) {
+      for (const c of strip) {
+        if (shapes.some((x) => x.name === c.name) || shapes.length >= 48) continue;
+        const v = guitarVoicing(c.chord, { mode: guitarMode, level: chordLevel, near: accomp.guitar.region });
+        if (v) shapes.push({ name: c.name, frets: v.frets, base: v.baseFret });
+      }
+    }
+    const regionLabel = BASS_REGIONS.find((r) => r.id === accomp.bass.region)?.label ?? '';
     return {
       title: title,
       key: keyName(songKey),
       bpm: analysis.bpm,
       ...(variableTempo && analysis.tempo?.range ? { bpmRange: [analysis.tempo.range[0], analysis.tempo.range[1]] as const } : {}),
       transpose: semis,
-      sections: spans.map((s) => ({
+      ...(accBass.length
+        ? {
+            strings: tuning.strings.map((m) => pcName(m % 12, false)),
+            bassStyle: tabSrc === 'acomp' || !bassNotes ? `${BASS_PATTERNS.find((x) => x.id === accomp.bass.pattern)?.label ?? ''}, ${regionLabel.toLowerCase()}` : tabSrcLabel,
+          }
+        : {}),
+      ...(shapes.length ? { shapes } : {}),
+      sections: spans.map((s, si) => ({
         name: s.name,
         from: s.from,
         to: s.to,
-        bars: analysis.bars.slice(s.from, s.to + 1).map((b, k) => {
+        ...(letters[si] ? { letter: letters[si]!.letter } : {}),
+        ...(letters[si]?.repeatOf != null ? { repeatOf: spans[letters[si]!.repeatOf!]!.name } : {}),
+        bars: effectiveBars.slice(s.from, s.to + 1).map((b, k) => {
           const local = transposeKey(b.key, semis);
           const names = b.chords.map((c) => (c.chord ? chordName(transposeChord(c.chord, semis), local) : '—'));
           const chords = names.filter((x, i) => i === 0 || x !== names[i - 1]);
@@ -792,13 +1125,14 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
           // "%" (repete o compasso anterior) dentro da mesma parte, como numa partitura de ensaio.
           const same = k > 0 && sig === prev;
           prev = sig;
-          return { n: s.from + k + 1, chords: same ? [] : chords, bass: bassIn(b) };
+          const tab = tabIn(b);
+          return { n: s.from + k + 1, chords: same ? [] : chords, bass: mapOpts.rec ? bassIn(b) : [], ...(tab.length ? { tab } : {}) };
         }),
       })),
     };
   }
-  async function exportMap(kind: 'pdf' | 'txt') {
-    const map = buildMap();
+  async function exportMap(kind: 'pdf' | 'txt', forceTab = false) {
+    const map = forceTab ? withTab() : buildMap();
     if (!map) return;
     setError(null);
     try {
@@ -806,9 +1140,21 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       if (picked.canceled) return;
       if (kind === 'pdf') await window.baixaria.exportMapPdf(picked.path, map);
       else await window.baixaria.writeExportFile(picked.path, new TextEncoder().encode('\ufeff' + songMapText(map)));
-      setMessage(`Mapa exportado em ${kind === 'pdf' ? 'PDF' : 'texto'}: ${map.sections.length} partes, ${nBars} compassos${bassNotes ? ', com as notas do baixo' : ''}.`);
+      const extras = [map.strings ? 'a tablatura do baixo' : '', map.shapes ? `${map.shapes.length} formas de acorde` : '', mapOpts.rec && bassNotes ? 'as notas do baixo da gravação' : ''].filter(Boolean);
+      setMessage(`Mapa exportado em ${kind === 'pdf' ? 'PDF' : 'texto'}: ${map.sections.length} partes, ${nBars} compassos${extras.length ? `, com ${extras.join(', ')}` : ''}.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao exportar o mapa');
+      setError(errorText(e, 'falha ao exportar o mapa'));
+    }
+  }
+
+  /** Mapa com a tablatura garantida (exportação pelo painel Tablatura). */
+  function withTab(): SongMap | null {
+    const keep = mapOpts.tab;
+    mapOpts.tab = true;
+    try {
+      return buildMap();
+    } finally {
+      mapOpts.tab = keep;
     }
   }
 
@@ -828,12 +1174,12 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
 
   // Violão: forma do acorde atual e do próximo. No CAGED, a raiz fica na zona da mão.
   const guitarNow = useMemo(
-    () => (curChord ? guitarVoicing(curChord, { mode: guitarMode, level: chordLevel, near: handZone ?? 3 }) : null),
-    [curChord, guitarMode, chordLevel, handZone],
+    () => (curChord ? guitarVoicing(curChord, { mode: guitarMode, level: chordLevel, near: accomp.guitar.region }) : null),
+    [curChord, guitarMode, chordLevel, accomp.guitar.region],
   );
   const guitarNext = useMemo(
-    () => (nextChord ? guitarVoicing(nextChord.chord, { mode: guitarMode, level: chordLevel, near: handZone ?? 3 }) : null),
-    [nextChord, guitarMode, chordLevel, handZone],
+    () => (nextChord ? guitarVoicing(nextChord.chord, { mode: guitarMode, level: chordLevel, near: accomp.guitar.region }) : null),
+    [nextChord, guitarMode, chordLevel, accomp.guitar.region],
   );
 
   // Próxima nota (pode estar no compasso seguinte) e quanto falta.
@@ -855,12 +1201,13 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       await window.baixaria.writeExportFile(picked.path, bytes);
       setMessage(`${info.label} exportada em WAV (${(bytes.byteLength / 1048576).toFixed(1)} MB).`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao exportar');
+      setError(errorText(e, 'falha ao exportar'));
     }
   }
 
   const [mixBusy, setMixBusy] = useState(false);
   const mixKeys = lanes ? lanes.filter((l) => mix[l.key]?.exp ?? true).map((l) => l.key) : [];
+  const mixCount = mixKeys.length;
   /** Renderiza as faixas marcadas, com o volume, o pan e o tom de agora, num WAV estéreo. */
   async function exportMix() {
     if (!lanes) return;
@@ -873,14 +1220,14 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       const picked = await window.baixaria.chooseExportPath('wav', `${cleanName(name)} - ${suffix}${semis ? ` (${semis > 0 ? '+' : ''}${semis})` : ''}`);
       if (picked.canceled) return;
       setMixBusy(true);
-      const rate = chosen[0]!.buffer.sampleRate;
-      const length = Math.max(...chosen.map((l) => l.buffer.length));
+      const rate = lanes[0]!.buffer.sampleRate;
+      const length = Math.max(...lanes.map((l) => l.buffer.length));
       const ctx = new OfflineAudioContext(2, length, rate);
       const master = ctx.createGain(); // mesmo volume geral que se ouve no player
       master.gain.value = masterVol;
       master.connect(ctx.destination);
       for (const l of chosen) {
-        const m = mix[l.key] ?? { on: true, solo: false, vol: 0.8 };
+        const m = mix[l.key] ?? DEFAULT_MIX;
         const src = ctx.createBufferSource();
         src.buffer = l.buffer;
         const g = ctx.createGain();
@@ -906,7 +1253,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
         `Mixagem exportada em WAV com ${labels.join(', ')} (${(bytes.byteLength / 1048576).toFixed(1)} MB).${scaled ? ` O volume total foi reduzido em ${(20 * Math.log10(peak / 0.989)).toFixed(1).replace('.', ',')} dB para não distorcer.` : ''}`,
       );
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao exportar a mixagem');
+      setError(errorText(e, 'falha ao exportar a mixagem'));
     } finally {
       setMixBusy(false);
     }
@@ -924,7 +1271,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       await window.baixaria.writeExportFile(picked.path, bytes);
       setMessage(`${info.label} exportada em MIDI. As notas são estimadas pelo Basic Pitch: confira antes de usar.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao gerar o MIDI');
+      setError(errorText(e, 'falha ao gerar o MIDI'));
     } finally {
       setMidiBusy(null);
     }
@@ -944,7 +1291,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       if (e.code === 'Space') {
         e.preventDefault();
         if (playing) pause();
@@ -964,7 +1311,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
         if (!lane) return;
         const k = lane.key;
         setMix((x) => {
-          const m = x[k] ?? { on: true, solo: false, vol: 0.8 };
+          const m = x[k] ?? DEFAULT_MIX;
           return { ...x, [k]: e.shiftKey ? { ...m, solo: !m.solo } : { ...m, on: !m.on } };
         });
       }
@@ -972,6 +1319,21 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+
+  /* ------------------------------ montagem pelas faixas ------------------------------ */
+  const laneKeys = useMemo(() => (lanes ?? []).map((l) => l.key), [lanes]);
+  const presets = useMemo(() => presetsFor(laneKeys), [laneKeys]);
+  const preset = anySolo ? null : matchPreset(laneKeys, (k) => mix[k]?.on ?? true);
+  function applyPreset(id: string) {
+    const p = presets.find((x) => x.id === id);
+    if (!p) return;
+    setMix((m) => {
+      const next = { ...m };
+      for (const k of laneKeys) next[k] = { ...(next[k] ?? DEFAULT_MIX), on: p.on(k), solo: false };
+      return next;
+    });
+    setMessage(`Montagem: ${p.label.toLowerCase()} (${p.hint.toLowerCase()}).`);
+  }
 
   /* ------------------------------ telas sem faixas ------------------------------ */
   const title = cleanName(name);
@@ -1057,6 +1419,16 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
         </div>
         <div className="spacer" />
         {analysis && (
+          <button className={guidePanel ? 'ghost on' : 'ghost'} onClick={() => setGuidePanel((open) => !open)} aria-expanded={guidePanel} title="Configurar as visualizações harmônicas do braço e do teclado">
+            <Icon name="chords" size={16} /> Guias harmônicos
+          </button>
+        )}
+        {analysis && (
+          <button className={tabOpen ? 'ghost on' : 'ghost'} onClick={() => setTabOpen((o) => !o)} aria-expanded={tabOpen} title="Tablatura do baixo por compasso, com a harmonia">
+            <Icon name="tab" size={16} /> Tablatura
+          </button>
+        )}
+        {analysis && (
           <button className={mapOpen ? 'ghost on' : 'ghost'} onClick={() => setMapOpen((o) => !o)} aria-expanded={mapOpen}>
             <Icon name="staff" size={16} /> Mapa
           </button>
@@ -1065,11 +1437,11 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
           <button
             className="ghost"
             onClick={() => void exportMix()}
-            disabled={mixBusy || mixKeys.length === 0}
-            title="Junta as faixas marcadas (✓ ao lado do nome), com o volume, o pan e o tom de agora, num WAV"
+            disabled={mixBusy || mixCount === 0}
+            title="Junta as faixas marcadas com o volume, o pan e o tom de agora, num WAV"
           >
             {mixBusy ? <span className="spin" aria-hidden="true" /> : <Icon name="export" size={16} />} Exportar mixagem
-            <span className="count-pill">{mixKeys.length}</span>
+            <span className="count-pill">{mixCount}</span>
           </button>
         )}
         {lanes && (
@@ -1086,12 +1458,39 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
       </header>
 
       {mapOpen && analysis && sections && (
-        <div className="card map-panel" role="region" aria-label="Mapa da música">
+        <div className="card map-panel chart" role="region" aria-label="Mapa da música">
           <div className="map-head">
             <b>Mapa da música</b>
-            <span className="muted small" title="Detectadas pela repetição dos acordes e pela voz">Renomeie, divida e junte as partes; fica salvo na música.</span>
+            <span className="muted small">
+              {keyName(songKey ?? analysis.key)} · {Math.round((analysis.bpm * speed) / 100)} BPM{speed !== 100 ? ` (${speed}%)` : ''} · 4/4 · {nBars} compassos
+            </span>
             <div className="spacer" />
-            <button className="ghost small-btn" onClick={() => changeSections(detect())} title="Descarta as edições e detecta de novo">
+            <div className="seg tiny" role="group" aria-label="Visão do mapa">
+              <button aria-pressed={mapLook.view === 'chords'} onClick={() => setMapLook((l) => ({ ...l, view: 'chords' }))}>
+                Cifras
+              </button>
+              <button aria-pressed={mapLook.view === 'degrees'} onClick={() => setMapLook((l) => ({ ...l, view: 'degrees' }))}>
+                Graus
+              </button>
+              <button aria-pressed={mapLook.view === 'hybrid'} onClick={() => setMapLook((l) => ({ ...l, view: 'hybrid' }))}>
+                Híbrido
+              </button>
+            </div>
+            <div className="seg tiny" role="group" aria-label="Densidade do mapa">
+              <button aria-pressed={mapLook.density === 'stage'} onClick={() => setMapLook((l) => ({ ...l, density: 'stage' }))} title="Só a harmonia: para tocar">
+                Palco
+              </button>
+              <button aria-pressed={mapLook.density === 'study'} onClick={() => setMapLook((l) => ({ ...l, density: 'study' }))} title="Notas-alvo (1·3·7) e a nota de condução para o próximo acorde">
+                Estudo
+              </button>
+            </div>
+            <button className={mapLook.circle ? 'ghost small-btn on' : 'ghost small-btn'} onClick={() => setMapLook((l) => ({ ...l, circle: !l.circle }))} title="Ciclo das quintas sincronizado com a música">
+              <Icon name="chords" size={14} /> Ciclo
+            </button>
+            <button className="ghost small-btn" onClick={() => nameSectionsByForm()} title="Dá nomes de músico pela forma: Intro, Parte A, Parte B, Pré-refrão, Refrão, Ponte, Outro">
+              <Icon name="staff" size={14} /> Nomear pela forma
+            </button>
+            <button className="ghost small-btn" onClick={() => changeSections(detect())} title="Descarta as edições e detecta as partes de novo">
               Detectar de novo
             </button>
             <button className="ghost small-btn" onClick={() => void exportMap('txt')}>
@@ -1101,68 +1500,366 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
               <Icon name="export" size={14} /> Exportar PDF
             </button>
           </div>
+          {/* Forma da música: uma ficha por parte, na ordem; clique para ir até ela. */}
+          <div className="form-strip" aria-label="Forma da música">
+            {spans.map((sp, i) => (
+              <button
+                key={sp.from}
+                className={`form-chip ${i === curSection ? 'cur' : ''}`}
+                data-kind={sectionKind(sp.name)}
+                style={{ flexGrow: sp.to - sp.from + 1 }}
+                onClick={() => seekRef.current(analysis.bars[sp.from]!.start)}
+                title={`${sp.name} · compassos ${sp.from + 1}–${sp.to + 1}`}
+              >
+                <b>{letters[i]?.letter}</b> {sp.name}
+              </button>
+            ))}
+          </div>
+          <div className="map-opts" role="group" aria-label="O que entra no mapa exportado">
+            <span className="muted small">No PDF:</span>
+            <label className="check" title="Linha harmônica do baixo, com corda e casa">
+              <input type="checkbox" checked={mapOpts.tab} onChange={() => setMapOpts((o) => ({ ...o, tab: !o.tab }))} /> Tablatura do baixo
+            </label>
+            <label className="check" title="Notas que o baixo da gravação toca (estimadas)">
+              <input type="checkbox" checked={mapOpts.rec} onChange={() => setMapOpts((o) => ({ ...o, rec: !o.rec }))} /> Notas da gravação
+            </label>
+            <label className="check" title="Diagrama de cada acorde no violão (formas do painel)">
+              <input type="checkbox" checked={mapOpts.shapes} onChange={() => setMapOpts((o) => ({ ...o, shapes: !o.shapes }))} /> Acordes no violão
+            </label>
+            <div className="spacer" />
+            <span className="muted small">Para tocar junto mais devagar, use Velocidade na barra de baixo.</span>
+          </div>
           <datalist id="bf-section-names">
             {SECTION_NAMES.map((n) => (
               <option key={n} value={n} />
             ))}
           </datalist>
-          <ol className="map-list">
-            {spans.map((s, i) => (
-              <li key={s.from} className={`map-row ${i === curSection ? 'cur' : ''}`} data-kind={sectionKind(s.name)}>
-                <span className="map-dot" aria-hidden="true" />
-                <input
-                  className="map-name"
-                  list="bf-section-names"
-                  defaultValue={s.name}
-                  key={`${s.from}-${s.name}`}
-                  aria-label={`Nome da parte ${i + 1}`}
-                  onBlur={(e) => e.currentTarget.value.trim() !== s.name && changeSections(sections.map((x) => (x.startBar === s.from ? { ...x, name: e.currentTarget.value } : x)))}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === 'Enter') e.currentTarget.blur();
-                  }}
-                />
-                <button className="ghost map-range" onClick={() => seekRef.current(analysis.bars[s.from]!.start)} title="Ir para esta parte">
-                  c. {s.from + 1}–{s.to + 1} <span className="muted">· {s.to - s.from + 1}</span>
-                </button>
-                <span className="map-chords">
-                  {analysis.bars
-                    .slice(s.from, Math.min(s.to + 1, s.from + 4))
-                    .map((b) => {
-                      const c = b.chords.find((x) => x.chord)?.chord;
-                      return c ? chordName(transposeChord(c, semis), transposeKey(b.key, semis)) : '—';
-                    })
-                    .join('  ')}
-                  {s.to - s.from >= 4 ? ' …' : ''}
-                </span>
-                <span className="map-acts">
-                  <button
-                    className={`ghost icon-btn ${loop && loop.from === s.from && loop.to === s.to ? 'on' : ''}`}
-                    onClick={() => (loop && loop.from === s.from && loop.to === s.to ? setLoop(null) : loopPart(s.from, s.to))}
-                    aria-label={`Tocar ${s.name} em loop`}
-                    title="Tocar esta parte em loop"
-                  >
-                    <Icon name="loop" size={14} />
-                  </button>
-                  {i > 0 && (
-                    <button className="ghost small-btn" onClick={() => changeSections(sections.filter((x) => x.startBar !== s.from))} title="Junta esta parte com a anterior">
-                      Juntar
+          <div className="chart-sections">
+            {spans.map((sp, i) => {
+              const rep = letters[i]?.repeatOf;
+              const looping = !!loop && loop.from === sp.from && loop.to === sp.to;
+              const open = rep == null || expanded.has(sp.from);
+              let prevSig = '';
+              return (
+                <section key={sp.from} className={`chart-sec ${i === curSection ? 'cur' : ''}`} data-kind={sectionKind(sp.name)}>
+                  <header className="chart-sec-head">
+                    <span className="chart-letter" title="Forma: partes com os mesmos acordes têm a mesma letra">
+                      {letters[i]?.letter ?? ''}
+                    </span>
+                    <input
+                      className="map-name"
+                      list="bf-section-names"
+                      defaultValue={sp.name}
+                      key={`${sp.from}-${sp.name}`}
+                      aria-label={`Nome da parte ${i + 1}`}
+                      onBlur={(e) => e.currentTarget.value.trim() !== sp.name && changeSections(sections.map((x) => (x.startBar === sp.from ? { ...x, name: e.currentTarget.value } : x)))}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                      }}
+                    />
+                    <span className="muted small">
+                      c. {sp.from + 1}–{sp.to + 1} · {sp.to - sp.from + 1} comp.
+                    </span>
+                    {rep != null && <span className="chart-rep">= {spans[rep]!.name}</span>}
+                    <div className="spacer" />
+                    {i > 0 && (
+                      <span className="map-shift" role="group" aria-label={`Começo de ${sp.name}`}>
+                        <button className="ghost icon-btn" onClick={() => shiftSection(i, -1)} disabled={sp.from - 1 <= spans[i - 1]!.from} title="Começar um compasso antes" aria-label="Começar um compasso antes">
+                          <Icon name="back" size={12} />
+                        </button>
+                        <button className="ghost icon-btn flip" onClick={() => shiftSection(i, 1)} disabled={sp.from + 1 > sp.to} title="Começar um compasso depois" aria-label="Começar um compasso depois">
+                          <Icon name="back" size={12} />
+                        </button>
+                      </span>
+                    )}
+                    <button className={`ghost icon-btn ${looping ? 'on' : ''}`} onClick={() => (looping ? setLoop(null) : loopPart(sp.from, sp.to))} aria-label={`Tocar ${sp.name} em loop`} title="Tocar esta parte em loop">
+                      <Icon name="loop" size={14} />
+                    </button>
+                    {i > 0 && (
+                      <button className="ghost small-btn" onClick={() => changeSections(sections.filter((x) => x.startBar !== sp.from))} title="Junta esta parte com a anterior">
+                        Juntar
+                      </button>
+                    )}
+                  </header>
+                  {open ? (
+                    <div className="chart-grid">
+                      {analysis.bars.slice(sp.from, sp.to + 1).map((b) => {
+                        const m = songHarm?.measures[b.index];
+                        const ins = songInsight[b.index] ?? [];
+                        const sig = m ? m.chords.map((c) => chordSymbol(c.chord, mapFlats)).join(' ') : '';
+                        const same = sig === prevSig && mapLook.density === 'stage' && mapLook.view === 'chords';
+                        prevSig = sig;
+                        const curBar = b.index === barIdx;
+                        const edited = !!chordEdits[b.index];
+                        return (
+                          <button
+                            key={b.index}
+                            className={`chart-bar ${curBar ? 'cur' : ''} ${selBar === b.index ? 'sel' : ''} ${edited ? 'edited' : ''} ${loop && b.index >= loop.from && b.index <= loop.to ? 'in-loop' : ''}`}
+                            onClick={() => {
+                              seekRef.current(b.start);
+                              setSelBar((x) => (x === b.index ? null : b.index));
+                            }}
+                            title={`Compasso ${b.index + 1}: ${sig}${edited ? ' (corrigido)' : ''}`}
+                          >
+                            <span className="bar-n">{b.index + 1}</span>
+                            {same || !m ? (
+                              <span className="bar-rep">%</span>
+                            ) : (
+                              <span className="bar-harm">
+                                {m.chords.map((c, k) => (
+                                  <span key={k} className={`hm-chord ${ins[k] && ins[k]!.kind !== 'diatonic' ? `k-${ins[k]!.kind}` : ''}`} style={{ flexGrow: c.beats }}>
+                                    {mapLook.view !== 'degrees' && <b className="hm-name">{chordSymbol(c.chord, mapFlats)}</b>}
+                                    {mapLook.view !== 'chords' && ins[k] && <span className={mapLook.view === 'degrees' ? 'hm-roman big' : 'hm-roman'}>{ins[k]!.roman}</span>}
+                                    {mapLook.density === 'study' && ins[k] && (
+                                      <span className="hm-targets" title="Notas-alvo e a nota de condução para o próximo acorde">
+                                        {[ins[k]!.targets.root, ins[k]!.targets.third, ins[k]!.targets.seventh].filter(Boolean).join('·')}
+                                        {ins[k]!.approach && <i> → {ins[k]!.approach!.note}</i>}
+                                      </span>
+                                    )}
+                                    {ins[k]?.resolves && <span className={`hm-arrow ${ins[k]!.resolves}`} />}
+                                  </span>
+                                ))}
+                              </span>
+                            )}
+                            {curBar && <span className="bar-beat" style={{ width: `${((beat + 1) / 4) * 100}%` }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <button className="chart-collapsed" onClick={() => setExpanded((x) => new Set(x).add(sp.from))}>
+                      Mesmos acordes de “{spans[rep!]!.name}” · mostrar os compassos
                     </button>
                   )}
-                </span>
-              </li>
-            ))}
-          </ol>
+                </section>
+              );
+            })}
+          </div>
+          {(selBar !== null || mapLook.circle) && songHarm && (
+            <div className="map-cof">
+              {mapLook.circle && (
+                <div className="map-cof-wheel">
+                  <CircleOfFifthsWheel
+                    selected={circleSlotOf({ root: songHarm.key.tonic, quality: songHarm.key.mode === 'minor' ? 'm' : '' })}
+                    field={harmonicField(songHarm.key).flatMap((f) => {
+                      const sl = circleSlotOf(f.chord);
+                      return sl ? [{ ...sl, degree: f.degree }] : [];
+                    })}
+                    active={curChord ? circleSlotOf(curChord) : null}
+                    onPick={pickOnCircle}
+                  >
+                    <b className="hub-key">{keyName(songHarm.key)}</b>
+                    <span className="hub-sig">{selBar !== null ? `troca o c. ${selBar + 1}` : 'clique: transpor'}</span>
+                  </CircleOfFifthsWheel>
+                </div>
+              )}
+              {selBar !== null ? (
+                <VoiceLeadingInspector
+                  map={songHarm}
+                  insight={songInsight}
+                  measure={selBar}
+                  flats={mapFlats}
+                  onPlay={(c) => playHarmonyChord(c)}
+                  onReplace={(k, c) => editBar(selBar, k, c)}
+                  onSplit={() => splitBar(selBar)}
+                  onClose={() => setSelBar(null)}
+                />
+              ) : (
+                <p className="muted small">O acorde tocando acende no ciclo. Clique num tom para transpor a música; escolha um compasso para trocar o acorde dele pelo ciclo.</p>
+              )}
+            </div>
+          )}
+          {selBar !== null && chordEdits[selBar] && (
+            <button
+              className="ghost small-btn"
+              onClick={() =>
+                setChordEdits((e) => {
+                  const { [selBar]: _gone, ...rest } = e;
+                  return rest;
+                })
+              }
+            >
+              Desfazer a correção do compasso {selBar + 1}
+            </button>
+          )}
           <div className="map-foot">
             <button
               className="ghost small-btn"
-              disabled={barIdx <= 0 || spans.some((s) => s.from === barIdx)}
+              disabled={barIdx <= 0 || spans.some((x) => x.from === barIdx)}
               onClick={() => changeSections([...sections, { startBar: barIdx, name: 'Parte' }])}
               title="Começa uma parte nova no compasso em que você está"
             >
               <Icon name="scissors" size={14} /> Dividir no compasso {barIdx >= 0 ? barIdx + 1 : '–'}
             </button>
-            <span className="muted small">Dica: toque, pare no começo da parte e divida aqui.</span>
+            <span className="muted small">Clique num compasso para ir até ele; o compasso tocando acende.</span>
+          </div>
+        </div>
+      )}
+      {tabOpen && analysis && (
+        <div className="card map-panel chart tab-panel" role="region" aria-label="Tablatura do baixo">
+          <div className="map-head">
+            <b>Tablatura do baixo</b>
+            <span className="muted small">
+              {tabSrcLabel} · cordas {tabStrings.join(' ')} (aguda em cima) · número = casa
+            </span>
+            <div className="spacer" />
+            <div className="seg tiny" role="group" aria-label="Origem da tablatura">
+              <button aria-pressed={tabSrc === 'rec' && !!bassNotes} disabled={!bassNotes} onClick={() => setTabSrc('rec')} title="O que o baixo da gravação toca (notas estimadas)">
+                Gravação
+              </button>
+              <button aria-pressed={tabSrc === 'acomp' || !bassNotes} onClick={() => setTabSrc('acomp')} title="Linha harmônica guiada no braço">
+                Linha harmônica
+              </button>
+            </div>
+            <button className="ghost small-btn" onClick={() => void exportMap('txt', true)}>
+              <Icon name="export" size={14} /> Texto
+            </button>
+            <button className="ghost small-btn" onClick={() => void exportMap('pdf', true)}>
+              <Icon name="export" size={14} /> PDF
+            </button>
+            <button className="small-btn primary" disabled={!tabLine.length} onClick={studyAsExercise} title="Estudar esta linha nos Exercícios, trecho por trecho, no tom que quiser">
+              <Icon name="exercise" size={14} /> Estudar como exercício
+            </button>
+          </div>
+          {!tabLine.length ? (
+            <p className="muted small">{bassState && bassState !== 'error' ? 'Extraindo as notas do baixo…' : 'Sem notas de baixo: separe a faixa ou use a linha harmônica guiada.'}</p>
+          ) : (
+            <div className="chart-sections">
+              {spans.map((sp) => (
+                <section key={sp.from} className={`chart-sec ${barIdx >= sp.from && barIdx <= sp.to ? 'cur' : ''}`} data-kind={sectionKind(sp.name)}>
+                  <header className="chart-sec-head">
+                    <b>{sp.name}</b>
+                    <span className="muted small">
+                      c. {sp.from + 1}–{sp.to + 1}
+                    </span>
+                  </header>
+                  <div className="chart-grid">
+                    {analysis.bars.slice(sp.from, sp.to + 1).map((b) => {
+                      const local = transposeKey(b.key, semis);
+                      const names = b.chords.map((c) => (c.chord ? chordName(transposeChord(c.chord, semis), local) : '—'));
+                      const chords = names.filter((x, k) => k === 0 || x !== names[k - 1]);
+                      const notes = tabInBar(b);
+                      const n = tabStrings.length;
+                      const H = 8 + (n - 1) * 9;
+                      return (
+                        <button key={b.index} className={`chart-bar tab-bar ${b.index === barIdx ? 'cur' : ''}`} onClick={() => seekRef.current(b.start)} title={`Compasso ${b.index + 1}`}>
+                          <span className="bar-n">{b.index + 1}</span>
+                          <span className="tab-chords">{chords.join('  ')}</span>
+                          <svg className="tab-svg" viewBox={`0 0 160 ${H}`} aria-hidden="true">
+                            {tabStrings.map((_, st) => (
+                              <line key={st} x1="0" x2="160" y1={4 + (n - 1 - st) * 9} y2={4 + (n - 1 - st) * 9} />
+                            ))}
+                            {notes.map((t, k) => (
+                              <g
+                                key={k}
+                                className={b.index === barIdx && pos >= t.t - 0.01 && pos < t.end ? 'tab-now' : b.index === barIdx && t.end <= pos ? 'tab-done' : undefined}
+                                transform={`translate(${8 + t.x * 144} ${4 + (n - 1 - t.s) * 9})`}
+                              >
+                                <rect x="-5" y="-4.2" width="10" height="8.4" rx="1.5" />
+                                <text y="3">{t.f}</text>
+                              </g>
+                            ))}
+                          </svg>
+                          {b.index === barIdx && <span className="bar-beat" style={{ width: `${((beat + 1) / 4) * 100}%` }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {guidePanel && analysis && (
+        <div className="card acc-panel" role="region" aria-label="Guias harmônicos">
+          <div className="map-head">
+            <b>Guias harmônicos</b>
+            <span className="muted small">Visualizações baseadas nos acordes da música; não adicionam áudio à mixagem.</span>
+            <div className="spacer" />
+            <button className="ghost icon-btn" onClick={() => setGuidePanel(false)} aria-label="Fechar guias harmônicos">
+              <Icon name="close" size={13} />
+            </button>
+          </div>
+          <div className="acc-cols">
+            <section className="acc-col" aria-label="Baixo">
+              <div className="acc-col-head"><Icon name="bass" size={15} /> <b>Baixo</b></div>
+              <label className="field">
+                <span>Levada</span>
+                <select value={accomp.bass.pattern} onChange={(e) => setAccomp((a) => ({ ...a, bass: { ...a.bass, pattern: e.target.value as BassPattern } }))}>
+                  {BASS_PATTERNS.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="muted small">{BASS_PATTERNS.find((x) => x.id === accomp.bass.pattern)?.hint}</p>
+              <label className="field">
+                <span>Região do braço</span>
+                <select
+                  value={String(accomp.bass.region)}
+                  onChange={(e) => setAccomp((a) => ({ ...a, bass: { ...a.bass, region: e.target.value === 'auto' ? 'auto' : Number(e.target.value) } }))}
+                >
+                  {BASS_REGIONS.map((x) => (
+                    <option key={String(x.id)} value={String(x.id)}>
+                      {x.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="acc-rule small">
+                Mão parada numa região (um dedo por casa). Sem corda solta: a nota solta vai para a 5ª casa da corda de cima. Baixo de {strings} cordas.
+              </p>
+              <button
+                className="ghost small-btn"
+                onClick={() => {
+                  setDockInst('bass');
+                  setBassMode('acomp');
+                  if (!playing && pos === 0 && analysis.bars[0]) seek(analysis.bars[0].start + 0.01);
+                }}
+              >
+                Ver no braço
+              </button>
+            </section>
+            <section className="acc-col" aria-label="Violão ou guitarra">
+              <div className="acc-col-head"><Icon name="guitar" size={15} /> <b>Violão / guitarra</b></div>
+              <div className="field">
+                <span>Formas</span>
+                <div className="seg tiny" role="group" aria-label="Formas do guia harmônico no violão">
+                  <button aria-pressed={guitarMode === 'caged'} onClick={() => setGuitarMode('caged')} title="Formas CAGED móveis na região, sem cordas soltas">
+                    CAGED
+                  </button>
+                  <button aria-pressed={guitarMode === 'normal'} onClick={() => setGuitarMode('normal')} title="Formas abertas famosas das primeiras casas">
+                    Abertas
+                  </button>
+                </div>
+              </div>
+              <label className="field">
+                <span>Região do braço</span>
+                <select
+                  value={accomp.guitar.region}
+                  onChange={(e) => setAccomp((a) => ({ ...a, guitar: { ...a.guitar, region: Number(e.target.value) } }))}
+                >
+                  {GUITAR_REGIONS.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="ghost small-btn" onClick={() => setDockInst('guitar')}>
+                Ver as formas
+              </button>
+            </section>
+            <section className="acc-col" aria-label="Piano">
+              <div className="acc-col-head"><Icon name="piano" size={15} /> <b>Piano</b></div>
+              <p className="acc-rule small">O teclado mostra a harmonia principal da música, com condução de vozes entre os acordes.</p>
+              <button className="ghost small-btn" onClick={() => setDockInst('piano')}>
+                Ver no teclado
+              </button>
+            </section>
           </div>
         </div>
       )}
@@ -1217,15 +1914,30 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
           <div className="tl-inner" style={{ width: HEADER_W + totalW + 8 }}>
             <div className="tl-row ruler-row" style={{ height: RULER_H }}>
               <div className="tl-head ruler-head">
-                <button className="ghost icon-btn" onClick={() => zoom(0.8)} aria-label="Diminuir zoom" title="Diminuir zoom (Ctrl + roda)">
-                  <Icon name="minus" size={14} />
-                </button>
-                <button className="ghost small-btn" onClick={fit} title="Música inteira na tela">
-                  Ajustar
-                </button>
-                <button className="ghost icon-btn" onClick={() => zoom(1.25)} aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl + roda)">
-                  <Icon name="plus" size={14} />
-                </button>
+                {lanes && laneKeys.length > 1 && (
+                  <label className="mix-preset" title="Montagem das faixas separadas que tocam">
+                    <Icon name="mixer" size={15} />
+                    <select aria-label="Montagem das faixas" value={preset?.id ?? 'custom'} onChange={(e) => applyPreset(e.target.value)}>
+                      {!preset && <option value="custom">Personalizada</option>}
+                      {presets.map((p) => (
+                        <option key={p.id} value={p.id} title={p.hint}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <div className="zoom-row">
+                  <button className="ghost icon-btn" onClick={() => zoom(0.8)} aria-label="Diminuir zoom" title="Diminuir zoom (Ctrl + roda)">
+                    <Icon name="minus" size={14} />
+                  </button>
+                  <button className="ghost small-btn" onClick={fit} title="Música inteira na tela">
+                    Ajustar
+                  </button>
+                  <button className="ghost icon-btn" onClick={() => zoom(1.25)} aria-label="Aumentar zoom" title="Aumentar zoom (Ctrl + roda)">
+                    <Icon name="plus" size={14} />
+                  </button>
+                </div>
               </div>
               <Ruler
                 bars={analysis?.bars ?? null}
@@ -1248,7 +1960,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             )}
             {lanes?.map((l, i) => {
               const info = stemInfo(l.key);
-              const m = mix[l.key] ?? { on: true, solo: false, vol: 0.8 };
+              const m = mix[l.key] ?? DEFAULT_MIX;
               const audible = gainOf(l.key) > 0;
               return (
                 <div key={l.key} className={`tl-row lane stem-${l.key} ${audible ? '' : 'silent'} ${density}`} style={{ height: laneH }}>
@@ -1338,7 +2050,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                     </div>
                   </div>
                   <div className="lane-body" onClick={(e) => seek((e.clientX - e.currentTarget.getBoundingClientRect().left) / pxPerSec)}>
-                    <Waveform buffer={l.buffer} pxPerSec={pxPerSec} height={Math.max(4, Math.floor(laneH - 6))} color={cssVar(`--stem-${l.key}`, '#8e8e93')} dim={!audible} />
+                    <Waveform buffer={l.buffer} pxPerSec={pxPerSec * laneRate} height={Math.max(4, Math.floor(laneH - 6))} color={cssVar(`--stem-${l.key}`, '#8e8e93')} dim={!audible} />
                   </div>
                 </div>
               );
@@ -1395,14 +2107,45 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             </span>
             {nextChord && (
               <span className="next-chord">
-                depois <b>{chordName(nextChord.chord, localKey)}</b> em {nextChord.inSec.toFixed(1)} s
+                depois <b>{chordName(nextChord.chord, localKey)}</b> em {nextChord.inSec.toFixed(1).replace('.', ',')} s
               </span>
             )}
           </div>
             <div className="dock-neck-head">
+              {studyable.length > 0 && (
+                <label className="study-pick" title="Escolha uma faixa da mixagem para ver as notas dela no braço do baixo, no teclado ou no braço do violão">
+                  <span className="dock-label">Estudar</span>
+                  <select value={studyStem ?? ''} onChange={(e) => setStudyStem(e.target.value || null)} aria-label="Faixa para estudar">
+                    <option value="">Harmonia e baixo</option>
+                    {sortStems(studyable).map((k) => (
+                      <option key={k} value={k}>
+                        Faixa: {stemInfo(k).label}
+                      </option>
+                    ))}
+                  </select>
+                  {studyStem && (
+                    <span className="seg tiny" role="group" aria-label="Ouvir a faixa estudada">
+                      <button
+                        aria-pressed={!!mix[studyStem]?.solo}
+                        onClick={() => setMix((x) => ({ ...x, [studyStem]: { ...(x[studyStem] ?? DEFAULT_MIX), solo: !x[studyStem]?.solo } }))}
+                        title="Ouvir só esta faixa"
+                      >
+                        Só ela
+                      </button>
+                      <button
+                        aria-pressed={mix[studyStem]?.on === false}
+                        onClick={() => setMix((x) => ({ ...x, [studyStem]: { ...(x[studyStem] ?? DEFAULT_MIX), on: !(x[studyStem]?.on ?? true) } }))}
+                        title="Tirar esta faixa para tocar no lugar dela"
+                      >
+                        Sem ela
+                      </button>
+                    </span>
+                  )}
+                </label>
+              )}
               {canPiano ? (
                 <div className="seg tiny" role="group" aria-label="Instrumento do painel">
-                  {hasBass && (
+                  {(hasBass || !!accompaniment || !!studyStem) && (
                     <button aria-pressed={inst === 'bass'} onClick={() => setDockInst('bass')}>
                       <Icon name="bass" size={13} /> Baixo
                     </button>
@@ -1493,6 +2236,16 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                 </div>
               )}
               <div className="spacer" />
+              {inst === 'bass' && accompaniment && (
+                <div className="seg tiny" role="group" aria-label="Linha do baixo">
+                  <button aria-pressed={!bassAcomp} disabled={!hasBass} onClick={() => setBassMode('rec')} title="O que o baixo da gravação toca (notas estimadas)">
+                    Gravação
+                  </button>
+                  <button aria-pressed={bassAcomp} onClick={() => setBassMode('acomp')} title="Linha harmônica guiada, na região confortável e sem corda solta">
+                    Linha harmônica
+                  </button>
+                </div>
+              )}
               {inst === 'piano' && hasPiano && (
                 <div className="seg tiny" role="group" aria-label="Guia do piano">
                   <button aria-pressed={!pianoRec} onClick={() => setPianoMode('harmony')} title="Acorde da análise: base na esquerda, arpejo na direita">
@@ -1503,9 +2256,9 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                   </button>
                 </div>
               )}
-              {inst !== 'guitar' && (
+              {(inst !== 'guitar' || !!studyStem) && (
               <div className="seg tiny" role="group" aria-label="Rótulo das notas">
-                {inst === 'bass' && (
+                {(inst === 'bass' || (inst === 'guitar' && !!studyStem)) && (
                   <button aria-pressed={neckLabel === 'finger'} onClick={() => setNeckLabel('finger')} title="Dedo da mão esquerda na zona (1 indicador … 4 mínimo; 0 corda solta)">
                     Dedo
                   </button>
@@ -1549,7 +2302,13 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             </div>
           )}
           <div className="dock-neck">
-            {inst === 'guitar' ? (
+            {inst === 'guitar' && studyStem ? (
+              !fingered ? (
+                <Progress value={bassState && bassState !== 'error' ? bassState.percent / 100 : null} label={`Extraindo as notas de ${stemInfo(studyStem).label} (Basic Pitch)…`} />
+              ) : (
+                <BassNeck tuning={GUITAR_STUDY_TUNING} notes={neckNotes} flats={flats} label={neckLabel} zone={handZone} nextZone={nextZone?.zone ?? null} vertical={dockSide} />
+              )
+            ) : inst === 'guitar' ? (
               <div className="guitar-box">
                 {curChord && guitarNow ? (
                   <figure className="gchord-card">
@@ -1581,14 +2340,14 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
               ) : (
                 <PianoKeys low={pianoRange.low} high={pianoRange.high} marks={pianoMarks} flats={flats} label={neckLabel === 'note' ? 'note' : 'order'} vertical={dockSide} />
               )
-            ) : !hasBass ? (
+            ) : !hasBass && !bassAcomp && !studyStem ? (
               <p className="muted small">Separe o baixo ou o piano para ver as notas aqui.</p>
-            ) : bassState === 'error' ? (
+            ) : bassState === 'error' && !bassAcomp ? (
               <p className="alert small">Não foi possível extrair as notas do baixo.</p>
             ) : !fingered ? (
-              <Progress value={bassState ? bassState.percent / 100 : null} label="Extraindo as notas do baixo (Basic Pitch)…" />
+              <Progress value={bassState && bassState !== 'error' ? bassState.percent / 100 : null} label="Extraindo as notas do baixo (Basic Pitch)…" />
             ) : (
-              <BassNeck tuning={tuning} notes={neckNotes} flats={flats} label={neckLabel} zone={handZone} nextZone={nextZone?.zone ?? null} vertical={dockSide} />
+              <BassNeck tuning={tuning} notes={neckNotes} flats={flats} label={neckLabel} zone={handZone} nextZone={nextZone?.zone ?? null} vertical={dockSide} hints={mapOpen ? neckHints : []} />
             )}
           </div>
         </div>
@@ -1692,6 +2451,33 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             </button>
           )}
         </div>
+        <div className="tone speed" role="group" aria-label="Velocidade">
+          <span className="tone-label">Velocidade</span>
+          <select
+            className="tone-select"
+            aria-label="Velocidade do mixer"
+            value={slowing ?? speed}
+            disabled={!separated || slowing !== null || !!transposing}
+            onChange={(e) => void changeSpeed(Number(e.target.value))}
+            title="Deixa a música inteira mais lenta (todas as faixas e o metrônomo), sem mudar o tom"
+          >
+            {[100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50].map((v) => (
+              <option key={v} value={v}>
+                {v === 100 ? '100% (original)' : `${v}%`}
+              </option>
+            ))}
+          </select>
+          {slowing !== null ? (
+            <span className="tone-value">gerando {slowing}%…</span>
+          ) : (
+            analysis &&
+            speed !== 100 && (
+              <span className="tone-value" title="Andamento tocando agora">
+                {Math.round((analysis.bpm * speed) / 100)} BPM
+              </span>
+            )
+          )}
+        </div>
         <div className="master-vol" role="group" aria-label="Volume geral">
           <Knob value={masterVol} min={0} max={1} step={0.01} defaultValue={1} size={26} label="Volume geral" format={fmtGain} onChange={setMasterVol} />
         </div>
@@ -1754,6 +2540,12 @@ interface RulerProps {
 }
 
 /** Tipo da parte pelo nome (para a cor): refrão, intro/outro, ponte/solo ou parte. */
+/** Classes de altura das notas do acorde. */
+function harmonicFieldTones(c: Chord): number[] {
+  const iv: Record<string, number[]> = { '': [0, 4, 7], m: [0, 3, 7], dim: [0, 3, 6], '7': [0, 4, 7, 10], maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], m7b5: [0, 3, 6, 10], sus2: [0, 2, 7], sus4: [0, 5, 7], aug: [0, 4, 8] };
+  return (iv[c.quality] ?? (c.quality.startsWith('m') && !c.quality.startsWith('maj') ? iv.m! : iv['']!)).map((x) => (c.root + x) % 12);
+}
+
 function sectionKind(name: string): string {
   const n = name.toLowerCase();
   if (n.includes('refr') || n.includes('chorus')) return 'chorus';

@@ -22,7 +22,7 @@
 .brand-mark {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   display: grid;
   place-items: center;
   background: var(--accent);
@@ -41,7 +41,7 @@
   gap: 2px;
 }
 .nav-title {
-  font: 650 10.5px / 1 var(--font);
+  font: 650 var(--fs-2xs) / 1 var(--font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
@@ -125,7 +125,8 @@
   overflow: auto;
 }
 .content.full {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Telas comuns (com margem) */
@@ -154,3 +155,10 @@
   flex: none;
   object-fit: contain;
 }
+
+/* Menu sempre expandido e com rolagem; tela do mixer rola na vertical. */
+.side { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.side-toggle { display: none !important; }
+.content.full { overflow-y: auto; }
+.content.full > .song { height: auto; min-height: 100%; }
+.content.full > .song .timeline { min-height: 360px; }

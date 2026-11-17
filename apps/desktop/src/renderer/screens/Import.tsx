@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { errorText } from '../lib/errors.js';
 import { Icon } from '../components/Icons.js';
 import { Progress } from '../components/Progress.js';
 import { StemPicker } from '../components/StemPicker.js';
@@ -10,6 +11,8 @@ import type { UrlDownload, UrlRequest } from '../App.js';
 interface Props {
   /** Música adicionada à biblioteca a partir de um arquivo. */
   onImported(songId: string, name: string): void;
+  /** Várias músicas adicionadas de uma vez; `separate` põe todas na fila de separação. */
+  onImportedMany(songs: ReadonlyArray<{ id: string; name: string }>, separate: SeparateOptions | null): void;
   /** Download em andamento ou o último que falhou. */
   download: UrlDownload | null;
   onStartUrl(req: UrlRequest): void;
@@ -59,7 +62,7 @@ const FORMATS: ReadonlyArray<{ id: AudioFormatName; label: string; title: string
   { id: 'wav', label: 'WAV', title: 'Sem compressão; arquivo grande.' },
 ];
 
-export function Import({ onImported, download, onStartUrl, onCancelUrl, onDismissUrl, onOpen }: Props) {
+export function Import({ onImported, onImportedMany, download, onStartUrl, onCancelUrl, onDismissUrl, onOpen }: Props) {
   const [tab, setTab] = useState<Tab>(() => (load(TAB_KEY) === 'url' ? 'url' : 'file'));
   useEffect(() => save(TAB_KEY, tab), [tab]);
 
@@ -80,7 +83,7 @@ export function Import({ onImported, download, onStartUrl, onCancelUrl, onDismis
       </div>
       {tab === 'file' ? (
         <div role="tabpanel" id="panel-file" aria-labelledby="tab-file">
-          <FileImport onImported={onImported} />
+          <FileImport onImported={onImported} onImportedMany={onImportedMany} />
         </div>
       ) : (
         <div role="tabpanel" id="panel-url" aria-labelledby="tab-url">
@@ -91,9 +94,21 @@ export function Import({ onImported, download, onStartUrl, onCancelUrl, onDismis
   );
 }
 
-function FileImport({ onImported }: { onImported(songId: string, name: string): void }) {
+function FileImport({ onImported, onImportedMany }: { onImported(songId: string, name: string): void; onImportedMany: Props['onImportedMany'] }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Vários arquivos escolhidos: aguardam a escolha das faixas. */
+  const [batch, setBatch] = useState<string[] | null>(null);
+  const [cpu, setCpu] = useState(false);
+  const [voiceSplit, setVoiceSplit] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  useEffect(() => {
+    void window.baixaria
+      .stemsAvailable()
+      .then((r) => (setCpu(r.runtime === 'cpu'), setVoiceSplit(!!r.voiceSplit)))
+      .catch(() => undefined);
+  }, []);
+  const fileName = (p: string) => p.split(/[\\/]/).pop() ?? 'música';
 
   async function pick() {
     setError(null);
@@ -103,22 +118,83 @@ function FileImport({ onImported }: { onImported(songId: string, name: string): 
       await getAudioContext().resume();
       const picked = await window.baixaria.pickAudioFile();
       if (picked.canceled) return;
-      const name = picked.path.split(/[\\/]/).pop() ?? 'música';
-      const song = await window.baixaria.libraryAdd(picked.path, name);
-      onImported(song.id, song.name);
+      const paths = picked.paths?.length ? picked.paths : [picked.path];
+      if (paths.length === 1) {
+        const song = await window.baixaria.libraryAdd(paths[0]!, fileName(paths[0]!));
+        onImported(song.id, song.name);
+      } else setBatch(paths);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'falha ao importar');
+      setError(errorText(e, 'falha ao importar'));
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Adiciona todas à biblioteca (uma falha não para as outras) e, se pedido, põe na fila de separação. */
+  async function addAll(separate: SeparateOptions | null) {
+    if (!batch) return;
+    setError(null);
+    setBusy(true);
+    const added: Array<{ id: string; name: string }> = [];
+    const failed: string[] = [];
+    for (let i = 0; i < batch.length; i++) {
+      setProgress({ done: i, total: batch.length });
+      try {
+        const song = await window.baixaria.libraryAdd(batch[i]!, fileName(batch[i]!));
+        added.push({ id: song.id, name: song.name });
+      } catch {
+        failed.push(fileName(batch[i]!));
+      }
+    }
+    setProgress(null);
+    setBusy(false);
+    if (failed.length) setError(`não deu para importar: ${failed.join(', ')}`);
+    if (added.length) {
+      setBatch(null);
+      onImportedMany(added, separate);
+    }
+  }
+
+  if (batch) {
+    return (
+      <div className="card batch-import">
+        <div className="map-head">
+          <b>
+            {batch.length} músicas escolhidas
+          </b>
+          <span className="muted small">Todas entram na biblioteca e são separadas uma por vez, com as faixas abaixo. Dá para usar o app enquanto isso.</span>
+        </div>
+        <ol className="batch-list">
+          {batch.map((p) => (
+            <li key={p}>
+              <Icon name="wave" size={14} /> {fileName(p)}
+            </li>
+          ))}
+        </ol>
+        {progress ? (
+          <Progress value={progress.done / progress.total} label={`Adicionando ${progress.done + 1} de ${progress.total}`} />
+        ) : (
+          <StemPicker busy={busy} cpu={cpu} voiceSplit={voiceSplit} submitLabel={`Importar e separar ${batch.length} músicas`} onSubmit={(o) => void addAll(o)} onCancel={() => setBatch(null)}>
+            <button className="ghost small-btn" type="button" disabled={busy} onClick={() => void addAll(null)} title="Só adiciona à biblioteca; separe cada uma quando quiser">
+              Só importar, separar depois
+            </button>
+          </StemPicker>
+        )}
+        {error && (
+          <p className="alert" role="alert">
+            <Icon name="alert" size={16} /> {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
     <>
       <button className="import-drop" onClick={pick} disabled={busy}>
         <Icon name="import" size={28} />
-        <strong>{busy ? 'Importando…' : 'Escolher arquivo de música'}</strong>
-        <span className="muted small">MP3, WAV ou FLAC. Depois você escolhe as faixas a separar.</span>
+        <strong>{busy ? 'Importando…' : 'Escolher arquivos de música'}</strong>
+        <span className="muted small">MP3, WAV ou FLAC. Escolha uma ou várias (Ctrl ou Shift); depois você escolhe as faixas a separar.</span>
       </button>
       {error && (
         <p className="alert" role="alert">
@@ -428,6 +504,5 @@ function UrlImport({ download, onStart, onCancel, onDismiss, onOpen }: UrlProps)
 
 /** "Error invoking remote method 'x': Error: motivo" → "motivo". */
 export function cleanIpcError(e: unknown): string {
-  const m = e instanceof Error ? e.message : String(e);
-  return m.replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+  return errorText(e, String(e));
 }

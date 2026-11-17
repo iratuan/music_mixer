@@ -46,7 +46,9 @@ O **mixerCraft** é um aplicativo de estudo para baixistas (e para quem toca com
 **Entrada**
 - Importa um arquivo de áudio ou um link do YouTube (via `yt-dlp`).
 - Ferramenta **Baixar MP3**: salva o áudio de um link em uma pasta escolhida, com V0 ou 320 kbps e verificação do arquivo.
-- Biblioteca com pastas e coleções; cada música guarda seu andamento, tom e seções.
+- Biblioteca com coleções (inclusive o filtro "Sem coleção"), ordem por data, nome, tom ou andamento e filtro das músicas prontas ou ainda por separar; cada música guarda seu andamento, tom e seções.
+
+- **Exportar e importar a biblioteca:** salva no computador todas as músicas (ou uma coleção, ou as selecionadas) separadas por faixas, uma pasta por música com Baixo, Bateria, Voz… em arquivos de áudio, a análise e, se quiser, o áudio original. O arquivo biblioteca.json guarda nomes, coleções, mapa e mixer; em Biblioteca > Exportar / importar a pasta volta para o app (as músicas que já estão não são duplicadas).
 
 **Separação de faixas**
 - Separa voz, baixo, bateria, guitarra, piano e outros com o **Demucs** (`htdemucs_6s`). Funciona **sem internet**.
@@ -60,6 +62,12 @@ O **mixerCraft** é um aplicativo de estudo para baixistas (e para quem toca com
 
 **Player**
 - Mudo (M), solo (S), volume, pan e loop de uma parte da música.
+- **Montagem pelas faixas:** combinações prontas (sem o baixo, sem a voz, só a cozinha, só a harmonia…), acima dos nomes das faixas.
+- **Guias harmônicos**: o braço do baixo pode mostrar uma linha-guia derivada dos acordes, e o violão/guitarra mostra as formas do acorde atual e do próximo com condução harmônica.
+  - Baixo: escolha entre a linha da gravação e uma linha harmônica visual (fundamental, quinta, colcheias, oitavas, arpejo, walking bass, tercinas ou notas longas), com região confortável e sem cordas soltas.
+  - Violão/guitarra: formas CAGED ou abertas, com região ajustável e transição entre acordes.
+  - Piano: o teclado mostra a harmonia principal da análise, com acorde-base na mão esquerda e condução/arpejo na direita.
+  - As guias são visuais: não criam faixa de áudio e não entram na mixagem exportada.
 - **Metrônomo** alinhado aos tempos detectados.
 - **Volume geral** que afeta todo o áudio, inclusive a mixagem exportada.
 - **Transposição** de ±6 semitons ou escolha direta do tom de destino. A voz usa preservação de formantes, para não soar "de esquilo".
@@ -74,10 +82,13 @@ O **mixerCraft** é um aplicativo de estudo para baixistas (e para quem toca com
 **Exportar**
 - **Mixagem em WAV**, com as faixas marcadas, o volume e o tom atuais.
 - **MIDI** do baixo ou do piano, com mapa de andamento.
-- **Mapa da música** (partes e compassos), pronto para imprimir ou salvar em PDF pelo navegador.
+- **Mapa da música** em PDF ou texto: partes com letra da forma (A, B…) e repetições, começo de cada parte ajustável compasso a compasso, tablatura da linha harmônica guiada do baixo em cada compasso, notas do baixo da gravação e os diagramas dos acordes no violão.
 
 **Exercícios**
-- Escalas e padrões no braço do baixo, com julgamento automático das notas tocadas.
+- **Biblioteca de exercícios:** 128 rotinas por nível, tema e escala, com meta de andamento e recorde pessoal. Inclui a **trilha do braço** de 28 escalas (pentatônicas, blues, modos gregos, menores harmônica e melódica e seus modos, nordestina, bebop, simétricas, cromática e exóticas), em 4 etapas: duas cordas, três cordas, todas as cordas região por região e o braço inteiro.
+- **Tom e parte do braço à escolha:** toda escala em qualquer tom (meio tom acima/abaixo, ciclo das quartas, ou o tom em que as rotinas abrem, na biblioteca) e na parte do baixo que você quiser usar (primeiras casas, 3–8, 5–10, 7–12, até a 12, depois da 12 ou as casas que escolher); a rotina continua valendo.
+- **Percurso pelo braço:** o exercício avança sozinho pelas regiões (da pestana ao fim do braço, inclusive a oitava de cima) e/ou pelos grupos de 2, 3, 4… cordas, com quantos ciclos por etapa você quiser.
+- Treino livre: escalas e padrões no braço do baixo, com julgamento automático das notas tocadas.
 
 ---
 
@@ -185,7 +196,7 @@ A regra de dependência é simples: `packages/domain` não conhece Electron nem 
 
 ## Testes e verificação
 
-- **Automatizados:** `npm test` roda os 145 testes do domínio musical e do processo principal.
+- **Automatizados:** `npm test` roda os 199 testes do domínio musical e do processo principal.
 - **Ponta a ponta:** os roteiros em `tooling/screens/` abrem o app real (Electron + Playwright) com uma biblioteca isolada, sem tocar na sua. Exemplo:
   ```bash
   npm run build

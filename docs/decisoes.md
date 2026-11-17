@@ -134,3 +134,9 @@ Formato: uma entrada por decisão. **Aceita** = aprovada pelo usuário. **Propos
 - Violão: diagrama de 6 cordas com pestana, dedos, cordas mudas e soltas, e o próximo acorde menor ao lado. Escolha pelo custo de execução (`packages/domain/src/music/guitar.ts`): menos dedos, pestana cara, intervalo máximo de 4 casas, corda muda no meio das tocadas penalizada, baixo na fundamental.
 - Modo **Normal**: formas nas primeiras casas. Modo **CAGED**: a raiz fica no baixo, na 6ª, 5ª ou 4ª corda, dentro da zona da mão. É uma aproximação do princípio CAGED (escolhida pela corda da raiz), não uma tabela das cinco formas. Quando a zona é alta, a forma pode exigir mais dedos; a forma escolhida é a mais fácil dentro da zona.
 - Testes: toda raiz e qualidade tem forma tocável nos dois modos; nenhuma usa mais de 4 dedos nem intervalo acima de 4 casas; a fundamental é o baixo quando não há inversão. Medido: Dó maior normal = x32010; Lá menor = x02210; Fá maior 7M = xx3210.
+
+## D-57 Faixa de acompanhamento substituída por guias visuais (17/11/2026)
+- Remover a faixa sintética de acompanhamento da timeline, da reprodução e da mixagem exportada. A mixagem passa a incluir somente as faixas separadas que a pessoa selecionou.
+- Manter as visualizações harmônicas: linha-guia no braço do baixo, formas/condução de acordes no braço do violão/guitarra e teclado com a harmonia principal da análise. Essas guias não geram áudio.
+- No player, permitir rolagem vertical e manter o transporte acessível e responsivo quando a largura disponível diminuir com o menu lateral aberto.
+- A faixa de acompanhamento descrita na D-45 fica substituída por esta decisão; as demais partes históricas da decisão permanecem como registro do comportamento anterior.

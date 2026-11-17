@@ -143,3 +143,53 @@ describe('metadados: faixa de andamento', () => {
     expect(sanitizeMeta({ bpm: 100 })).not.toHaveProperty('bpmRange');
   });
 });
+
+describe('pastas com o nome da música e faixas com o nome da parte', () => {
+  it('organiza: pasta "Nome da música", faixas Voz principal.flac, Backing vocals.flac, Baixo.flac', async () => {
+    const { writeFile, mkdir, readdir } = await import('node:fs/promises');
+    const rec = await lib.add('Minha Música: ao vivo?.mp3', SRC);
+    const faixas = path.join(lib.songDir(rec.id), 'faixas');
+    await mkdir(faixas, { recursive: true });
+    const stems: Record<string, string> = {};
+    for (const k of ['lead', 'backing', 'bass']) {
+      stems[k] = path.join(faixas, `${k}.flac`);
+      await writeFile(stems[k]!, k);
+    }
+    await lib.setStems(rec.id, stems);
+    await lib.organize(rec.id);
+    const dir = lib.songDir(rec.id);
+    expect(path.basename(dir)).toBe('Minha Música ao vivo');
+    expect((await readdir(dir)).filter((f) => f.endsWith('.flac')).sort()).toEqual(['Backing vocals.flac', 'Baixo.flac', 'Voz principal.flac']);
+    const again = new Library(root); // reinício: acha a pasta pelo índice
+    expect(again.songDir(rec.id)).toBe(dir);
+    expect((await again.get(rec.id))!.stems!.lead).toBe(path.join(dir, 'Voz principal.flac'));
+    // Outra música com o mesmo nome ganha "(2)".
+    const r2 = await lib.add('Minha Música: ao vivo?.mp3', path.resolve('/musica/outra.wav'));
+    await lib.organize(r2.id);
+    expect(path.basename(lib.songDir(r2.id))).toBe('Minha Música ao vivo (2)');
+  });
+});
+
+describe('pasta da biblioteca escolhida pelo usuário', () => {
+  it('cópia do áudio na pasta da música e sem importar duas vezes o mesmo arquivo', async () => {
+    const rec = await lib.add('Faixa', SRC);
+    const copy = path.join(lib.songDir(rec.id), 'original.wav');
+    await lib.setSource(rec.id, copy, SRC);
+    expect((await lib.get(rec.id))!.sourcePath).toBe(copy);
+    expect((await lib.add('De novo', SRC)).id).toBe(rec.id);
+    await expect(lib.setSource(rec.id, path.resolve('/fora/x.wav'), SRC)).rejects.toThrow(/fora/);
+  });
+  it('biblioteca copiada para outra pasta: caminhos passam a apontar para a nova', async () => {
+    const rec = await lib.add('Faixa', SRC);
+    await lib.setStems(rec.id, { bass: path.join(lib.songDir(rec.id), 'faixas', 'bass.flac') });
+    const other = path.join(root, '..', `${path.basename(root)}-novo`);
+    const { cp } = await import('node:fs/promises');
+    await cp(root, other, { recursive: true });
+    const moved = new Library(other);
+    await moved.relocateFrom(root);
+    const [s] = await moved.list();
+    expect(s!.stems!.bass).toBe(path.join(moved.songDir(rec.id), 'faixas', 'bass.flac'));
+    expect(s!.sourcePath).toBe(SRC); // arquivo fora da biblioteca não muda
+    await rmDir(other, { recursive: true, force: true });
+  });
+});

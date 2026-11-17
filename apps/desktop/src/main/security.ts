@@ -32,6 +32,7 @@ export const CONTENT_SECURITY_POLICY = [
 /** Canais IPC permitidos. Qualquer outro nome é recusado. */
 export const ALLOWED_CHANNELS = [
   'app:info',
+  'db:call',
   'app:open-folder',
   'dialog:pick-audio',
   'audio:read',
@@ -45,6 +46,12 @@ export const ALLOWED_CHANNELS = [
   'library:list',
   'library:storage',
   'library:compact',
+  'library:export',
+  'library:import',
+  'library:show-export',
+  'library:location',
+  'library:choose-location',
+  'library:open-location',
   'library:add',
   'library:read-original',
   'library:read-stem',
@@ -75,7 +82,7 @@ export const ALLOWED_CHANNELS = [
 ] as const;
 
 /** Tipos de exportação permitidos e a extensão de cada um. */
-export const EXPORT_KINDS = { midi: '.mid', wav: '.wav', pdf: '.pdf', txt: '.txt' } as const;
+export const EXPORT_KINDS = { midi: '.mid', wav: '.wav', pdf: '.pdf', txt: '.txt', json: '.json' } as const;
 export type ExportKind = keyof typeof EXPORT_KINDS;
 export const MAX_EXPORT_BYTES = 200 * 1024 * 1024;
 
