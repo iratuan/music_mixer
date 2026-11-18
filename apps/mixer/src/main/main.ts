@@ -140,7 +140,7 @@ function registerIpc(): void {
     if (!isExportKind(req.kind)) throw new Error('tipo de exportação inválido');
     const kind: ExportKind = req.kind;
     const ext = EXPORT_KINDS[kind].slice(1);
-    const LABELS: Record<ExportKind, string> = { midi: 'MIDI', wav: 'Áudio WAV', pdf: 'PDF', txt: 'Texto', json: 'JSON (mapa estruturado)' };
+    const LABELS: Record<ExportKind, string> = { midi: 'MIDI', wav: 'Áudio WAV', pdf: 'PDF', txt: 'Texto', json: 'JSON (mapa estruturado)', pack: 'Pacote do ScaleMonster' };
     const options = {
       title: `Exportar ${LABELS[kind]}`,
       defaultPath: `${sanitizeSuggestedName(req.suggestedName)}${EXPORT_KINDS[kind]}`,

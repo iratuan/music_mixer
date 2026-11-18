@@ -81,7 +81,7 @@ export const ALLOWED_CHANNELS = [
 ] as const;
 
 /** Tipos de exportação permitidos e a extensão de cada um. */
-export const EXPORT_KINDS = { midi: '.mid', wav: '.wav', pdf: '.pdf', txt: '.txt', json: '.json' } as const;
+export const EXPORT_KINDS = { midi: '.mid', wav: '.wav', pdf: '.pdf', txt: '.txt', json: '.json', pack: '.mcraft-pack' } as const;
 export type ExportKind = keyof typeof EXPORT_KINDS;
 export const MAX_EXPORT_BYTES = 200 * 1024 * 1024;
 

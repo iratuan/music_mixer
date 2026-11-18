@@ -6,6 +6,7 @@ import { Neck, type NeckMark } from '@baixaria/ui-core';
 import { getAudioContext } from '@baixaria/audio-synth';
 import { INSTRUMENT_INPUT, clickAt, listInputs, pluckAt, startInput, type InputEngine } from '../lib/practice.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
+import { PACK_EXTENSION, parsePack, type PackSong } from '@baixaria/exchange-contract';
 
 /**
  * Linha do baixo de uma música como exercício progressivo (enviada pela Tablatura da música).
@@ -13,14 +14,8 @@ import { readStore, writeStore } from '@baixaria/ui-core';
  * avança sozinho para o próximo trecho a cada N voltas; o andamento pode subir até o da música.
  * A linha pode ser transposta para qualquer tom; o braço mostra corda, casa e dedo, sem corda solta.
  */
-export interface SongExerciseData {
-  readonly title: string;
-  readonly source: string;
-  readonly key: string;
-  readonly bpm: number;
-  readonly bars: ReadonlyArray<{ readonly chords: readonly string[]; readonly notes: ReadonlyArray<{ readonly midi: number; readonly beat: number; readonly len: number }> }>;
-  readonly sections: ReadonlyArray<{ readonly name: string; readonly from: number; readonly to: number }>;
-}
+/** A música vem do MixerMonster num pacote .mcraft-pack (contrato em @baixaria/exchange-contract). */
+export type SongExerciseData = PackSong;
 
 const KEY = 'bf-song-exercise';
 const OPTS = 'bf-song-exercise-opts';
@@ -39,8 +34,50 @@ function transposeName(name: string, semis: number): string {
   return `${nm(c.root)}${m[2] ?? ''}${c.bass !== undefined ? `/${nm(c.bass)}` : ''}`;
 }
 
+/** Botão "Importar música": lê um .mcraft-pack (arquivo não confiável, validado pelo contrato). */
+function ImportPack({ onImported, label }: { onImported(song: SongExerciseData): void; label: string }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    const r = parsePack(new Uint8Array(await file.arrayBuffer()));
+    if (!r.ok) return setError(`Não deu para importar "${file.name}": ${r.error}.`);
+    onImported(r.pack.song);
+  };
+  return (
+    <>
+      <button className="primary small-btn" onClick={() => input.current?.click()} title="Abrir um pacote salvo pelo MixerMonster (Tablatura → Enviar ao ScaleMonster)">
+        <Icon name="import" size={14} /> {label}
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept={`${PACK_EXTENSION},application/json,application/octet-stream`}
+        hidden
+        aria-label="Arquivo do pacote da música"
+        onChange={(e) => {
+          void pick(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+      {error && (
+        <p className="alert" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  );
+}
+
 export function SongExercise() {
-  const data = readStore<SongExerciseData | null>(KEY, null);
+  const [data, setData] = useState(() => readStore<SongExerciseData | null>(KEY, null));
+  const imported = (song: SongExerciseData) => {
+    writeStore(KEY, song);
+    setData(song);
+    setBpm(Math.max(40, Math.round(song.bpm * 0.7)));
+    setChunk(0);
+  };
   const [o, setO] = useState(() => readStore(OPTS, { semis: 0, chunk: 4 as number | 'section', progressive: true, every: 2, strings: 4, ramp: true, label: 'finger' as 'finger' | 'fret' | 'note', click: true, sound: true }));
   useEffect(() => writeStore(OPTS, o), [o]);
   const set = <K extends keyof typeof o>(k: K, v: (typeof o)[K]) => setO((x) => ({ ...x, [k]: v }));
@@ -214,8 +251,9 @@ export function SongExercise() {
       <div className="card song-ex-empty">
         <Icon name="tab" size={22} />
         <p className="muted">
-          Abra uma música, clique em <b>Tablatura</b> e em <b>Estudar como exercício</b>: a linha do baixo vem para cá, compasso a compasso com a harmonia.
+          Estude a linha do baixo de uma música, compasso a compasso com a harmonia. No <b>MixerMonster</b>, abra a música, clique em <b>Tablatura</b> e em <b>Enviar ao ScaleMonster</b>; depois importe o arquivo aqui.
         </p>
+        <ImportPack label="Importar música" onImported={imported} />
       </div>
     );
   }
@@ -250,6 +288,7 @@ export function SongExercise() {
           </span>
         </div>
         <div className="spacer" />
+        <ImportPack label="Importar outra" onImported={imported} />
         <div className="field">
           <span>Transpor</span>
           <div className="key-pick">

@@ -4,7 +4,7 @@ import { contextBridge, ipcRenderer } from 'electron';
  * API mínima exposta ao renderer. Nenhum acesso genérico a ipcRenderer, fs ou shell.
  * Cada função corresponde a um canal de ALLOWED_CHANNELS no processo principal.
  */
-export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt' | 'json';
+export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt' | 'json' | 'pack';
 export interface LibrarySong {
   readonly id: string;
   readonly name: string;

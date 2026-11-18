@@ -70,6 +70,7 @@ import { harmonicStore } from '@baixaria/ui-core';
 import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../lib/audio.js';
 import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../lib/stems.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
+import { PACK_LIMITS, createPack, encodePack, type PackSong } from '@baixaria/exchange-contract';
 
 /**
  * Página da música: player com as faixas separadas ocupando toda a área, régua de compassos com
@@ -1127,6 +1128,46 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     }
   }
 
+  /**
+   * Pacote .mcraft-pack: a linha do baixo da tablatura, compasso a compasso com a harmonia (no tom
+   * transposto), para estudar no ScaleMonster (Prática → Música → Importar música).
+   */
+  function buildPackSong(): PackSong | null {
+    if (!analysis || !tabLine.length) return null;
+    // A linha harmônica já sai no tom transposto; as notas da gravação, não.
+    const shift = tabSrc === 'acomp' || !bassNotes ? 0 : semis;
+    const bars = analysis.bars.slice(0, PACK_LIMITS.bars).map((b) => {
+      const local = transposeKey(b.key, semis);
+      const names = b.chords.map((c) => (c.chord ? chordName(transposeChord(c.chord, semis), local) : '—'));
+      const len = Math.max(0.1, b.end - b.start);
+      return {
+        chords: names.filter((x, k) => k === 0 || x !== names[k - 1]).slice(0, PACK_LIMITS.chordsPerBar),
+        notes: tabLine
+          .filter((n) => n.t >= b.start - 0.02 && n.t < b.end - 0.02)
+          .slice(0, PACK_LIMITS.notesPerBar)
+          .map((n) => ({ midi: Math.max(0, Math.min(127, n.midi + shift)), beat: Math.min(4, Math.max(0, ((n.t - b.start) / len) * 4)), len: Math.max(0.25, Math.min(4, (n.dur / len) * 4)) })),
+      };
+    });
+    const last = bars.length - 1;
+    const sections = spans.filter((sp) => sp.from <= last).map((sp) => ({ name: sp.name, from: sp.from, to: Math.min(sp.to, last) }));
+    return { title: cleanName(name), source: tabSrcLabel, key: songKey ? keyName(songKey) : '', bpm: Math.max(20, Math.min(400, Math.round(analysis.bpm))), bars, sections };
+  }
+  async function sendToScaleMonster() {
+    const song = buildPackSong();
+    if (!song) return;
+    setError(null);
+    try {
+      const picked = await window.baixaria.chooseExportPath('pack', `${song.title}${semis ? ` (${semis > 0 ? '+' : ''}${semis})` : ''}`);
+      if (picked.canceled) return;
+      const info = await window.baixaria.getAppInfo();
+      await window.baixaria.writeExportFile(picked.path, encodePack(createPack(song, { name: 'MixerMonster', version: info.version })));
+      const notes = song.bars.reduce((a, b) => a + b.notes.length, 0);
+      setMessage(`Pacote salvo: ${song.bars.length} compassos, ${notes} notas. No ScaleMonster, abra Prática → Música → Importar música.`);
+    } catch (e) {
+      setError(errorText(e, 'falha ao salvar o pacote'));
+    }
+  }
+
   /** Mapa com a tablatura garantida (exportação pelo painel Tablatura). */
   function withTab(): SongMap | null {
     const keep = mapOpts.tab;
@@ -1697,6 +1738,9 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             </button>
             <button className="ghost small-btn" onClick={() => void exportMap('pdf', true)}>
               <Icon name="export" size={14} /> PDF
+            </button>
+            <button className="small-btn primary" disabled={!tabLine.length} onClick={() => void sendToScaleMonster()} title="Salvar esta linha como pacote (.mcraft-pack) para estudar no ScaleMonster, trecho por trecho">
+              <Icon name="export" size={14} /> Enviar ao ScaleMonster
             </button>
           </div>
           {!tabLine.length ? (
