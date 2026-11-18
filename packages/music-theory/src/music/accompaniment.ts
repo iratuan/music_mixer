@@ -1,7 +1,7 @@
 import { pc, type Chord } from './harmony.js';
 import { chordTones, voiceChords, type PianoVoicing } from './piano.js';
 import { GUITAR_TUNING, guitarVoicing, type GuitarMode } from './guitar.js';
-import { BASS_TUNINGS, type BassTuning, type FretPos } from '../practice/bass.js';
+import { BASS_TUNINGS, type BassTuning, type FretPos } from '../instrument/bass.js';
 import { approachNote, bassShape, fingerInZone, noOpenString, type BassRegion, type BassShape, type BassTone, type PlacedNote } from './bassline.js';
 
 /**

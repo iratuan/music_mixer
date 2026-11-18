@@ -26,6 +26,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@domain': resolve(root, 'packages/domain/src/index.ts'),
+      '@baixaria/music-theory': resolve(root, 'packages/music-theory/src/index.ts'),
       '@ui': resolve(root, 'packages/ui/src'),
       '@config': resolve(root, 'src/config'),
     },

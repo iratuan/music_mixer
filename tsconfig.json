@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@domain": ["packages/domain/src/index.ts"],
+      "@baixaria/music-theory": ["packages/music-theory/src/index.ts"],
       "@ui/*": ["packages/ui/src/*"]
     }
   },

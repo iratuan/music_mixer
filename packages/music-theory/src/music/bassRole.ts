@@ -2,7 +2,7 @@
  * Papel do baixo no acompanhamento da Harmonia: o baixo marca só a tônica, a tríade ou o arpejo
  * do acorde (nada de escalas ou aproximações). Gera as notas, uma por tempo, e onde tocá-las.
  */
-import { fingerLine, type BassTuning, type FretPos } from '../practice/bass.js';
+import { fingerLine, type BassTuning, type FretPos } from '../instrument/bass.js';
 import { type Chord } from './harmony.js';
 import { chordIntervals } from './circleOfFifths.js';
 

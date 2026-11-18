@@ -1,4 +1,4 @@
-import type { BassTuning, FretPos } from './bass.js';
+import type { BassTuning, FretPos } from '@baixaria/music-theory';
 
 /**
  * Motor de exercícios de escala, portado do ScaleMonster (guitarra-escalas-v3, do mesmo autor):

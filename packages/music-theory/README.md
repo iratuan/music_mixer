@@ -4,4 +4,4 @@ Biblioteca técnica pura e agnóstica de plataforma: notas, escalas, modos, acor
 
 **Regras:** sem regras de negócio de um produto (nada de XP, currículo ou biblioteca), sem `electron`, `node:*` ou DOM.
 
-**Status (E1):** vazio. Os módulos serão extraídos de `packages/domain` na Etapa E2.
+**Status (E2):** harmonia, piano, guitarra, braço (`instrument/bass`), seções, linhas de baixo, acompanhamento, círculo das quintas, análise e mapa harmônico, e leitura MIDI. `packages/domain` reexporta tudo, então `@domain` continua funcionando.

@@ -1,5 +1,5 @@
 import { pc, type Chord } from './harmony.js';
-import { positionsOf, type BassTuning, type FretPos } from '../practice/bass.js';
+import { positionsOf, type BassTuning, type FretPos } from '../instrument/bass.js';
 
 /**
  * Linha de baixo do acompanhamento: onde tocar cada nota do acorde no braço.

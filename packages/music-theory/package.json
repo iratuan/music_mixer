@@ -3,5 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "Teoria musical pura: escalas, modos, acordes, círculo das quintas, MIDI.",
-  "type": "module"
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

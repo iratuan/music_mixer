@@ -4,7 +4,7 @@
  * MIDI comunitárias de jogos de ritmo (notas 60–64, 72–76, 84–88 e 96–100 = 5 trilhas por nível),
  * para poder carregar músicas assim no futuro; os exercícios do app geram as notas sozinhos.
  */
-import { readMidi } from '../../io/midi.js';
+import { readMidi } from '@baixaria/music-theory';
 
 export type FofDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
