@@ -126,7 +126,7 @@ export function ProgressDashboard({ sessions, onChange }: Props) {
       onChange(r.sessions);
       setMsg(r.added ? `${r.added} sessões importadas.` : 'Nada novo neste arquivo.');
     } catch {
-      setMsg('Este arquivo não é um histórico do mixerCraft.');
+      setMsg('Este arquivo não é um histórico de prática do ScaleMonster (nem do mixerCraft antigo).');
     } finally {
       if (file.current) file.current.value = '';
     }

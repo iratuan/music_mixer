@@ -28,7 +28,7 @@ export function Splash({ onDone }: { onDone(): void }) {
     };
   }, [onDone]);
   return (
-    <div className={`splash ${leaving ? 'leaving' : ''}`} role="status" aria-label="Carregando o mixerCraft">
+    <div className={`splash ${leaving ? 'leaving' : ''}`} role="status" aria-label="Carregando o ScaleMonster">
       <img className="splash-logo" src={logoUrl} alt="" />
       <div className="splash-spin" aria-hidden="true" />
       <div className="splash-foot">

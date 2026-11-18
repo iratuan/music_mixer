@@ -57,6 +57,7 @@ import { INSTRUMENT_INPUT, clickAt, BASS_TIMBRES, TIMBRES_OF, listInputs, master
 import { recordSession } from '../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { SongExercise } from './SongExercise.js';
+import { TouchLanes } from '../components/TouchLanes.js';
 
 /**
  * Exercícios de escala (motor do ScaleMonster): tom, escala, padrão, grupo de cordas, região do braço,
@@ -132,7 +133,7 @@ type InputMode = 'audio' | 'midi' | 'keys';
 const INPUT_MODES: ReadonlyArray<{ id: InputMode; label: string; hint: string }> = [
   { id: 'audio', label: 'Instrumento (áudio)', hint: 'Toque o instrumento ligado à interface ou perto do microfone' },
   { id: 'midi', label: 'Instrumento MIDI', hint: 'Teclado, baixo ou guitarra MIDI ligado ao computador' },
-  { id: 'keys', label: 'Teclado do computador', hint: 'Segure a casa (1 a 6, corda grave = 1) e palhete com Enter ou Espaço; ligados valem só com a casa' },
+  { id: 'keys', label: 'Teclado ou toque na tela', hint: 'Segure a casa (1 a 6, corda grave = 1, ou a pista na tela) e palhete com Enter, Espaço ou o botão Palhetar; ligados valem só com a casa' },
 ];
 /** Precisão mínima do desafio no Palco. */
 const STAGE_GOAL = 80;
@@ -499,6 +500,22 @@ export function Exercises() {
     void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restart]);
+
+  // Mesmo gesto pelo teclado e pelas pistas de toque: segurar a casa e palhetar.
+  const laneDown = (lane: number) => {
+    const eng = feed.current.engine;
+    if (!eng || lane < 0 || lane >= s.strings) return;
+    feed.current.pressed.add(lane);
+    eng.tap(lane, getAudioContext().currentTime);
+  };
+  const laneUp = (lane: number) => feed.current.pressed.delete(lane);
+  const strikeNow = () => {
+    const eng = feed.current.engine;
+    if (!eng) return;
+    // Vale a casa mais aguda apertada (como no braço: a de cima soa).
+    const lanes = [...feed.current.pressed].sort((a, b) => b - a);
+    eng.strike(lanes.length ? lanes[0]! : -1, getAudioContext().currentTime);
+  };
 
   // Teclado do computador no Palco: segure a casa (1–6 ou F1–F6) e palhete (Enter, Espaço, ↑/↓).
   useEffect(() => {
@@ -1043,10 +1060,13 @@ export function Exercises() {
             <span aria-hidden="true">{stageMax ? '⤡' : '⤢'}</span> {stageMax ? 'Sair da tela cheia' : 'Tela cheia'}
           </button>
           <ArcadeStageCanvas feed={feed} lanes={tuning.strings.length} stringNames={tuning.strings.map((m) => pcName(m, false))} goal={STAGE_GOAL} />
+          {s.inputMode === 'keys' && (
+            <TouchLanes lanes={tuning.strings.length} names={tuning.strings.map((m) => pcName(m, false))} disabled={!playing} onPress={laneDown} onRelease={laneUp} onStrike={strikeNow} />
+          )}
           <p className="arcade-legend muted small">
             {s.inputMode === 'keys' ? (
               <>
-                Segure a casa (<kbd>1</kbd>…<kbd>{tuning.strings.length}</kbd>, corda grave = 1) e palhete com <kbd>Enter</kbd> ou <kbd>Espaço</kbd>. Gema de miolo branco é ligado: vale só com a casa.
+                Segure a casa (<kbd>1</kbd>…<kbd>{tuning.strings.length}</kbd>, corda grave = 1, ou a pista na tela) e palhete com <kbd>Enter</kbd>, <kbd>Espaço</kbd> ou <b>Palhetar</b>. Gema de miolo branco é ligado: vale só com a casa.
               </>
             ) : s.inputMode === 'midi' ? (
               'Toque as notas no instrumento MIDI. Segure as notas com cauda até o fim.'

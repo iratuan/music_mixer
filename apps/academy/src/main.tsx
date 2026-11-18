@@ -14,6 +14,7 @@ import './styles/standard.css';
 import './styles/solid.css';
 import './styles/ear.css';
 import './styles/home2.css';
+import './styles/responsive.css';
 import { App } from './App.js';
 import { installPlatform, type PlatformBridge } from './platform/bridge.js';
 import { androidBridge, isAndroid, openAndroidData } from './platform/android.js';

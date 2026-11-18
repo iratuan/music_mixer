@@ -7,7 +7,7 @@ describe('gamificação', () => {
     expect(levelProgress(0).title).toBe('Iniciante de Garagem');
     expect(levelProgress(xpForLevel(10)).title).toBe('Sideman');
     expect(levelProgress(xpForLevel(100)).level).toBe(100);
-    expect(levelProgress(xpForLevel(100)).title).toBe('Maestro mixerCraft');
+    expect(levelProgress(xpForLevel(100)).title).toBe('Maestro ScaleMonster');
     expect(levelProgress(xpForLevel(100) * 3).fraction).toBe(1);
   });
   it('combo e XP', () => {

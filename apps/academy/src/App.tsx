@@ -49,14 +49,120 @@ const NAV: ReadonlyArray<{ title: string; items: ReadonlyArray<{ id: Screen; lab
   },
 ];
 
+/** Tela estreita (celular, tablet pequeno em retrato): barra inferior no lugar da lateral. */
+const COMPACT_QUERY = '(max-width: 820px)';
+function useCompact(): boolean {
+  const [compact, setCompact] = useState(() => window.matchMedia?.(COMPACT_QUERY).matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.(COMPACT_QUERY);
+    if (!mq) return;
+    const on = () => setCompact(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return compact;
+}
+
+/** As 4 abas fixas da barra inferior; o resto fica em "Mais". */
+const TABS: ReadonlyArray<{ id: Screen; label: string; icon: IconName }> = [
+  { id: 'home', label: 'Início', icon: 'wave' },
+  { id: 'trails', label: 'Trilhas', icon: 'library' },
+  { id: 'exercises', label: 'Prática', icon: 'exercise' },
+  { id: 'ear', label: 'Ouvido', icon: 'wave' },
+];
+const MORE = NAV.flatMap((s) => s.items).filter((i) => !TABS.some((t) => t.id === i.id));
+
+function ThemePick({ theme, onPick }: { theme: ThemeName; onPick(t: ThemeName): void }) {
+  return (
+    <div className="theme-pick" role="radiogroup" aria-label="Tema">
+      {THEMES.map((t) => (
+        <button key={t.id} className={`t-${t.id}`} role="radio" aria-checked={theme === t.id} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => onPick(t.id)} />
+      ))}
+    </div>
+  );
+}
+
 export function App() {
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [splash, setSplash] = useState(() => !new URLSearchParams(window.location.search).get('screen'));
   const [theme, setTheme] = useState<ThemeName>(readTheme);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const compact = useCompact();
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && setMoreOpen(false);
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [moreOpen]);
+
+  const go = (next: Screen) => {
+    setScreen(next);
+    setMoreOpen(false);
+  };
+
+  const content = (
+    <div className="main-col">
+      <LegacyImportBanner />
+      {screen !== 'home' && (
+        <div className="topbar">
+          <XpBar onOpen={() => go('achievements')} />
+        </div>
+      )}
+      <main key={screen} className="content screen-in">
+        {screen === 'home' && <Home onGo={(next) => go(next)} />}
+        {screen === 'trails' && <Trails onPractice={() => go('exercises')} />}
+        {screen === 'exercises' && <Exercises />}
+        {screen === 'harmony' && <Harmony onPracticeScale={() => go('exercises')} />}
+        {screen === 'theory' && <Academy module="theory" onPractice={() => go('exercises')} />}
+        {screen === 'ear' && <EarTraining />}
+        {screen === 'profiles' && <Profiles onChanged={() => go('home')} />}
+        {screen === 'achievements' && <Achievements />}
+      </main>
+    </div>
+  );
+
+  if (compact) {
+    const inMore = MORE.some((m) => m.id === screen);
+    return (
+      <>
+        {splash && <Splash onDone={() => setSplash(false)} />}
+        <div className="shell compact">
+          {content}
+          <nav className="tabbar" aria-label="Navegação principal">
+            {TABS.map((t) => (
+              <button key={t.id} className={`tab ${screen === t.id ? 'active' : ''}`} aria-current={screen === t.id ? 'page' : undefined} onClick={() => go(t.id)}>
+                <Icon name={t.icon} size={20} />
+                <span>{t.label}</span>
+              </button>
+            ))}
+            <button className={`tab ${inMore || moreOpen ? 'active' : ''}`} aria-expanded={moreOpen} aria-controls="more-sheet" onClick={() => setMoreOpen((o) => !o)}>
+              <Icon name="chords" size={20} />
+              <span>Mais</span>
+            </button>
+          </nav>
+          {moreOpen && (
+            <div className="more-scrim" onClick={() => setMoreOpen(false)}>
+              <div id="more-sheet" className="more-sheet card" role="dialog" aria-label="Mais opções" onClick={(e) => e.stopPropagation()}>
+                {MORE.map((item) => (
+                  <button key={item.id} className={`nav-item ${screen === item.id ? 'active' : ''}`} aria-current={screen === item.id ? 'page' : undefined} onClick={() => go(item.id)}>
+                    <Icon name={item.icon} size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+                <div className="nav-title">Tema</div>
+                <ThemePick theme={theme} onPick={setTheme} />
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -74,7 +180,7 @@ export function App() {
                   key={item.id}
                   className={`nav-item ${screen === item.id ? 'active' : ''}`}
                   aria-current={screen === item.id ? 'page' : undefined}
-                  onClick={() => setScreen(item.id)}
+                  onClick={() => go(item.id)}
                   title={item.hint}
                 >
                   <Icon name={item.icon} size={18} />
@@ -85,32 +191,10 @@ export function App() {
           ))}
           <div className="side-foot">
             <div className="nav-title">Tema</div>
-            <div className="theme-pick" role="radiogroup" aria-label="Tema">
-              {THEMES.map((t) => (
-                <button key={t.id} className={`t-${t.id}`} role="radio" aria-checked={theme === t.id} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => setTheme(t.id)} />
-              ))}
-            </div>
+            <ThemePick theme={theme} onPick={setTheme} />
           </div>
         </nav>
-
-        <div className="main-col">
-          <LegacyImportBanner />
-          {screen !== 'home' && (
-            <div className="topbar">
-              <XpBar onOpen={() => setScreen('achievements')} />
-            </div>
-          )}
-          <main key={screen} className="content screen-in">
-            {screen === 'home' && <Home onGo={(next) => setScreen(next)} />}
-            {screen === 'trails' && <Trails onPractice={() => setScreen('exercises')} />}
-            {screen === 'exercises' && <Exercises />}
-            {screen === 'harmony' && <Harmony onPracticeScale={() => setScreen('exercises')} />}
-            {screen === 'theory' && <Academy module="theory" onPractice={() => setScreen('exercises')} />}
-            {screen === 'ear' && <EarTraining />}
-            {screen === 'profiles' && <Profiles onChanged={() => setScreen('home')} />}
-            {screen === 'achievements' && <Achievements />}
-          </main>
-        </div>
+        {content}
       </div>
     </>
   );

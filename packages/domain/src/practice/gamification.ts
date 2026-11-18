@@ -25,7 +25,7 @@ export const RANKS: ReadonlyArray<{ readonly from: number; readonly title: strin
   { from: 25, title: 'Groove Master' },
   { from: 45, title: 'Arquiteto Harmônico' },
   { from: 70, title: 'Ouvido Absoluto' },
-  { from: 100, title: 'Maestro mixerCraft' },
+  { from: 100, title: 'Maestro ScaleMonster' },
 ];
 
 export interface LevelProgress {
