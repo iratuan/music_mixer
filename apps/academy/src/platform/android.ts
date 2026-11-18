@@ -1,3 +1,4 @@
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -86,4 +87,16 @@ export async function openAndroidData() {
   await backupOnStart().catch(() => undefined);
   const SQL = (await initSqlJs({ locateFile: () => wasmUrl })) as SqlJsStatic;
   return createAcademyData(sqlJsAdapter(SQL, await readDb(), writeDb));
+}
+
+/**
+ * Botão Voltar do Android: volta no histórico do app (fecha o "Mais", volta de tela); na tela raiz,
+ * sai do app. A profundidade vem do estado de navegação gravado pelo App.tsx.
+ */
+export function installAndroidBack(): void {
+  void App.addListener('backButton', () => {
+    const depth = (history.state as { depth?: number } | null)?.depth ?? 0;
+    if (depth > 0) history.back();
+    else void App.exitApp();
+  });
 }

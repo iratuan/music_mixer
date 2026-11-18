@@ -82,6 +82,14 @@ function ThemePick({ theme, onPick }: { theme: ThemeName; onPick(t: ThemeName): 
   );
 }
 
+interface NavState {
+  screen: Screen;
+  more?: boolean;
+  /** Quantas entradas do app há abaixo desta (0 = raiz: Voltar sai do app no Android). */
+  depth: number;
+}
+const navDepth = () => (history.state as NavState | null)?.depth ?? 0;
+
 export function App() {
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [splash, setSplash] = useState(() => !new URLSearchParams(window.location.search).get('screen'));
@@ -93,14 +101,39 @@ export function App() {
     applyTheme(theme);
   }, [theme]);
 
+  // Histórico do navegador = botão Voltar do Android (e do navegador): fecha o "Mais" e volta de tela
+  // em vez de sair do app. Cada tela é uma entrada; a folha "Mais" aberta é uma entrada por cima.
+  useEffect(() => {
+    history.replaceState({ screen: initialScreen(), depth: 0 } satisfies NavState, '');
+    const onPop = (e: PopStateEvent) => {
+      const st = e.state as NavState | null;
+      setScreen(st?.screen ?? 'home');
+      setMoreOpen(!!st?.more);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const openMore = () => {
+    history.pushState({ screen, more: true, depth: navDepth() + 1 } satisfies NavState, '');
+    setMoreOpen(true);
+  };
+  const closeMore = () => {
+    if ((history.state as NavState | null)?.more) history.back();
+    else setMoreOpen(false);
+  };
+
   useEffect(() => {
     if (!moreOpen) return;
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && setMoreOpen(false);
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && closeMore();
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, [moreOpen]);
 
   const go = (next: Screen) => {
+    const fromMore = (history.state as NavState | null)?.more;
+    if (fromMore) history.replaceState({ screen: next, depth: navDepth() } satisfies NavState, '');
+    else if (next !== screen) history.pushState({ screen: next, depth: navDepth() + 1 } satisfies NavState, '');
     setScreen(next);
     setMoreOpen(false);
   };
@@ -140,13 +173,13 @@ export function App() {
                 <span>{t.label}</span>
               </button>
             ))}
-            <button className={`tab ${inMore || moreOpen ? 'active' : ''}`} aria-expanded={moreOpen} aria-controls="more-sheet" onClick={() => setMoreOpen((o) => !o)}>
+            <button className={`tab ${inMore || moreOpen ? 'active' : ''}`} aria-expanded={moreOpen} aria-controls="more-sheet" onClick={() => (moreOpen ? closeMore() : openMore())}>
               <Icon name="chords" size={20} />
               <span>Mais</span>
             </button>
           </nav>
           {moreOpen && (
-            <div className="more-scrim" onClick={() => setMoreOpen(false)}>
+            <div className="more-scrim" onClick={closeMore}>
               <div id="more-sheet" className="more-sheet card" role="dialog" aria-label="Mais opções" onClick={(e) => e.stopPropagation()}>
                 {MORE.map((item) => (
                   <button key={item.id} className={`nav-item ${screen === item.id ? 'active' : ''}`} aria-current={screen === item.id ? 'page' : undefined} onClick={() => go(item.id)}>

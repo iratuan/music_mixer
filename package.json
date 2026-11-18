@@ -35,7 +35,7 @@
     "academy:desktop:pack": "npm run academy:desktop:build && electron-builder --win --dir --projectDir apps/academy/shells/desktop",
     "academy:desktop:dist": "npm run academy:desktop:build && electron-builder --win --projectDir apps/academy/shells/desktop",
     "academy:android:sync": "npm run academy:build && cd apps/academy && npx cap sync android",
-    "academy:android:apk": "npm run academy:android:sync && cd apps/academy/android && gradlew assembleDebug"
+    "academy:android:apk": "npm run academy:android:sync && node tooling/academy/gradle.mjs assembleDebug"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

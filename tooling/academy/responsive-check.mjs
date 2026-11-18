@@ -97,6 +97,16 @@ for (const dev of DEVICES) {
     await page.getByRole('heading', { name: 'Harmonia' }).first().waitFor();
     if ((await sheet.count()) !== 0) fail(`${dev.id}: folha "Mais" não fecha ao navegar`);
     else console.log('  ok "Mais" → Harmonia');
+    // Voltar (botão do Android = histórico): fecha a folha e volta de tela, sem sair do app.
+    await page.getByRole('button', { name: 'Mais' }).click();
+    await sheet.waitFor();
+    await page.goBack();
+    const sheetClosed = (await sheet.count()) === 0 && (await page.getByRole('heading', { name: 'Harmonia' }).count()) > 0;
+    await page.goBack();
+    await page.waitForTimeout(300);
+    const backHome = await page.evaluate(() => document.querySelector('.tabbar .tab.active')?.textContent?.trim());
+    if (!sheetClosed || backHome !== 'Início') fail(`${dev.id}: Voltar não navega no app (folha fechou=${sheetClosed}, tela=${backHome})`);
+    else console.log('  ok Voltar fecha "Mais" e volta de tela');
   }
   // Desafio por toque (celular em retrato): pistas no palco em tela cheia, multitoque e "Palhetar".
   if (dev.id === 'celular-retrato') {

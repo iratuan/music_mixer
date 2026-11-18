@@ -17,7 +17,7 @@ import './styles/home2.css';
 import './styles/responsive.css';
 import { App } from './App.js';
 import { installPlatform, type PlatformBridge } from './platform/bridge.js';
-import { androidBridge, isAndroid, openAndroidData } from './platform/android.js';
+import { androidBridge, installAndroidBack, isAndroid, openAndroidData } from './platform/android.js';
 import { desktopApi, desktopBridge, openDesktopData } from './platform/desktop.js';
 import { openWebData, webBridge } from './platform/web.js';
 import type { AcademyData } from './data/services.js';
@@ -26,7 +26,10 @@ const root = createRoot(document.getElementById('root')!);
 
 /** Mesmo build para todas as plataformas: Android (Capacitor), shell desktop (Electron) ou navegador. */
 async function boot(): Promise<[PlatformBridge, AcademyData]> {
-  if (isAndroid()) return [androidBridge, await openAndroidData()];
+  if (isAndroid()) {
+    installAndroidBack();
+    return [androidBridge, await openAndroidData()];
+  }
   const desktop = desktopApi();
   if (desktop) return [desktopBridge(desktop), await openDesktopData(desktop)];
   return [webBridge, await openWebData()];
