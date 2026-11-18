@@ -37,7 +37,7 @@
   },
   "extraResources": [
     {
-      "from": "tooling/runtime/python",
+      "from": "apps/mixer/tooling/runtime/python",
       "to": "python",
       "filter": [
         "**/*",
@@ -45,31 +45,31 @@
       ]
     },
     {
-      "from": "tooling/runtime/models",
+      "from": "apps/mixer/tooling/runtime/models",
       "to": "models"
     },
     {
-      "from": "tooling/rubberband/rubberband-4.0.0-gpl-executable-windows",
+      "from": "apps/mixer/tooling/rubberband/rubberband-4.0.0-gpl-executable-windows",
       "to": "rubberband"
     },
     {
-      "from": "tooling/stems/bf_tools.py",
+      "from": "apps/mixer/tooling/stems/bf_tools.py",
       "to": "tools/bf_tools.py"
     },
     {
-      "from": "tooling/ytdlp/yt-dlp.exe",
+      "from": "apps/mixer/tooling/ytdlp/yt-dlp.exe",
       "to": "ytdlp/yt-dlp.exe"
     },
     {
-      "from": "tooling/stems/ffmpeg/ffmpeg.exe",
+      "from": "apps/mixer/tooling/stems/ffmpeg/ffmpeg.exe",
       "to": "ffmpeg/ffmpeg.exe"
     },
     {
-      "from": "tooling/licenses",
+      "from": "apps/mixer/tooling/licenses",
       "to": "licenses"
     },
     {
-      "from": "tooling/stems/bf_roformer",
+      "from": "apps/mixer/tooling/stems/bf_roformer",
       "to": "tools/bf_roformer",
       "filter": [
         "**/*",
@@ -77,7 +77,7 @@
       ]
     },
     {
-      "from": "tooling/stems/models-sep",
+      "from": "apps/mixer/tooling/stems/models-sep",
       "to": "models/voice",
       "filter": [
         "*_config.yaml"

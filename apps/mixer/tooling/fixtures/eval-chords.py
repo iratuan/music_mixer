@@ -6,7 +6,7 @@ sus2, sus4, dim, m7b5 e inversões), roda a análise de verdade e compara, tempo
   - fundamental certa;
   - acorde certo (fundamental + tipo);
   - baixo certo nas inversões.
-Uso: tooling/runtime/python/python.exe -I tooling/fixtures/eval-chords.py [pasta de saída]
+Uso: apps/mixer/tooling/runtime/python/python.exe -I apps/mixer/tooling/fixtures/eval-chords.py [pasta de saída]
 """
 import json
 import os

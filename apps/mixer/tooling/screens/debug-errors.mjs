@@ -3,7 +3,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const screen = process.env.BF_DEBUG_SCREEN ?? 'library';
 const app = await electron.launch({ args: [root], cwd: root, env: { ...process.env, BF_SMOKE_SCREEN: screen } });
 try {

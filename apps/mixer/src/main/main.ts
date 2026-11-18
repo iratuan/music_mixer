@@ -56,6 +56,9 @@ import {
   type ExportKind,
 } from './security.js';
 
+/** Ferramentas do Mixer em desenvolvimento (relativo à raiz do repositório); no instalador vêm em resources/. */
+const DEV_TOOLING = path.join('apps', 'mixer', 'tooling');
+
 /**
  * Processo principal. O renderer só lê arquivos e só escreve arquivos que o usuário
  * escolheu em diálogos nativos nesta sessão. Permissão de mídia: apenas áudio, apenas o app.
@@ -98,7 +101,7 @@ function registerIpc(): void {
       which === 'logs'
         ? path.join(app.getPath('userData'), 'logs')
         : which === 'licenses'
-          ? [path.join(process.resourcesPath, 'licenses'), path.join(app.getAppPath(), 'tooling', 'licenses')].find((d) => existsSync(d))
+          ? [path.join(process.resourcesPath, 'licenses'), path.join(app.getAppPath(), DEV_TOOLING, 'licenses')].find((d) => existsSync(d))
           : undefined;
     if (!dir) throw new Error('pasta indisponível');
     await mkdir(dir, { recursive: true });
@@ -1174,7 +1177,7 @@ let sepJob: { id: string; cancelled: boolean; child: ChildProcess | null } | nul
 function stemsPython(): { exe: string; bundled: boolean } {
   const fromEnv = process.env.BF_STEMS_PYTHON;
   if (fromEnv) return { exe: fromEnv, bundled: false };
-  const rel = path.join('tooling', 'stems', '.venv', 'Scripts', 'python.exe');
+  const rel = path.join(DEV_TOOLING, 'stems', '.venv', 'Scripts', 'python.exe');
   const dev = [path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)].find((c) => existsSync(c));
   if (dev) return { exe: dev, bundled: false };
   return { exe: path.join(process.resourcesPath, 'python', 'python.exe'), bundled: true };
@@ -1195,9 +1198,9 @@ function demucsDirOf(id: string, sourcePath: string): string {
   return existsSync(fixed) || !existsSync(legacy) ? fixed : legacy;
 }
 
-/** Modelos do audio-separator (karaokê): tooling/stems/models-sep (desenvolvimento) ou resources/models/separator. */
+/** Modelos do audio-separator (karaokê): apps/mixer/tooling/stems/models-sep (desenvolvimento) ou resources/models/separator. */
 function separatorModelsDir(): string {
-  const rel = path.join('tooling', 'stems', 'models-sep');
+  const rel = path.join(DEV_TOOLING, 'stems', 'models-sep');
   const dev = [path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)].find((c) => existsSync(path.join(c, VOICE_MODEL.file)));
   return dev ?? userVoiceDir();
 }
@@ -1209,7 +1212,7 @@ function userVoiceDir(): string {
 
 /** Configuração do modelo (2 KB), que vai no instalador; copiada para junto do modelo baixado. */
 function bundledVoiceConfig(): string | null {
-  const c = [path.join(process.resourcesPath, 'models', 'voice', VOICE_MODEL.config), path.join(app.getAppPath(), 'tooling', 'stems', 'models-sep', VOICE_MODEL.config)];
+  const c = [path.join(process.resourcesPath, 'models', 'voice', VOICE_MODEL.config), path.join(app.getAppPath(), DEV_TOOLING, 'stems', 'models-sep', VOICE_MODEL.config)];
   return c.find((p) => existsSync(p)) ?? null;
 }
 
@@ -1222,7 +1225,7 @@ let voiceDownload: AbortController | null = null;
 
 /** ffmpeg embutido (exigido pelo audio-separator para gravar áudio). */
 function ffmpegDir(): string | null {
-  const rel = path.join('tooling', 'stems', 'ffmpeg');
+  const rel = path.join(DEV_TOOLING, 'stems', 'ffmpeg');
   const candidates = [path.join(process.resourcesPath, 'ffmpeg'), path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)];
   return candidates.find((c) => existsSync(path.join(c, 'ffmpeg.exe'))) ?? null;
 }
@@ -1292,9 +1295,9 @@ function keyName(tonic: number, mode: string): string {
   return `${KEY_NAMES[((tonic % 12) + 12) % 12]} ${mode === 'minor' ? 'menor' : 'maior'}`;
 }
 
-/** Script de análise e MIDI: tooling/stems/bf_tools.py (desenvolvimento) ou resources/tools (instalador). */
+/** Script de análise e MIDI: apps/mixer/tooling/stems/bf_tools.py (desenvolvimento) ou resources/tools (instalador). */
 function bfToolsPath(): string {
-  const rel = path.join('tooling', 'stems', 'bf_tools.py');
+  const rel = path.join(DEV_TOOLING, 'stems', 'bf_tools.py');
   const candidates = [path.join(process.resourcesPath, 'tools', 'bf_tools.py'), path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)];
   return candidates.find((c) => existsSync(c)) ?? candidates[1]!;
 }
@@ -1342,7 +1345,7 @@ function runPythonOnce(args: string[], onProgress: (percent: number) => void, ti
   return new Promise((resolve, reject) => {
     const { exe, bundled } = stemsPython();
     if (!existsSync(exe)) {
-      reject(new Error('ambiente Python não instalado (faltam tooling/stems/.venv ou BF_STEMS_PYTHON)'));
+      reject(new Error('ambiente Python não instalado (faltam apps/mixer/tooling/stems/.venv ou BF_STEMS_PYTHON)'));
       return;
     }
     const child = track(spawn(exe, ['-I', ...args], { env: pythonEnv(bundled), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }));
@@ -1406,11 +1409,11 @@ function userYtdlp(): string {
 
 /**
  * Executável do yt-dlp: BF_YTDLP (teste; um .mjs roda pelo próprio Electron como Node), a cópia
- * atualizada em userData, resources/ytdlp (instalador) ou tooling/ytdlp (desenvolvimento).
+ * atualizada em userData, resources/ytdlp (instalador) ou apps/mixer/tooling/ytdlp (desenvolvimento).
  */
 function ytdlpExe(): string | null {
   if (process.env.BF_YTDLP) return process.env.BF_YTDLP;
-  const rel = path.join('tooling', 'ytdlp', 'yt-dlp.exe');
+  const rel = path.join(DEV_TOOLING, 'ytdlp', 'yt-dlp.exe');
   const candidates = [userYtdlp(), path.join(process.resourcesPath, 'ytdlp', 'yt-dlp.exe'), path.join(app.getAppPath(), rel), path.resolve(process.resourcesPath, '..', '..', '..', rel)];
   return candidates.find((c) => existsSync(c)) ?? null;
 }
@@ -1532,7 +1535,7 @@ async function fetchThumbnail(url: string): Promise<{ bytes: Uint8Array; mime: s
 function rubberbandExe(): string {
   const fromEnv = process.env.BF_RUBBERBAND;
   if (fromEnv) return fromEnv;
-  const rel = path.join('tooling', 'rubberband', 'rubberband-4.0.0-gpl-executable-windows', 'rubberband.exe');
+  const rel = path.join(DEV_TOOLING, 'rubberband', 'rubberband-4.0.0-gpl-executable-windows', 'rubberband.exe');
   const candidates = [
     path.join(process.resourcesPath, 'rubberband', 'rubberband.exe'),
     path.join(app.getAppPath(), rel),
@@ -1546,7 +1549,7 @@ function runRubberbandPitch(input: string, output: string, semitones: number, fo
   return new Promise((resolve, reject) => {
     const exe = rubberbandExe();
     if (!existsSync(exe)) {
-      reject(new Error('Rubber Band não instalado (faltam tooling/rubberband ou BF_RUBBERBAND)'));
+      reject(new Error('Rubber Band não instalado (faltam apps/mixer/tooling/rubberband ou BF_RUBBERBAND)'));
       return;
     }
     // --tempo < 1 deixa mais lento sem mudar o tom; --pitch muda o tom sem mudar o andamento.
@@ -1597,7 +1600,7 @@ function runDemucsOnce(
   return new Promise((resolve, reject) => {
     const { exe: py, bundled } = stemsPython();
     if (!existsSync(py)) {
-      reject(new Error('separador não instalado (faltam tooling/stems/.venv ou BF_STEMS_PYTHON)'));
+      reject(new Error('separador não instalado (faltam apps/mixer/tooling/stems/.venv ou BF_STEMS_PYTHON)'));
       return;
     }
     // No runtime embutido, os pesos do htdemucs_6s vêm junto do instalador: nada é baixado.

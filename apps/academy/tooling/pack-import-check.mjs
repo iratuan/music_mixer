@@ -4,7 +4,7 @@
  *  - pacote válido: a música aparece com título, compassos e tom; sobrevive ao recarregar;
  *  - pacote inválido (outro JSON, versão mais nova): mensagem de erro e nada muda.
  * Uso: npm run academy:build && npm run academy:preview  (em outro terminal)
- *      node tooling/academy/pack-import-check.mjs [url]
+ *      node apps/academy/tooling/pack-import-check.mjs [url]
  */
 import { chromium } from 'playwright';
 

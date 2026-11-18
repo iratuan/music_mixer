@@ -3,7 +3,7 @@
  * Fluxo real do modelo de voz no app EMPACOTADO (copiado para fora do projeto: só o runtime
  * embutido, CPU): importar um trecho, escolher "Principal e backing", ver o cartão de 913 MB,
  * baixar o modelo de verdade (SHA-256 conferido), separar e conferir Voz principal e Backing.
- * Uso: node tooling/screens/voice-download-check.mjs <pasta do app> <áudio curto com voz> [captura.png]
+ * Uso: node apps/mixer/tooling/screens/voice-download-check.mjs <pasta do app> <áudio curto com voz> [captura.png]
  */
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';

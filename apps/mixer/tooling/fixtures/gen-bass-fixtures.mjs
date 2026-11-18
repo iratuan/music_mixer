@@ -10,14 +10,14 @@
  *   bass-common-noisy.wav  mesmo conteúdo com ruído branco a 20 dB SNR
  *   manifest.json          notas, instantes e duração (ground truth)
  *
- * Uso: node tooling/fixtures/gen-bass-fixtures.mjs
+ * Uso: node apps/mixer/tooling/fixtures/gen-bass-fixtures.mjs
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outDir = join(here, '..', '..', 'tests', 'fixtures', 'midi-synth');
+const outDir = join(here, '..', '..', '..', '..', 'tests', 'fixtures', 'midi-synth');
 
 const SR = 48000; // taxa de amostragem da UM2 (verificar no manual antes de gravar)
 const PPQ = 480;

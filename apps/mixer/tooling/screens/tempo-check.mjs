@@ -4,7 +4,7 @@
  * só leitura): o aviso de análise nova aparece, "Atualizar análise" refaz (versão 3); se o
  * andamento sair variável, o cabeçalho mostra a faixa e "usar andamento fixo" refaz com um só
  * andamento (e "detectar variação" volta). O BPM do painel acompanha o trecho.
- * Uso: node tooling/screens/tempo-check.mjs <userData> <id> [captura.png]
+ * Uso: node apps/mixer/tooling/screens/tempo-check.mjs <userData> <id> [captura.png]
  */
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const [src, id, shot] = process.argv.slice(2);
 if (!src || !id) throw new Error('uso: tempo-check.mjs <userData> <id> [captura.png]');
 const userData = mkdtempSync(join(tmpdir(), 'bf-tempo-'));

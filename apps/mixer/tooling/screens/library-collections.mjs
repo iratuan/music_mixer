@@ -3,7 +3,7 @@
  * Coleções na biblioteca, no Electron real, com uma biblioteca isolada de músicas falsas
  * (só o índice e as pastas): lixeira no cartão com confirmação, exclusão da música aberta e
  * exclusão em lote pelo modo de seleção.
- * Uso: npm run build && node tooling/screens/library-collections.mjs [pasta para capturas]
+ * Uso: npm run build && node apps/mixer/tooling/screens/library-collections.mjs [pasta para capturas]
  */
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const shots = process.argv[2];
 const userData = mkdtempSync(join(tmpdir(), 'bf-col-'));
 const ids = ['a1a1a1a1a1a1a1a1', 'b2b2b2b2b2b2b2b2', 'c3c3c3c3c3c3c3c3', 'd4d4d4d4d4d4d4d4'];

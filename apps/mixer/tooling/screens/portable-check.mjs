@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Testa o app empacotado FORA da pasta do projeto: sem o venv de GPU, ele precisa usar o runtime embutido
 // (CPU, offline): separar com escolha de faixas, analisar, transpor (Rubber Band) e gerar MIDI (Basic Pitch).
-// Uso: node tooling/screens/portable-check.mjs <pasta win-unpacked copiada> <arquivo de áudio de teste>
+// Uso: node apps/mixer/tooling/screens/portable-check.mjs <pasta win-unpacked copiada> <arquivo de áudio de teste>
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -7,7 +7,7 @@
  *   - "Importar" devolve a fixture tests/fixtures/midi-synth/bass-common-clean.wav
  *   - "Salvar" devolve arquivos em BF_TMP
  *
- * Uso: npm run build && node tooling/screens/capture.mjs
+ * Uso: npm run build && node apps/mixer/tooling/screens/capture.mjs
  * BF_SPLIT_VOICE=1 também testa a divisão de voz (modelo de karaokê, mais lento).
  */
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
@@ -16,7 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const outDir = join(root, 'docs', 'screens');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const tmp = process.env.BF_TMP ?? join(tmpdir(), 'baixaria-fina-e2e');

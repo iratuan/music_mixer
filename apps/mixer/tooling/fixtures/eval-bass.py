@@ -7,7 +7,7 @@ compara nota a nota (critério do mir_eval): ataque a até 50 ms e altura exata.
   - precisão: das notas detectadas, quantas existem;
   - revocação: das notas tocadas, quantas foram achadas;
   - erros de oitava e de altura (ataque certo, nota errada).
-Uso: tooling/stems/.venv/Scripts/python.exe -I tooling/fixtures/eval-bass.py [pasta] [semente]
+Uso: apps/mixer/tooling/stems/.venv/Scripts/python.exe -I apps/mixer/tooling/fixtures/eval-bass.py [pasta] [semente]
 """
 import json
 import os

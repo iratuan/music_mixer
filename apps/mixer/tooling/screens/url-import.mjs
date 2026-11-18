@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Roteiro de ponta a ponta da importação pelo link de um vídeo, SEM internet:
- * o yt-dlp é substituído por tooling/screens/fake-ytdlp.mjs (BF_YTDLP), que entrega a fixture.
+ * o yt-dlp é substituído por apps/mixer/tooling/screens/fake-ytdlp.mjs (BF_YTDLP), que entrega a fixture.
  * A separação (Demucs) e a análise são reais. Biblioteca isolada.
  *
- * Uso: npm run build && node tooling/screens/url-import.mjs
+ * Uso: npm run build && node apps/mixer/tooling/screens/url-import.mjs
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const outDir = join(root, 'docs', 'screens');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const tmp = join(tmpdir(), 'baixaria-fina-e2e-url');
@@ -30,7 +30,7 @@ const app = await electron.launch({
     NODE_ENV: 'production',
     BF_USER_DATA: userData,
     BF_AUDIO_SINK: 'none',
-    BF_YTDLP: join(root, 'tooling', 'screens', 'fake-ytdlp.mjs'),
+    BF_YTDLP: join(root, 'apps', 'mixer', 'tooling', 'screens', 'fake-ytdlp.mjs'),
     BF_FAKE_AUDIO: fixture,
     BF_FAKE_LOG: log,
   },

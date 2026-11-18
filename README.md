@@ -128,18 +128,18 @@ Para separar, analisar e transpor de verdade, antes é preciso preparar as ferra
 
 ## Ferramentas externas
 
-Binários, modelos e ambientes Python **não são versionados** (veja o `.gitignore`). Prepare estes itens na pasta `tooling/`:
+Binários, modelos e ambientes Python **não são versionados** (veja o `.gitignore`). Prepare estes itens na pasta `apps/mixer/tooling/`:
 
 | Item | Onde fica | Como obter |
 |---|---|---|
-| Runtime Python (torch CPU, Demucs, librosa, Basic Pitch) | `tooling/runtime/python` e `models` | `tooling/runtime/build-runtime.sh`. O script tem caminhos da máquina de origem (`BASE` e o cache do Hugging Face); ajuste antes de rodar. |
-| ffmpeg | `tooling/stems/ffmpeg/ffmpeg.exe` | Build oficial do ffmpeg para Windows. |
-| Rubber Band 4.0.0 (transposição) | `tooling/rubberband/rubberband-4.0.0-gpl-executable-windows/` | Executável oficial. Outro caminho: variável `BF_RUBBERBAND`. |
-| yt-dlp (download por link) | `tooling/ytdlp/yt-dlp.exe` | Release oficial. `tooling/ytdlp/SHA2-256SUMS` traz as somas para conferir. Outro caminho: `BF_YTDLP`. |
-| Ambiente com GPU (opcional) | `tooling/stems/.venv` | Venv com `torch` CUDA. Se existir, o app usa a GPU. |
+| Runtime Python (torch CPU, Demucs, librosa, Basic Pitch) | `apps/mixer/tooling/runtime/python` e `models` | `apps/mixer/tooling/runtime/build-runtime.sh`. O script tem caminhos da máquina de origem (`BASE` e o cache do Hugging Face); ajuste antes de rodar. |
+| ffmpeg | `apps/mixer/tooling/stems/ffmpeg/ffmpeg.exe` | Build oficial do ffmpeg para Windows. |
+| Rubber Band 4.0.0 (transposição) | `apps/mixer/tooling/rubberband/rubberband-4.0.0-gpl-executable-windows/` | Executável oficial. Outro caminho: variável `BF_RUBBERBAND`. |
+| yt-dlp (download por link) | `apps/mixer/tooling/ytdlp/yt-dlp.exe` | Release oficial. `apps/mixer/tooling/ytdlp/SHA2-256SUMS` traz as somas para conferir. Outro caminho: `BF_YTDLP`. |
+| Ambiente com GPU (opcional) | `apps/mixer/tooling/stems/.venv` | Venv com `torch` CUDA. Se existir, o app usa a GPU. |
 | Modelo de divisão de voz (opcional) | Pasta de dados do app | Baixado pelo próprio app, quando você pedir. |
 
-As licenças de cada ferramenta estão em [`tooling/licenses/`](tooling/licenses/).
+As licenças de cada ferramenta estão em [`apps/mixer/tooling/licenses/`](apps/mixer/tooling/licenses/).
 
 ---
 
@@ -153,7 +153,7 @@ arquivo ou link ──► yt-dlp (se for link)
         │                    │
         │                    └─ opcional: RoFormer karaokê ──► voz principal · backings
         ▼
-  análise (tooling/stems/bf_tools.py analyze)
+  análise (apps/mixer/tooling/stems/bf_tools.py analyze)
      andamento · compassos · acordes · tom · seções
         │
         ├─► transcrição do baixo e do piano (Basic Pitch) ──► digitação no braço e nas mãos
@@ -180,7 +180,7 @@ packages/
   domain/          regras musicais puras: harmonia, piano, violão, digitação do baixo, MIDI, seções
   ui/              tokens de design compartilhados
 build/             ícone do aplicativo (instalador e atalho)
-tooling/
+apps/mixer/tooling/   (ferramentas do MixerMonster)
   stems/           bf_tools.py (análise, MIDI, compactação, separação) e bf_roformer/
   runtime/         script e requisitos do runtime Python portátil
   screens/         roteiros ponta a ponta (Playwright, com o Electron real)
@@ -197,13 +197,13 @@ A regra de dependência é simples: `packages/domain` não conhece Electron nem 
 ## Testes e verificação
 
 - **Automatizados:** `npm test` roda os 199 testes do domínio musical e do processo principal.
-- **Ponta a ponta:** os roteiros em `tooling/screens/` abrem o app real (Electron + Playwright) com uma biblioteca isolada, sem tocar na sua. Exemplo:
+- **Ponta a ponta:** os roteiros em `apps/mixer/tooling/screens/` abrem o app real (Electron + Playwright) com uma biblioteca isolada, sem tocar na sua. Exemplo:
   ```bash
   npm run build
-  node tooling/screens/compact-check.mjs
-  node tooling/screens/tempo-check.mjs
+  node apps/mixer/tooling/screens/compact-check.mjs
+  node apps/mixer/tooling/screens/tempo-check.mjs
   ```
-- **Avaliações:** `tooling/fixtures/eval-*.py` comparam a análise com material de resposta conhecida.
+- **Avaliações:** `apps/mixer/tooling/fixtures/eval-*.py` comparam a análise com material de resposta conhecida.
 
 ---
 
@@ -246,6 +246,6 @@ Gera `release/mixerCraft-Setup-<versão>.exe` (NSIS, instalação por usuário, 
 ## Licença e créditos
 
 - Código do projeto: **licença ainda não definida** (uso privado).
-- Componentes de terceiros têm licenças próprias, inclusive o **Rubber Band** (GPL). Os avisos estão em [`tooling/licenses/`](tooling/licenses/).
+- Componentes de terceiros têm licenças próprias, inclusive o **Rubber Band** (GPL). Os avisos estão em [`apps/mixer/tooling/licenses/`](apps/mixer/tooling/licenses/).
 - Ferramentas usadas: **Demucs** (separação), **Basic Pitch** (transcrição), **librosa** (análise), **Rubber Band** (transposição), **yt-dlp** (download), **mido** e **pretty_midi** (MIDI). Modelo de voz: Mel-Band RoFormer karaokê (aufr33/viperx).
 - O projeto não distribui músicas. Use apenas arquivos e vídeos sobre os quais você tem direito de uso.

@@ -8,7 +8,7 @@
  *   - no celular: desafio por toque (pistas no palco em tela cheia, dois dedos, palhetar);
  *   - nenhum erro no console.
  * Uso: npm run academy:build && npm run academy:preview  (em outro terminal)
- *      node tooling/academy/responsive-check.mjs [url] [pasta-de-capturas]
+ *      node apps/academy/tooling/responsive-check.mjs [url] [pasta-de-capturas]
  */
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';

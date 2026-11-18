@@ -2,7 +2,7 @@
 // Testa a importação pelo link no app empacotado, FORA da pasta do projeto, com o yt-dlp e o ffmpeg
 // embutidos e download REAL (precisa de internet): prévia, download, separação só de baixo e bateria
 // pelo runtime de CPU, e o estado inicial com o baixo mudo.
-// Uso: node tooling/screens/portable-url-check.mjs <pasta win-unpacked copiada> [link]
+// Uso: node apps/mixer/tooling/screens/portable-url-check.mjs <pasta win-unpacked copiada> [link]
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

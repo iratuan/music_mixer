@@ -3,7 +3,7 @@
  * Atualização da análise para a versão 2 (acordes estendidos e inversões) numa música real:
  * cópia mínima da biblioteca com a análise antiga; o aviso aparece, "Atualizar análise" refaz e o
  * aviso some; a régua passa a mostrar acordes com inversão quando há.
- * Uso: node tooling/screens/chords-upgrade.mjs <userData> <id> [captura.png]
+ * Uso: node apps/mixer/tooling/screens/chords-upgrade.mjs <userData> <id> [captura.png]
  */
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const [src, id, shot] = process.argv.slice(2);
 const userData = mkdtempSync(join(tmpdir(), 'bf-chords-'));
 const index = JSON.parse(readFileSync(join(src, 'library', 'index.json'), 'utf8'));

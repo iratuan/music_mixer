@@ -8,7 +8,7 @@ seguindo uma curva de andamento, roda a análise de verdade e mede:
   - deriva: maior distância entre um tempo verdadeiro e o detectado mais próximo (pior caso).
 Perfis: constante, acelerando (96 → 120), ao vivo (oscila ±4%), mudança de seção (100 → 112 → 100).
 Saltos maiores que ~15% entre seções não são seguidos (ver track_beats em bf_tools.py).
-Uso: tooling/stems/.venv/Scripts/python.exe -I tooling/fixtures/eval-tempo.py [perfil|todos] [semente]
+Uso: apps/mixer/tooling/stems/.venv/Scripts/python.exe -I apps/mixer/tooling/fixtures/eval-tempo.py [perfil|todos] [semente]
 """
 import json
 import os

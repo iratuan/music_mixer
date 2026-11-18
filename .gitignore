@@ -6,15 +6,15 @@ release-next/
 coverage/
 
 # Ferramentas e runtimes montados localmente (não versionados; ver README)
-tooling/runtime/python/
-tooling/runtime/models/
-tooling/rubberband/
-tooling/ytdlp/*.exe
-tooling/stems/.venv/
-tooling/stems/ffmpeg/
-tooling/stems/out/
-tooling/stems/models-sep/*.ckpt
-tooling/stems/models-sep/download_checks.json
+apps/mixer/tooling/runtime/python/
+apps/mixer/tooling/runtime/models/
+apps/mixer/tooling/rubberband/
+apps/mixer/tooling/ytdlp/*.exe
+apps/mixer/tooling/stems/.venv/
+apps/mixer/tooling/stems/ffmpeg/
+apps/mixer/tooling/stems/out/
+apps/mixer/tooling/stems/models-sep/*.ckpt
+apps/mixer/tooling/stems/models-sep/download_checks.json
 
 # Pesos de modelo e binários
 *.ckpt

@@ -4,7 +4,7 @@
  *   2. fechar o app no meio de uma separação: nenhum Python fica rodando escondido;
  *   3. segunda instância com a mesma pasta de dados: encerra sozinha;
  *   4. registro (logs/main.log) criado com a linha de início.
- * Uso: node tooling/screens/lifecycle-check.mjs
+ * Uso: node apps/mixer/tooling/screens/lifecycle-check.mjs
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
@@ -13,7 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const userData = join(tmpdir(), 'bf-lifecycle', 'userData');
 rmSync(userData, { recursive: true, force: true });

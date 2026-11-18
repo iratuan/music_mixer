@@ -4,7 +4,7 @@
  * ligadas: a compactação apaga os WAV). Verifica: aviso com o tamanho; "Compactar agora" troca os
  * WAV por FLAC e libera espaço; a música abre e toca as faixas; transpor (Rubber Band lendo FLAC)
  * e refazer a análise funcionam.
- * Uso: node tooling/screens/compact-check.mjs <userData> <id>
+ * Uso: node apps/mixer/tooling/screens/compact-check.mjs <userData> <id>
  */
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const [src, id] = process.argv.slice(2);
 if (!src || !id) throw new Error('uso: compact-check.mjs <userData> <id>');
 const userData = mkdtempSync(join(tmpdir(), 'bf-compact-'));

@@ -2,7 +2,7 @@
 /**
  * Mede o custo da tela durante a reprodução: CPU do processo da janela (renderer) e quantos
  * quadros o React redesenhou, tocando a mesma música por 10 s.
- * Uso: node tooling/screens/perf-check.mjs <userData com uma música separada> [Baixaria Fina.exe]
+ * Uso: node apps/mixer/tooling/screens/perf-check.mjs <userData com uma música separada> [Baixaria Fina.exe]
  * Sem o .exe, roda o build do projeto (dist/).
  */
 import { cpSync, mkdtempSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const [srcUserData, exe] = process.argv.slice(2);
 if (!srcUserData) throw new Error('uso: perf-check.mjs <userData> [exe]');
 const userData = mkdtempSync(join(tmpdir(), 'bf-perf-'));

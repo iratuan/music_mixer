@@ -3,7 +3,7 @@
  * Confere o teclado do painel inferior numa música real que tenha a faixa de piano separada.
  * Usa uma cópia mínima da biblioteca (índice com uma música + análise); as faixas são lidas no lugar,
  * sem alteração. O MIDI do piano é gerado na cópia.
- * Uso: node tooling/screens/piano-check.mjs <userData> <id da música> [saída.png]
+ * Uso: node apps/mixer/tooling/screens/piano-check.mjs <userData> <id da música> [saída.png]
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const [src, id, shot] = process.argv.slice(2);
 if (!src || !id) throw new Error('uso: piano-check.mjs <userData> <id> [saída.png]');
 const userData = mkdtempSync(join(tmpdir(), 'bf-piano-'));
