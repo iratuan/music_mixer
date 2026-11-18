@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { CADENCES, PROGRESSION_GENRES, cadenceChords, cadenceGenre, chordNoteNames, chordSymbol, harmonicField, keyUsesFlats, type Cadence, type Chord, type Key, type ProgressionGenre } from '@domain';
-import { Icon } from './Icons.js';
-import { RHYTHMS, TIMBRES, TIMBRE_GROUPS, previewTimbre, type Rhythm, type Timbre } from '../lib/harmonyAudioEngine.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { Icon } from '@baixaria/ui-core';
+import { RHYTHMS, TIMBRES, TIMBRE_GROUPS, previewTimbre, type Rhythm, type Timbre } from '@baixaria/audio-synth';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 /**
  * Painel de som e progressões da Harmonia:

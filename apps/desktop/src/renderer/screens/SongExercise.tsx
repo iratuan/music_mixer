@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BASS_TUNINGS, fingerZones, hitWindowSec, keyUsesFlats, pcName, transposeChord, type Verdict } from '@domain';
-import { Icon } from '../components/Icons.js';
-import { Knob } from '../components/Knob.js';
-import { Neck, type NeckMark } from '../components/Neck.js';
+import { Icon } from '@baixaria/ui-core';
+import { Knob } from '@baixaria/ui-core';
+import { Neck, type NeckMark } from '@baixaria/ui-core';
 import { getAudioContext } from '../lib/audio.js';
 import { INSTRUMENT_INPUT, clickAt, listInputs, pluckAt, startInput, type InputEngine } from '../lib/practice.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 /**
  * Linha do baixo de uma música como exercício progressivo (enviada pela Tablatura da música).

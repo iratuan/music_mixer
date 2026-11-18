@@ -1,4 +1,4 @@
-import { readStore, writeStore } from './store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 /** Acesso ao banco SQLite (processo principal) e ao músico ativo. */
 export interface DbUser {

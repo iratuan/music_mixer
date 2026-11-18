@@ -1,4 +1,4 @@
-import { midiToHz, type AccompNote, type AccompPart } from '@domain';
+import { midiHz as midiToHz, type AccompNote, type AccompPart } from '@baixaria/music-theory';
 
 /**
  * Vozes sintetizadas do acompanhamento (baixo, piano e violão). Funcionam tanto no player

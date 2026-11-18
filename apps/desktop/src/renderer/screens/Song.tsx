@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { errorText } from '../lib/errors.js';
+import { errorText } from '@baixaria/ui-core';
 import {
   BASS_TUNINGS,
   CIRCLE,
@@ -25,7 +25,6 @@ import {
   chordName,
   barEnergy,
   detectSections,
-  encodeWav,
   fingerZones,
   guitarVoicing,
   simplifyChord,
@@ -55,22 +54,22 @@ import {
 import type { SeparateOptions, SongAnalysis, LibrarySong } from '../../preload/preload.js';
 import type { SongJob } from '../App.js';
 import { cleanName } from '../App.js';
-import { Icon } from '../components/Icons.js';
-import { Progress } from '../components/Progress.js';
+import { Icon } from '@baixaria/ui-core';
+import { Progress } from '@baixaria/ui-core';
 import { StemPicker } from '../components/StemPicker.js';
-import { Knob } from '../components/Knob.js';
+import { Knob } from '@baixaria/ui-core';
 import { Waveform } from '../components/Waveform.js';
-import { BassNeck, type NeckNote } from '../components/BassNeck.js';
-import { PianoKeys, keyboardRange, type KeyMark } from '../components/PianoKeys.js';
-import { GuitarChord } from '../components/GuitarChord.js';
-import { CircleOfFifthsWheel } from '../components/CircleOfFifthsWheel.js';
-import { VoiceLeadingInspector } from '../components/VoiceLeadingInspector.js';
-import type { MapDensity, MapView } from '../components/HarmonicGrid.js';
-import { playChord as playHarmonyChord } from '../lib/harmonyAudioEngine.js';
-import { harmonicStore } from '../lib/harmonicSyncStore.js';
+import { BassNeck, type NeckNote } from '@baixaria/ui-core';
+import { PianoKeys, keyboardRange, type KeyMark } from '@baixaria/ui-core';
+import { GuitarChord } from '@baixaria/ui-core';
+import { CircleOfFifthsWheel } from '@baixaria/ui-core';
+import { VoiceLeadingInspector } from '@baixaria/ui-core';
+import type { MapDensity, MapView } from '@baixaria/ui-core';
+import { encodeWav, playChord as playHarmonyChord } from '@baixaria/audio-synth';
+import { harmonicStore } from '@baixaria/ui-core';
 import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../lib/audio.js';
 import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../lib/stems.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 /**
  * Página da música: player com as faixas separadas ocupando toda a área, régua de compassos com

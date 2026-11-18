@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { HISTORY_FORMAT, dailySeries, levelFor, medals, mergeSessions, personalBests, sessionXp, streakDays, type PracticeSession } from '@domain';
-import { writeStore } from '../lib/store.js';
-import { Icon } from './Icons.js';
+import { writeStore } from '@baixaria/ui-core';
+import { Icon } from '@baixaria/ui-core';
 
 /**
  * Evolução (estilo painel de saúde): nível e XP, medalhas, gráficos de precisão e BPM por dia,

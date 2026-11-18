@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 import { call, loadUsers, setActiveUser, type DbUser } from '../lib/db.js';
 
 /** Cada músico tem o próprio histórico: ao trocar, o histórico atual é guardado e o do outro é carregado. */

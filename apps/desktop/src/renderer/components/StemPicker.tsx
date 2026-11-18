@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { errorText } from '../lib/errors.js';
+import { errorText } from '@baixaria/ui-core';
 import type { SeparateOptions } from '../../preload/preload.js';
-import { Icon } from './Icons.js';
+import { Icon } from '@baixaria/ui-core';
 import { stemInfo } from '../lib/stems.js';
-import { Progress } from './Progress.js';
+import { Progress } from '@baixaria/ui-core';
 
 /**
  * Escolha das faixas a separar. Instrumentos marcados viram faixas próprias; os desmarcados

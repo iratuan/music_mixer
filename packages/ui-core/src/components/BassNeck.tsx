@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { pcName, type BassTuning, type FretPos } from '@domain';
+import { pcName, type BassTuning, type FretPos } from '@baixaria/music-theory';
 import { Neck, type NeckMark } from './Neck.js';
 
 /**

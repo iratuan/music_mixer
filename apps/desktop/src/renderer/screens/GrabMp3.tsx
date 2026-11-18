@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GrabPreview, GrabQuality } from '../../preload/preload.js';
 import type { GrabDownload, GrabRequest } from '../App.js';
-import { Icon } from '../components/Icons.js';
-import { Progress } from '../components/Progress.js';
+import { Icon } from '@baixaria/ui-core';
+import { Progress } from '@baixaria/ui-core';
 import { cleanIpcError } from './Import.js';
 
 interface Props {

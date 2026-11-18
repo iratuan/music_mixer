@@ -3,7 +3,7 @@ import { EAR_CATEGORIES, comboMultiplier, earTypesOf, earXp, judgeTaps, randomCh
 import { EarStage, type StageKind } from '../components/EarStage.js';
 import { call, loadUsers } from '../lib/db.js';
 import { playEvents, playOne, type PlayHandle } from '../lib/earAudio.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 type Mode = 'practice' | 'survival' | 'time';
 type Phase = 'listening' | 'answer' | 'path' | 'done';

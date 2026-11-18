@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { encodeWav } from '@baixaria/audio-synth';
 import {
   barAt,
   beatInBar,
@@ -6,7 +7,6 @@ import {
   chordDegree,
   chordName,
   clicksBetween,
-  encodeWav,
   keyName,
   keyNameSolfege,
   keyUsesFlats,

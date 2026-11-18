@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './styles/tokens.css';
+import '@baixaria/ui-core/tokens.css';
 import './styles/base.css';
 import './styles/shell.css';
 import './styles/library.css';

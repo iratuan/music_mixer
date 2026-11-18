@@ -1,28 +1,11 @@
 import { clicksBetween, type AccompNote, type AccompPart } from '@domain';
-import { playAccompNotes } from './synth.js';
+import { getAudioContext, playAccompNotes } from '@baixaria/audio-synth';
 
 /**
- * Camada de áudio do renderer. O relógio musical é o AudioContext (monotônico),
- * nunca Date.now() nem requestAnimationFrame.
+ * Camada de áudio do player (multipista, acompanhamento e metrônomo alinhados à música).
+ * O relógio musical (AudioContext) vem de @baixaria/audio-synth; reexportado para os consumidores atuais.
  */
-
-let context: AudioContext | null = null;
-
-/** Criado dentro de um gesto do usuário (clique), para não ficar suspenso. */
-export function getAudioContext(): AudioContext {
-  if (!context) {
-    // Testes automatizados (?audio=none): relógio sem dispositivo de saída, determinístico.
-    const silent = new URLSearchParams(window.location.search).get('audio') === 'none';
-    const options = silent ? ({ latencyHint: 'interactive', sinkId: { type: 'none' } } as AudioContextOptions) : { latencyHint: 'interactive' as const };
-    context = new AudioContext(options);
-  }
-  return context;
-}
-
-export async function decodeAudio(bytes: Uint8Array): Promise<AudioBuffer> {
-  const copy = bytes.slice().buffer; // decodeAudioData desanexa o buffer
-  return getAudioContext().decodeAudioData(copy);
-}
+export { decodeAudio, getAudioContext } from '@baixaria/audio-synth';
 
 export interface AlignedHandle {
   setGain(index: number, gain: number): void;
@@ -49,7 +32,8 @@ function masterOut(): AudioNode {
 /** Ajusta o volume geral ao vivo. Antes do primeiro uso só guarda o valor. */
 export function setMasterGain(level: number): void {
   masterLevel = Math.max(0, Math.min(1, level));
-  if (masterNode && context) masterNode.gain.setTargetAtTime(masterLevel, context.currentTime, 0.02);
+  // masterNode só existe depois que o contexto foi criado (masterOut), então o relógio é o dele.
+  if (masterNode) masterNode.gain.setTargetAtTime(masterLevel, masterNode.context.currentTime, 0.02);
 }
 
 /** Toca vários buffers no mesmo instante do relógio do motor, com ganho e pan ajustáveis por faixa. */

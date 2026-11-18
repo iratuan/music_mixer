@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { pcName, type BassTuning, type FretPos } from '@domain';
+import { pcName, type BassTuning, type FretPos } from '@baixaria/music-theory';
 
 /**
  * Braço do baixo em SVG, genérico: janela de casas e marcações com estado.

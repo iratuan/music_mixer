@@ -31,19 +31,19 @@ import {
   type Key,
   type Ring,
 } from '@domain';
-import { CircleOfFifthsWheel } from '../components/CircleOfFifthsWheel.js';
+import { CircleOfFifthsWheel } from '@baixaria/ui-core';
 import { CadencePlayerPanel } from '../components/CadencePlayerPanel.js';
-import { GuitarChord } from '../components/GuitarChord.js';
-import { HarmonicGrid, type MapDensity, type MapView } from '../components/HarmonicGrid.js';
-import { HarmonicMapToolbar } from '../components/HarmonicMapToolbar.js';
-import { Icon } from '../components/Icons.js';
-import { keyboardRange, PianoKeys } from '../components/PianoKeys.js';
-import { VoiceLeadingInspector } from '../components/VoiceLeadingInspector.js';
-import { BassNeck, type NeckNote } from '../components/BassNeck.js';
-import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, stopAll, type ProgressionHandle, type Rhythm, type Timbre } from '../lib/harmonyAudioEngine.js';
-import { harmonicStore } from '../lib/harmonicSyncStore.js';
-import { readStore, writeStore } from '../lib/store.js';
-import { errorText } from '../lib/errors.js';
+import { GuitarChord } from '@baixaria/ui-core';
+import { HarmonicGrid, type MapDensity, type MapView } from '@baixaria/ui-core';
+import { HarmonicMapToolbar } from '@baixaria/ui-core';
+import { Icon } from '@baixaria/ui-core';
+import { keyboardRange, PianoKeys } from '@baixaria/ui-core';
+import { VoiceLeadingInspector } from '@baixaria/ui-core';
+import { BassNeck, type NeckNote } from '@baixaria/ui-core';
+import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, stopAll, type ProgressionHandle, type Rhythm, type Timbre } from '@baixaria/audio-synth';
+import { harmonicStore } from '@baixaria/ui-core';
+import { readStore, writeStore } from '@baixaria/ui-core';
+import { errorText } from '@baixaria/ui-core';
 import { getAudioContext } from '../lib/audio.js';
 
 /**

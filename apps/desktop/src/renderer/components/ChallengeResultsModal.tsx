@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Icon } from './Icons.js';
+import { Icon } from '@baixaria/ui-core';
 
 /** Resumo ao fim de um desafio no Palco: precisão, maior sequência, perfeitas, ligados e o botão +5 BPM. */
 export interface ChallengeResult {

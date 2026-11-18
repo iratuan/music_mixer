@@ -1,4 +1,4 @@
-import { BASS_TUNINGS, chordCandidates, chordNoteNames, chordSymbol, parseChord, pc, positionsOf, type Chord, type ChordInsight, type HarmonicMapData } from '@domain';
+import { BASS_TUNINGS, chordCandidates, chordNoteNames, chordSymbol, parseChord, pc, positionsOf, type Chord, type ChordInsight, type HarmonicMapData } from '@baixaria/music-theory';
 import { useState } from 'react';
 import { Icon } from './Icons.js';
 import { Neck, type NeckMark } from './Neck.js';

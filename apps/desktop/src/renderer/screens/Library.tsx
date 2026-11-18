@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { errorText } from '../lib/errors.js';
-import { Icon } from '../components/Icons.js';
-import { Progress } from '../components/Progress.js';
+import { errorText } from '@baixaria/ui-core';
+import { Icon } from '@baixaria/ui-core';
+import { Progress } from '@baixaria/ui-core';
 import type { SongJob, UrlDownload } from '../App.js';
 import { cleanName } from '../App.js';
 import type { LibrarySong } from '../../preload/preload.js';
 import { sortStems, stemInfo } from '../lib/stems.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 
 interface Props {
   jobs: Record<string, SongJob>;

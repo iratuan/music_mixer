@@ -19,6 +19,8 @@
     "paths": {
       "@domain": ["packages/domain/src/index.ts"],
       "@baixaria/music-theory": ["packages/music-theory/src/index.ts"],
+      "@baixaria/audio-synth": ["packages/audio-synth/src/index.ts"],
+      "@baixaria/ui-core": ["packages/ui-core/src/index.ts"],
       "@ui/*": ["packages/ui/src/*"]
     }
   },

@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react';
-import { CIRCLE, signatureShort, type Ring } from '@domain';
+import { CIRCLE, signatureShort, type Ring } from '@baixaria/music-theory';
 
 /**
  * Ciclo das quintas em SVG puro e responsivo: anel externo (tons maiores e armadura), anel do meio

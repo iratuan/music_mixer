@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorText } from '../lib/errors.js';
-import { Icon } from '../components/Icons.js';
-import { Progress } from '../components/Progress.js';
+import { errorText } from '@baixaria/ui-core';
+import { Icon } from '@baixaria/ui-core';
+import { Progress } from '@baixaria/ui-core';
 import { StemPicker } from '../components/StemPicker.js';
 import { getAudioContext } from '../lib/audio.js';
 import { sortStems, stemInfo } from '../lib/stems.js';

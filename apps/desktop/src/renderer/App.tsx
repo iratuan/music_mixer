@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorText } from './lib/errors.js';
+import { errorText } from '@baixaria/ui-core';
 import { Import } from './screens/Import.js';
 import { GrabMp3 } from './screens/GrabMp3.js';
 import { Library } from './screens/Library.js';
@@ -14,12 +14,12 @@ import { EarTraining } from './screens/EarTraining.js';
 import { Achievements } from './screens/Achievements.js';
 import { XpBar } from './components/XpBar.js';
 import { Splash } from './components/Splash.js';
-import { Icon, type IconName } from './components/Icons.js';
-import { applyTheme, readTheme, THEMES, type ThemeName } from './lib/theme.js';
+import { Icon, type IconName } from '@baixaria/ui-core';
+import { applyTheme, readTheme, THEMES, type ThemeName } from '@baixaria/ui-core';
 import type { AudioFormatName, GrabProgress, GrabQuality, GrabResult, SeparateOptions } from '../preload/preload.js';
 import { cleanIpcError } from './screens/Import.js';
 import markUrl from './assets/logo.png';
-import { readStore, writeStore } from './lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 import { FEATURES } from './lib/features.js';
 
 /**

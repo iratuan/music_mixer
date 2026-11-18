@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { THEORY_MODULES, THEORY_SOURCES, THEORY_TOPICS, THEORY_XP_PER_TOPIC, type TheoryTopic } from '@domain';
-import { Staff, type StaffNote } from '../components/Staff.js';
+import { Staff, type StaffNote } from '@baixaria/ui-core';
 import { call, loadUsers } from '../lib/db.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 import { getAudioContext } from '../lib/audio.js';
 import { masterBus, pluckAt, setBassTimbre } from '../lib/practice.js';
-import { playMidis } from '../lib/harmonyAudioEngine.js';
+import { playMidis } from '@baixaria/audio-synth';
 
 type Inst = 'bass' | 'guitar' | 'keyboard';
 const INSTS: ReadonlyArray<{ id: Inst; label: string }> = [

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CURRICULUM, THEORY_TOPICS, curriculumProgress, levelProgress, streakDays, type CurriculumExercise, type PracticeSession } from '@domain';
 import { call, loadUsers, type DbSession, type DbUser } from '../lib/db.js';
-import { readStore, writeStore } from '../lib/store.js';
+import { readStore, writeStore } from '@baixaria/ui-core';
 import { MetronomeModal, TunerModal } from '../components/StudioTools.js';
 import stageBg from '../assets/stage-bg.jpg';
 

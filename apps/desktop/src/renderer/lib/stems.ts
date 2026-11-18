@@ -1,4 +1,4 @@
-import type { IconName } from '../components/Icons.js';
+import type { IconName } from '@baixaria/ui-core';
 
 /** Nome, ícone e ordem de exibição de cada faixa. A cor vem do token --stem-<chave>. */
 export interface StemInfo {

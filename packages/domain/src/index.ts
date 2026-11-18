@@ -1,6 +1,6 @@
 // Teoria musical pura extraída na Etapa E2; reexportada para não quebrar os imports de '@domain'.
+// encodeWav/decodeWavPcm16 foram para @baixaria/audio-synth na Etapa E3.
 export * from '@baixaria/music-theory';
-export * from './io/wav.js';
 export * from './practice/scales.js';
 export * from './practice/judge.js';
 export * from './practice/routines.js';

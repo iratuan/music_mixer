@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
-import { chordSymbol, type ChordInsight, type HarmonicMapData } from '@domain';
+import { chordSymbol, type ChordInsight, type HarmonicMapData } from '@baixaria/music-theory';
 
 /**
  * Grade do mapa harmônico (estilo Real Book): seções com letra e repetição, 4 compassos por linha,

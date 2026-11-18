@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { GuitarVoicing } from '@domain';
+import type { GuitarVoicing } from '@baixaria/music-theory';
 
 interface Props {
   readonly voicing: GuitarVoicing | null;

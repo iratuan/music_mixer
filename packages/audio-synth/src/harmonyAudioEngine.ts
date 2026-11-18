@@ -1,6 +1,6 @@
-import { chordMidis, midiHz, type Chord } from '@domain';
-import { getAudioContext } from './audio.js';
-import { driveStage, masterBus, pluckAt } from './practice.js';
+import { chordMidis, midiHz, type Chord } from '@baixaria/music-theory';
+import { getAudioContext } from './context.js';
+import { driveStage, masterBus, pluckAt } from './voices.js';
 
 /**
  * Motor de áudio da harmonia (ciclo das quintas e mapa harmônico): acordes polifônicos com

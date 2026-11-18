@@ -1,7 +1,7 @@
 import type { EarEvent, EarTimbre } from '@domain';
 import { getAudioContext } from './audio.js';
 import { clickAt, masterBus, pluckAt, setBassTimbre } from './practice.js';
-import { playMidis, stopAll, type Timbre } from './harmonyAudioEngine.js';
+import { playMidis, stopAll, type Timbre } from '@baixaria/audio-synth';
 
 const VOICE: Record<Exclude<EarTimbre, 'bass'>, Timbre> = { piano: 'piano', rhodes: 'rhodes', guitar: 'guitar' };
 

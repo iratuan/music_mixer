@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { Chord, Key } from '@domain';
+import type { Chord, Key } from '@baixaria/music-theory';
 
 /**
  * Estado musical compartilhado (sessão): o tom escolhido no Ciclo das Quintas, o acorde soando
