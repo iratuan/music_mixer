@@ -10,6 +10,7 @@ import { Profiles } from './screens/Profiles.js';
 import { Achievements } from './screens/Achievements.js';
 import { XpBar } from './components/XpBar.js';
 import { Splash } from './components/Splash.js';
+import { LegacyImportBanner } from './components/LegacyImportBanner.js';
 import markUrl from './assets/logo.png';
 
 /** Telas do Academy (trilhas, prática, harmonia, teoria, ouvido e perfil). Sem nada do estúdio. */
@@ -93,6 +94,7 @@ export function App() {
         </nav>
 
         <div className="main-col">
+          <LegacyImportBanner />
           {screen !== 'home' && (
             <div className="topbar">
               <XpBar onOpen={() => setScreen('achievements')} />

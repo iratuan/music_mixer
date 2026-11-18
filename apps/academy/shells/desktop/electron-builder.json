@@ -1,0 +1,38 @@
+{
+  "appId": "br.local.academy",
+  "productName": "Academy",
+  "electronVersion": "33.4.11",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "package.json"
+  ],
+  "npmRebuild": false,
+  "forceCodeSigning": false,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "shortcutName": "Academy",
+    "artifactName": "Academy-Setup-${version}.${ext}"
+  }
+}

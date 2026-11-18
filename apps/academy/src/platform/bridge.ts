@@ -13,6 +13,17 @@ export interface PlatformBridge {
   saveFile(suggestedName: string, bytes: Uint8Array, kind: SaveKind): Promise<SaveResult>;
   /** Mapa harmônico em PDF; ausente onde a plataforma não gera PDF (a tela oferece texto/JSON). */
   readonly exportMapPdf?: (suggestedName: string, map: unknown) => Promise<SaveResult>;
+  /** Importação do progresso do mixerCraft antigo (só no desktop, onde o arquivo existe). */
+  readonly legacy?: LegacyImport;
+}
+
+export interface LegacyImport {
+  /** Há banco antigo e o aluno ainda não decidiu. */
+  available(): Promise<boolean>;
+  /** Copia o banco antigo (o original fica intocado); o app precisa recarregar em seguida. */
+  importNow(): Promise<void>;
+  /** "Agora não": não pergunta de novo. */
+  dismiss(): Promise<void>;
 }
 
 let current: { bridge: PlatformBridge; data: AcademyData } | null = null;

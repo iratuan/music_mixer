@@ -12,3 +12,13 @@ Produto B — Formação & Prática Musical. Aplicação web pura (WebAudio, SQL
 - Testes: `apps/academy/tests/data.test.ts` (sql.js real em Node).
 - Sem `electron`, `node:*` ou `window.baixaria` em `src/`.
 - Pendências: PDF do mapa harmônico (a web não gera PDF; `exportMapPdf` é opcional na bridge), poda das folhas de estilo copiadas do Mixer, shells desktop (E6) e Android (E7), responsividade/toque (E8), importação do `mixercraft.sqlite` legado (E6).
+
+**Status (E6): shell desktop.** `npm run academy:desktop:start` (desenvolvimento), `npm run academy:desktop:pack` / `academy:desktop:dist` (Windows). Código em [`shells/desktop/`](shells/desktop/): Electron mínimo que só embrulha o build web.
+
+- Protocolo próprio `academy://app` (origem estável para IndexedDB, `fetch` do WebAssembly e CSP `'self'` + `'wasm-unsafe-eval'`); janela endurecida (sandbox, contextIsolation, navegação e popups bloqueados, só microfone de áudio e MIDI).
+- IPC mínimo com origem conferida: banco (`academy.sqlite` na pasta de dados, gravação atômica, só aceita SQLite), salvar arquivo (diálogo do sistema, tipos fixos), importação do legado.
+- Backups em `backups/` ao abrir e antes de importar (ficam os 3 últimos).
+- Importação do `mixercraft.sqlite` do app antigo: oferta dentro do app até o aluno decidir; COPIA (o original fica intocado), confere por SHA-256 e registra a decisão em `legacy-import.json`.
+- Identidade PROVISÓRIA (`br.local.academy`, pasta `%APPDATA%/academy`) em `shells/desktop/src/policy.ts`: fixar na Decisão 1 antes de distribuir.
+- Sem Python, FFmpeg, modelos ou yt-dlp no pacote (271 MB descompactado, quase tudo é o runtime do Electron).
+- Pendências: ícone próprio, PDF do mapa harmônico (pode usar `printToPDF` do shell), histórico de prática legado guardado no localStorage do app antigo (não é alcançável a partir do arquivo SQLite).

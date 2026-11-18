@@ -1,0 +1,10 @@
+{
+  "name": "academy-desktop",
+  "productName": "Academy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Academy — formação e prática musical (shell desktop).",
+  "main": "dist/main.cjs",
+  "author": "Baixaria Fina (local)"
+}
