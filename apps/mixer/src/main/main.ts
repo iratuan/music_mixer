@@ -2,10 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, session, shell, type IpcMainInvoke
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { dbCall, openDatabase } from './db.js';
 
-// Configuração de profile (Mixer vs Academy) — lido do PROFILE env var em build
-const PROFILE = (process.env.PROFILE || 'mixer') as 'mixer' | 'academy';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { copyFile, cp, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
@@ -88,12 +85,6 @@ function guard(channel: (typeof import('./security.js'))['ALLOWED_CHANNELS'][num
 }
 
 function registerIpc(): void {
-  ipcMain.handle('db:call', (event, input: unknown) => {
-    guard('db:call', event);
-    const i = (input ?? {}) as { op?: unknown; args?: Record<string, unknown> };
-    return dbCall(i.op, i.args ?? {});
-  });
-
   ipcMain.handle('app:info', (event) => {
     guard('app:info', event);
     return { name: app.getName(), version: app.getVersion(), platform: process.platform };
@@ -1750,9 +1741,7 @@ app.whenReady().then(() => {
   library = new Library(libraryRoot);
   configureSession();
   registerIpc();
-  openDatabase()
-    .catch((e) => logLine(`banco: ${String(e)}`))
-    .finally(() => createWindow());
+  createWindow();
 });
 
 app.on('window-all-closed', () => {

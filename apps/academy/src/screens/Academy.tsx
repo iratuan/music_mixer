@@ -3,7 +3,7 @@ import { THEORY_MODULES, THEORY_SOURCES, THEORY_TOPICS, THEORY_XP_PER_TOPIC, typ
 import { Staff, type StaffNote } from '@baixaria/ui-core';
 import { call, loadUsers } from '../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
-import { getAudioContext } from '../lib/audio.js';
+import { getAudioContext } from '@baixaria/audio-synth';
 import { masterBus, pluckAt, setBassTimbre } from '../lib/practice.js';
 import { playMidis } from '@baixaria/audio-synth';
 

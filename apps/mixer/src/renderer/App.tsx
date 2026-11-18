@@ -4,23 +4,12 @@ import { Import } from './screens/Import.js';
 import { GrabMp3 } from './screens/GrabMp3.js';
 import { Library } from './screens/Library.js';
 import { Song } from './screens/Song.js';
-import { Exercises } from './screens/Exercises.js';
-import { Harmony } from './screens/Harmony.js';
-import { Home } from './screens/Home.js';
-import { Trails } from './screens/Trails.js';
-import { Profiles } from './screens/Profiles.js';
-import { Academy } from './screens/Academy.js';
-import { EarTraining } from './screens/EarTraining.js';
-import { Achievements } from './screens/Achievements.js';
-import { XpBar } from './components/XpBar.js';
 import { Splash } from './components/Splash.js';
 import { Icon, type IconName } from '@baixaria/ui-core';
 import { applyTheme, readTheme, THEMES, type ThemeName } from '@baixaria/ui-core';
 import type { AudioFormatName, GrabProgress, GrabQuality, GrabResult, SeparateOptions } from '../preload/preload.js';
 import { cleanIpcError } from './screens/Import.js';
 import markUrl from './assets/logo.png';
-import { readStore, writeStore } from '@baixaria/ui-core';
-import { FEATURES } from './lib/features.js';
 
 /**
  * Trabalho em segundo plano de uma música: separar em 6 faixas e depois analisar.
@@ -70,12 +59,12 @@ export interface GrabDownload extends GrabRequest {
   readonly result?: GrabResult;
 }
 
-type Screen = 'achievements' | 'trails' | 'profiles' | 'theory' | 'ear' | 'home' | 'library' | 'import' | 'grab' | 'song' | 'exercises' | 'harmony';
+type Screen = 'library' | 'import' | 'grab' | 'song';
 
-/** Tela inicial. O parâmetro ?screen= só é usado no teste de fumaça (BF_SMOKE_SCREEN). */
+/** Tela inicial: a Biblioteca. O parâmetro ?screen= só é usado no teste de fumaça (BF_SMOKE_SCREEN). */
 function initialScreen(): Screen {
   const requested = new URLSearchParams(window.location.search).get('screen');
-  return requested === 'import' || requested === 'grab' || requested === 'exercises' || requested === 'harmony' ? requested : 'home';
+  return requested === 'import' || requested === 'grab' ? requested : 'library';
 }
 
 export const cleanName = (n: string) => n.replace(/\.[a-z0-9]{2,5}$/i, '');
@@ -241,13 +230,6 @@ export function App() {
           </button>
         </div>
         <div className="nav-section">
-          <div className="nav-title">Início</div>
-          <button className={`nav-item ${screen === 'home' ? 'active' : ''}`} aria-current={screen === 'home' ? 'page' : undefined} onClick={() => setScreen('home')} title="Início">
-            <Icon name="wave" size={18} />
-            <span>Início</span>
-          </button>
-        </div>
-        <div className="nav-section">
           <div className="nav-title">Estúdio & Áudio</div>
           {nav.map((item) => (
             <button
@@ -263,60 +245,12 @@ export function App() {
             </button>
           ))}
         </div>
-        {FEATURES.GRAB_MP3 && (
-          <div className="nav-section">
-            <div className="nav-title">Ferramentas de estúdio</div>
-            <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')} title="Baixar MP3">
-              <Icon name="import" size={18} />
-              <span>Baixar MP3</span>
-              {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
-            </button>
-          </div>
-        )}
-        {FEATURES.EXERCISES && (
-          <div className="nav-section">
-            <div className="nav-title">Formação & Trilhas</div>
-            <button className={`nav-item ${screen === 'trails' ? 'active' : ''}`} aria-current={screen === 'trails' ? 'page' : undefined} onClick={() => setScreen('trails')} title="Trilhas de aprendizado">
-              <Icon name="library" size={18} />
-              <span>Trilhas</span>
-            </button>
-            <button
-              className={`nav-item ${screen === 'exercises' ? 'active' : ''}`}
-              aria-current={screen === 'exercises' ? 'page' : undefined}
-              onClick={() => setScreen('exercises')}
-              title="Exercícios"
-            >
-              <Icon name="exercise" size={18} />
-              <span>Prática livre & desafios</span>
-            </button>
-            <button className={`nav-item ${screen === 'harmony' ? 'active' : ''}`} aria-current={screen === 'harmony' ? 'page' : undefined} onClick={() => setScreen('harmony')} title="Harmonia">
-              <Icon name="chords" size={18} />
-              <span>Harmonia</span>
-            </button>
-          </div>
-        )}
-        {FEATURES.EAR_TRAINING && (
-          <div className="nav-section">
-            <div className="nav-title">Academia</div>
-            <button className={`nav-item ${screen === 'theory' ? 'active' : ''}`} onClick={() => setScreen('theory')} title="Teoria musical e leitura">
-              <Icon name="chords" size={18} />
-              <span>Teoria & leitura</span>
-            </button>
-            <button className={`nav-item ${screen === 'ear' ? 'active' : ''}`} onClick={() => setScreen('ear')} title="Laboratório e ear training">
-              <Icon name="wave" size={18} />
-              <span>Ear training</span>
-            </button>
-          </div>
-        )}
         <div className="nav-section">
-          <div className="nav-title">Perfil & evolução</div>
-          <button className={`nav-item ${screen === 'profiles' ? 'active' : ''}`} onClick={() => setScreen('profiles')} title="Trocar ou cadastrar músico">
-            <Icon name="exercise" size={18} />
-            <span>Músicos</span>
-          </button>
-          <button className={`nav-item ${screen === 'achievements' ? 'active' : ''}`} onClick={() => setScreen('achievements')} title="Conquistas e missões">
-            <Icon name="exercise" size={18} />
-            <span>Conquistas & missões</span>
+          <div className="nav-title">Ferramentas de estúdio</div>
+          <button className={`nav-item ${screen === 'grab' ? 'active' : ''}`} aria-current={screen === 'grab' ? 'page' : undefined} onClick={() => setScreen('grab')} title="Baixar MP3">
+            <Icon name="import" size={18} />
+            <span>Baixar MP3</span>
+            {grabDownload && !grabDownload.error && !grabDownload.result && <span className="nav-dot" aria-label="baixando" />}
           </button>
         </div>
         {open && (
@@ -354,14 +288,7 @@ export function App() {
       </nav>
 
       <div className="main-col">
-        {screen !== 'home' && <div className="topbar"><XpBar onOpen={() => setScreen('achievements')} /></div>}
         <main key={screen} className={`content screen-in ${screen === 'song' ? 'full' : ''}`}>
-          {screen === 'home' && <Home onGo={(next) => setScreen(next)} />}
-          {screen === 'trails' && <Trails onPractice={() => setScreen('exercises')} />}
-          {screen === 'profiles' && <Profiles onChanged={() => setScreen('home')} />}
-          {screen === 'theory' && <Academy module="theory" onPractice={() => setScreen("exercises")} />}
-          {screen === 'ear' && <EarTraining />}
-          {screen === 'achievements' && <Achievements />}
           {screen === 'import' && (
             <Import
               onImported={(id, name) => openSong(id, name)}
@@ -385,8 +312,6 @@ export function App() {
               onDismiss={() => setGrabDownload(null)}
             />
           )}
-          {screen === 'exercises' && <Exercises />}
-          {screen === 'harmony' && <Harmony onPracticeScale={() => setScreen('exercises')} />}
           {screen === 'library' && <Library
               jobs={jobs}
               download={download}
@@ -410,7 +335,6 @@ export function App() {
                 setOpen(null);
                 setScreen('library');
               }}
-              onStudyExercise={() => setScreen('exercises')}
             />
           )}
         </main>

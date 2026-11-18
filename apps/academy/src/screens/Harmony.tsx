@@ -44,7 +44,7 @@ import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, st
 import { harmonicStore } from '@baixaria/ui-core';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { errorText } from '@baixaria/ui-core';
-import { getAudioContext } from '../lib/audio.js';
+import { getAudioContext } from '@baixaria/audio-synth';
 
 /**
  * Harmonia: Ciclo das Quintas interativo + campo harmônico e cadências + Mapa Harmônico

@@ -52,7 +52,7 @@ import { ChallengeResultsModal, type ChallengeResult } from '../components/Chall
 import { Icon } from '@baixaria/ui-core';
 import { Knob } from '@baixaria/ui-core';
 import { Neck, type MarkState, type NeckMark } from '@baixaria/ui-core';
-import { getAudioContext } from '../lib/audio.js';
+import { getAudioContext } from '@baixaria/audio-synth';
 import { INSTRUMENT_INPUT, clickAt, BASS_TIMBRES, TIMBRES_OF, listInputs, masterBus, openMidi, pluckAt, setBassTimbre, type BassTimbre, startInput, type InputEngine, type MidiInput } from '../lib/practice.js';
 import { recordSession } from '../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';

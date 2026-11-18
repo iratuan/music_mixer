@@ -1,5 +1,5 @@
 import type { EarEvent, EarTimbre } from '@domain';
-import { getAudioContext } from './audio.js';
+import { getAudioContext } from '@baixaria/audio-synth';
 import { clickAt, masterBus, pluckAt, setBassTimbre } from './practice.js';
 import { playMidis, stopAll, type Timbre } from '@baixaria/audio-synth';
 

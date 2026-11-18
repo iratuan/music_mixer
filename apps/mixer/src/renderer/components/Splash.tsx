@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import logoUrl from '../assets/logo.png';
 import { getAudioContext } from '../lib/audio.js';
-import { masterBus } from '../lib/practice.js';
+import { masterBus } from '@baixaria/audio-synth';
 
 /** Abertura: logo pulsando enquanto o áudio é preparado, barra de progresso e saída suave. */
 export function Splash({ onDone }: { onDone(): void }) {

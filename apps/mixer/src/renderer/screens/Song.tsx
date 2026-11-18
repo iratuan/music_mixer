@@ -50,7 +50,7 @@ import {
   transposeKey,
   type Key,
   type MidiNote,
-} from '@domain';
+} from '@baixaria/music-theory';
 import type { SeparateOptions, SongAnalysis, LibrarySong } from '../../preload/preload.js';
 import type { SongJob } from '../App.js';
 import { cleanName } from '../App.js';
@@ -84,8 +84,6 @@ interface Props {
   /** Refaz a análise; `tempo` força o modo do andamento (senão mantém o anterior). */
   onAnalyze(tempo?: 'auto' | 'fixed'): void;
   onRemoved(): void;
-  /** Linha do baixo enviada para os Exercícios (abre a tela de exercícios). */
-  onStudyExercise?(): void;
 }
 
 interface Lane {
@@ -168,7 +166,7 @@ function cssVar(name: string, fallback: string): string {
   return v || fallback;
 }
 
-export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved, onStudyExercise }: Props) {
+export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Props) {
   const [rec, setRec] = useState<LibrarySong | null>(null);
   const [analysis, setAnalysis] = useState<SongAnalysis | null>(null);
   const [lanes, setLanes] = useState<Lane[] | null>(null);
@@ -768,25 +766,8 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved, onSt
       .slice(0, 24)
       .map((n) => ({ s: n.pos.string, f: n.pos.fret, x: Math.max(0, Math.min(1, (n.t - b.start) / Math.max(0.1, b.end - b.start))), t: n.t, end: n.t + Math.max(0.08, n.dur) }));
 
-  /** Envia a linha do baixo, compasso a compasso com a harmonia, para os Exercícios. */
-  function studyAsExercise() {
-    if (!analysis) return;
-    const bars = analysis.bars.map((b) => {
-      const local = transposeKey(b.key, semis);
-      const names = b.chords.map((c) => (c.chord ? chordName(transposeChord(c.chord, semis), local) : '—'));
-      const len = Math.max(0.1, b.end - b.start);
-      return {
-        chords: names.filter((x, k) => k === 0 || x !== names[k - 1]),
-        notes: tabLine.filter((n) => n.t >= b.start - 0.02 && n.t < b.end - 0.02).map((n) => ({ midi: n.midi, beat: Math.max(0, ((n.t - b.start) / len) * 4), len: Math.max(0.25, Math.min(4, (n.dur / len) * 4)) })),
-      };
-    });
-    const sec = spans.map((sp) => ({ name: sp.name, from: sp.from, to: sp.to }));
-    writeStore('bf-song-exercise', { title: cleanName(name), source: tabSrcLabel, key: songKey ? keyName(songKey) : '', bpm: Math.round(analysis.bpm), bars, sections: sec });
-    writeStore('bf-ex-view', { ...readStore<Record<string, unknown>>('bf-ex-view', {}), tab: 'song' });
-    stopAll();
-    setPlaying(false);
-    onStudyExercise?.();
-  }
+  // "Estudar como exercício" (linha do baixo → Exercícios) saiu na Etapa E4: o Academy é outro app.
+  // Volta na Etapa E9 como exportação .mcraft-pack; o montador da carga está no commit 7cea016.
   // Instantes em que a tela muda (tempos e notas do baixo), em ordem.
   useEffect(() => {
     const t: number[] = [...(analysis?.beats ?? [])];
@@ -1716,9 +1697,6 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved, onSt
             </button>
             <button className="ghost small-btn" onClick={() => void exportMap('pdf', true)}>
               <Icon name="export" size={14} /> PDF
-            </button>
-            <button className="small-btn primary" disabled={!tabLine.length} onClick={studyAsExercise} title="Estudar esta linha nos Exercícios, trecho por trecho, no tom que quiser">
-              <Icon name="exercise" size={14} /> Estudar como exercício
             </button>
           </div>
           {!tabLine.length ? (

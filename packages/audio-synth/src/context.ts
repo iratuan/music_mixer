@@ -1,6 +1,6 @@
 /**
  * Relógio musical compartilhado: um AudioContext único (monotônico), nunca Date.now() nem
- * requestAnimationFrame. Extraído de apps/desktop/src/renderer/lib/audio.ts na Etapa E3.
+ * requestAnimationFrame. Extraído de apps/desktop/src/renderer/lib/audio.ts (hoje apps/mixer) na Etapa E3.
  */
 
 let context: AudioContext | null = null;

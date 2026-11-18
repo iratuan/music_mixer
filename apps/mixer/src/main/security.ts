@@ -32,7 +32,6 @@ export const CONTENT_SECURITY_POLICY = [
 /** Canais IPC permitidos. Qualquer outro nome é recusado. */
 export const ALLOWED_CHANNELS = [
   'app:info',
-  'db:call',
   'app:open-folder',
   'dialog:pick-audio',
   'audio:read',

@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   test: {
-    include: ['packages/**/tests/**/*.test.ts', 'apps/desktop/tests/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['packages/**/tests/**/*.test.ts', 'apps/mixer/tests/**/*.test.ts', 'tests/**/*.test.ts'],
     environment: 'node',
   },
 });

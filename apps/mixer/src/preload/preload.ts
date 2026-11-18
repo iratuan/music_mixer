@@ -3,15 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 /**
  * API mínima exposta ao renderer. Nenhum acesso genérico a ipcRenderer, fs ou shell.
  * Cada função corresponde a um canal de ALLOWED_CHANNELS no processo principal.
- *
- * PROFILE-dependent:
- * - PROFILE=mixer: expõe ~40 canais (library, stems, grab, etc.)
- * - PROFILE=academy: expõe ~3 canais (db, getAppInfo, openAppFolder)
- *
- * Em build, Vite tree-shakes branches não usados.
  */
-
-const PROFILE = (process.env.PROFILE || 'mixer') as 'mixer' | 'academy';
 export type ExportKindName = 'midi' | 'wav' | 'pdf' | 'txt' | 'json';
 export interface LibrarySong {
   readonly id: string;
@@ -165,7 +157,6 @@ export interface SongAnalysis {
 }
 
 export interface BaixariaApi {
-  db(op: string, args?: Record<string, unknown>): Promise<unknown>;
   getAppInfo(): Promise<{ name: string; version: string; platform: string }>;
   openAppFolder(which: 'logs' | 'licenses'): Promise<{ ok: true }>;
   /** Um ou vários arquivos (`paths`); `path` é o primeiro. */
@@ -259,15 +250,9 @@ function subscribe<T>(channel: string, listener: (p: T) => void): () => void {
   };
 }
 
-/** Shared API (ambos profiles) */
-const sharedApi = {
-  db: (op: string, args?: Record<string, unknown>) => ipcRenderer.invoke('db:call', { op, args }),
+const api: BaixariaApi = {
   getAppInfo: () => ipcRenderer.invoke('app:info'),
   openAppFolder: (which: 'logs' | 'licenses') => ipcRenderer.invoke('app:open-folder', { which }),
-};
-
-/** Mixer-specific API (40+ canais) */
-const mixerApi = {
   pickAudioFile: () => ipcRenderer.invoke('dialog:pick-audio'),
   readAudioFile: (path: string) => ipcRenderer.invoke('audio:read', path),
   chooseExportPath: (kind: ExportKindName, suggestedName: string) => ipcRenderer.invoke('dialog:save', { kind, suggestedName }),
@@ -321,10 +306,5 @@ const mixerApi = {
   libraryReadCover: (id: string) => ipcRenderer.invoke('library:read-cover', { id }),
   libraryOpenOrigin: (id: string) => ipcRenderer.invoke('library:open-origin', { id }),
 };
-
-/** Monta API final baseado no profile */
-const api: BaixariaApi = PROFILE === 'mixer'
-  ? { ...sharedApi, ...mixerApi } as BaixariaApi
-  : sharedApi as unknown as BaixariaApi;
 
 contextBridge.exposeInMainWorld('baixaria', api);

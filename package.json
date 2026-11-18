@@ -2,7 +2,7 @@
   "name": "baixaria-fina",
   "version": "0.5.0-beta.3",
   "private": true,
-  "description": "mixerCraft — faixas separadas, player com compassos e acordes, transposição e exercícios de baixo.",
+  "description": "Monorepo: mixerCraft (apps/mixer, desktop) e Academy (apps/academy). O pacote Electron da raiz é o Mixer.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -17,24 +17,15 @@
     "packages/exchange-contract"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/academy/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:renderer": "vite build",
-    "build:electron": "esbuild apps/desktop/src/main/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/main/main.cjs && esbuild apps/desktop/src/preload/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/preload/preload.cjs",
+    "build:electron": "esbuild apps/mixer/src/main/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/main/main.cjs && esbuild apps/mixer/src/preload/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/preload/preload.cjs",
     "build": "npm run build:renderer && npm run build:electron",
     "start": "npm run build && electron .",
-    "pack:win": "npm run build && electron-builder --win --dir",
-    "dist:win": "npm run build && electron-builder --win",
-    "build:mixer": "cross-env PROFILE=mixer npm run build:renderer && npm run build:electron",
-    "build:academy:desktop": "cross-env PROFILE=academy npm run build:renderer && npm run build:electron",
-    "build:academy:web": "cross-env PROFILE=academy vite build",
-    "start:mixer": "cross-env PROFILE=mixer npm run build && electron .",
-    "start:academy": "cross-env PROFILE=academy npm run build && electron .",
-    "pack:mixer": "cross-env PROFILE=mixer npm run build:mixer && electron-builder --win --dir -c.build.files=dist/**/* -c.build.extraMetadata.name=mixer",
-    "pack:academy": "cross-env PROFILE=academy npm run build:academy:desktop && electron-builder --win --dir -c.build.files=dist/**/*",
-    "dist:mixer": "cross-env PROFILE=mixer npm run build:mixer && electron-builder --win -c electron-builder.mixer.json5",
-    "dist:academy": "cross-env PROFILE=academy npm run build:academy:desktop && electron-builder --win -c electron-builder.academy.json5"
+    "pack:win": "npm run build && electron-builder --win --dir -c apps/mixer/electron-builder.json",
+    "dist:win": "npm run build && electron-builder --win -c apps/mixer/electron-builder.json"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
@@ -54,93 +45,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sql.js": "^1.16.0"
-  },
-  "build": {
-    "appId": "br.local.mixercraft",
-    "productName": "mixerCraft",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "package.json"
-    ],
-    "win": {
-      "icon": "build/icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "dir",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "npmRebuild": false,
-    "forceCodeSigning": false,
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "shortcutName": "mixerCraft",
-      "artifactName": "mixerCraft-Setup-${version}.${ext}"
-    },
-    "extraResources": [
-      {
-        "from": "tooling/runtime/python",
-        "to": "python",
-        "filter": [
-          "**/*",
-          "!**/__pycache__/**"
-        ]
-      },
-      {
-        "from": "tooling/runtime/models",
-        "to": "models"
-      },
-      {
-        "from": "tooling/rubberband/rubberband-4.0.0-gpl-executable-windows",
-        "to": "rubberband"
-      },
-      {
-        "from": "tooling/stems/bf_tools.py",
-        "to": "tools/bf_tools.py"
-      },
-      {
-        "from": "tooling/ytdlp/yt-dlp.exe",
-        "to": "ytdlp/yt-dlp.exe"
-      },
-      {
-        "from": "tooling/stems/ffmpeg/ffmpeg.exe",
-        "to": "ffmpeg/ffmpeg.exe"
-      },
-      {
-        "from": "tooling/licenses",
-        "to": "licenses"
-      },
-      {
-        "from": "tooling/stems/bf_roformer",
-        "to": "tools/bf_roformer",
-        "filter": [
-          "**/*",
-          "!**/__pycache__/**"
-        ]
-      },
-      {
-        "from": "tooling/stems/models-sep",
-        "to": "models/voice",
-        "filter": [
-          "*_config.yaml"
-        ]
-      }
-    ]
   },
   "author": "Baixaria Fina (local)"
 }

@@ -1,4 +1,4 @@
-import { clicksBetween, type AccompNote, type AccompPart } from '@domain';
+import { clicksBetween, type AccompNote, type AccompPart } from '@baixaria/music-theory';
 import { getAudioContext, playAccompNotes } from '@baixaria/audio-synth';
 
 /**

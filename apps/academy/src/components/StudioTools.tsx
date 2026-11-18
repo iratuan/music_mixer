@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { yinPitch } from '@domain';
-import { getAudioContext } from '../lib/audio.js';
+import { getAudioContext } from '@baixaria/audio-synth';
 import { clickAt, masterBus } from '../lib/practice.js';
 
 const NAMES = ['Dó', 'Dó#', 'Ré', 'Ré#', 'Mi', 'Fá', 'Fá#', 'Sol', 'Sol#', 'Lá', 'Lá#', 'Si'];
