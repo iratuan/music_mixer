@@ -1,0 +1,7 @@
+{
+  "name": "@baixaria/mixer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Estúdio & Mixer — desktop autocontido (Electron + sidecars nativos).",
+  "type": "module"
+}

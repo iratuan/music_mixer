@@ -1,0 +1,7 @@
+{
+  "name": "@baixaria/exchange-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Esquema JSON versionado do .mcraft-pack (integração opcional Mixer → Academy).",
+  "type": "module"
+}

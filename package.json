@@ -8,6 +8,14 @@
     "node": ">=22"
   },
   "main": "dist/main/main.cjs",
+  "workspaces": [
+    "apps/mixer",
+    "apps/academy",
+    "packages/music-theory",
+    "packages/audio-synth",
+    "packages/ui-core",
+    "packages/exchange-contract"
+  ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
