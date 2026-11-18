@@ -5,12 +5,12 @@
 import path from 'node:path';
 
 /**
- * Identidade PROVISÓRIA (Decisão 1, nomes oficiais, ainda aberta). Trocar só antes da primeira
- * distribuição: a pasta de dados vira o lugar do progresso do aluno.
+ * Identidade oficial (Decisão 1, 2026-11-18): ScaleMonster. Não mudar depois de distribuir: a pasta de
+ * dados guarda o progresso do aluno e o appId identifica o app no Windows e no Android.
  */
-export const APP_ID = 'br.local.academy';
-export const PRODUCT_NAME = 'Academy';
-export const USER_DATA_DIR = 'academy';
+export const APP_ID = 'br.local.scalemonster';
+export const PRODUCT_NAME = 'ScaleMonster';
+export const USER_DATA_DIR = 'scalemonster';
 
 /** Banco do app antigo (mixerCraft com o Academy embutido), oferecido para importação. */
 export const LEGACY_DIR = 'baixaria-fina';

@@ -1,6 +1,6 @@
 {
-  "appId": "br.local.academy",
-  "productName": "Academy",
+  "appId": "br.local.scalemonster",
+  "productName": "ScaleMonster",
   "electronVersion": "33.4.11",
   "directories": {
     "output": "release"
@@ -32,7 +32,7 @@
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
-    "shortcutName": "Academy",
-    "artifactName": "Academy-Setup-${version}.${ext}"
+    "shortcutName": "ScaleMonster",
+    "artifactName": "ScaleMonster-Setup-${version}.${ext}"
   }
 }

@@ -5,6 +5,7 @@
     "src/**/*.tsx",
     "tests/**/*.ts",
     "shells/desktop/src/**/*.ts",
+    "capacitor.config.ts",
     "vite.config.ts",
     "../../packages/**/*.ts",
     "../../packages/**/*.tsx"

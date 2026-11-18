@@ -64,7 +64,7 @@ export function App() {
       <div className="shell">
         <nav className="side" aria-label="Navegação principal">
           <div className="brand">
-            <img className="brand-logo" src={markUrl} alt="Academy" />
+            <img className="brand-logo" src={markUrl} alt="ScaleMonster" />
           </div>
           {NAV.map((section) => (
             <div className="nav-section" key={section.title}>

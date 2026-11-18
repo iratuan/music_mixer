@@ -28,7 +28,7 @@ import {
 } from './policy.js';
 
 /**
- * Shell desktop do Academy: só embrulha o build web (apps/academy/dist) e oferece ao renderer o que o
+ * Shell desktop do ScaleMonster (apps/academy): só embrulha o build web (apps/academy/dist) e oferece ao renderer o que o
  * navegador não tem: o banco num arquivo de verdade, o diálogo de salvar e a importação do banco do
  * mixerCraft antigo. Nada de Python, FFmpeg ou sidecars.
  *

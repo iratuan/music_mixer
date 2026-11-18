@@ -9,9 +9,9 @@ import { sqlJsAdapter, type SqlJsStatic } from './sqljs.js';
  * salvos pelo seletor do navegador (File System Access) ou por download.
  */
 
-const IDB_NAME = 'academy';
+const IDB_NAME = 'scalemonster';
 const IDB_STORE = 'files';
-const DB_KEY = 'academy.sqlite';
+const DB_KEY = 'scalemonster.sqlite';
 
 function idb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
