@@ -58,6 +58,7 @@ import { recordSession } from '../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { SongExercise } from './SongExercise.js';
 import { TouchLanes } from '../components/TouchLanes.js';
+import { StageVideo, useStageVideo } from '../components/StageVideo.js';
 
 /**
  * Exercícios de escala (motor do ScaleMonster): tom, escala, padrão, grupo de cordas, região do braço,
@@ -250,6 +251,9 @@ export function Exercises() {
 
   /* ------------------------------ reprodução ------------------------------ */
   const [playing, setPlaying] = useState(false);
+  // Vídeo de fundo do palco (desktop e tablet na horizontal): abertura antes das notas, depois loop.
+  const stageVideo = useStageVideo();
+  const [intro, setIntro] = useState(false);
   const [step, setStep] = useState(-1);
   const [bpmNow, setBpmNow] = useState(s.bpm);
   const [loops, setLoops] = useState(0);
@@ -364,6 +368,7 @@ export function Exercises() {
     midiIn.current?.stop();
     midiIn.current = null;
     setPlaying(false);
+    setIntro(false);
     setStep(-1);
   }
   useEffect(() => () => stop(), []);
@@ -373,7 +378,7 @@ export function Exercises() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ex]);
 
-  async function start() {
+  async function start(skipIntro = false) {
     if (!ex || ex.sequence.length === 0) return;
     // Desafio: o palco abre em tela cheia ao começar (ainda dentro do clique, para o sistema permitir).
     if (challenge && (s.autoMax ?? true) && !stageMax) {
@@ -383,6 +388,12 @@ export function Exercises() {
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') await ctx.resume();
     stop();
+    // Abertura do vídeo (10 s) antes das notas; ao terminar, StageVideo chama start(true).
+    if (challenge && stageVideo.enabled && !stageVideo.reduced && !skipIntro) {
+      setResult(null);
+      setIntro(true);
+      return;
+    }
     setResult(null);
     setVerdicts({});
     setScore({ hit: 0, octave: 0, miss: 0 });
@@ -497,7 +508,7 @@ export function Exercises() {
   useEffect(() => {
     if (!restart) return;
     setRestart(false);
-    void start();
+    void start(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restart]);
 
@@ -964,8 +975,8 @@ export function Exercises() {
       </div>
 
       <footer className="ex-transport card">
-        <button className="primary round big" onClick={() => (playing ? stop() : void start())} disabled={!ex || seqLen === 0} aria-label={playing ? 'Parar' : 'Começar'}>
-          <Icon name={playing ? 'stop' : 'play'} size={20} />
+        <button className="primary round big" onClick={() => (playing || intro ? stop() : void start())} disabled={!ex || seqLen === 0} aria-label={playing || intro ? 'Parar' : 'Começar'}>
+          <Icon name={playing || intro ? 'stop' : 'play'} size={20} />
         </button>
         <div className="bpm">
           <Knob
@@ -1052,14 +1063,20 @@ export function Exercises() {
       {challenge && (
         <aside ref={stagePanel} className={`arcade-panel card ${stageMax ? 'maximized' : ''}`} aria-label="Palco do desafio">
           {stageMax && (
-            <button className="arcade-stop" onClick={() => (playing ? stop() : void start())} aria-label={playing ? 'Parar o desafio' : 'Começar o desafio'}>
-              <Icon name={playing ? 'stop' : 'play'} size={14} /> {playing ? 'Parar' : 'Começar'}
+            <button className="arcade-stop" onClick={() => (playing || intro ? stop() : void start())} aria-label={playing || intro ? 'Parar o desafio' : 'Começar o desafio'}>
+              <Icon name={playing || intro ? 'stop' : 'play'} size={14} /> {playing || intro ? 'Parar' : 'Começar'}
             </button>
           )}
           <button className="arcade-max" onClick={toggleStageMax} aria-pressed={stageMax} aria-label={stageMax ? 'Sair da tela cheia' : 'Maximizar o palco'} title={stageMax ? 'Sair da tela cheia (Esc)' : 'Palco em tela cheia'}>
             <span aria-hidden="true">{stageMax ? '⤡' : '⤢'}</span> {stageMax ? 'Sair da tela cheia' : 'Tela cheia'}
           </button>
-          <ArcadeStageCanvas feed={feed} lanes={tuning.strings.length} stringNames={tuning.strings.map((m) => pcName(m, false))} goal={STAGE_GOAL} />
+          {stageVideo.enabled && <StageVideo intro={intro} reduced={stageVideo.reduced} onIntroEnd={() => intro && void start(true)} />}
+          {intro && (
+            <button className="stage-skip" onClick={() => void start(true)} aria-label="Pular a abertura">
+              Pular abertura
+            </button>
+          )}
+          <ArcadeStageCanvas feed={feed} lanes={tuning.strings.length} stringNames={tuning.strings.map((m) => pcName(m, false))} goal={STAGE_GOAL} videoBg={stageVideo.enabled} />
           {s.inputMode === 'keys' && (
             <TouchLanes lanes={tuning.strings.length} names={tuning.strings.map((m) => pcName(m, false))} disabled={!playing} onPress={laneDown} onRelease={laneUp} onStrike={strikeNow} />
           )}

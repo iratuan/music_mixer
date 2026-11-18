@@ -436,3 +436,36 @@ button:active:not(:disabled) {
   font: 700 var(--fs-sm) / 1 var(--font);
   cursor: pointer;
 }
+
+/* ------------------------------ vídeo de fundo do palco ------------------------------ */
+/* Desktop e tablet na horizontal (StageVideo.tsx): loop atrás da esteira; abertura cobre o palco. */
+.stage-video video,
+.stage-video img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+.stage-video .stage-video-intro {
+  z-index: 6;
+  background: #000;
+}
+.arcade-panel:has(.stage-video) > .arcade-canvas,
+.arcade-panel:has(.stage-video) > .touch-lanes,
+.arcade-panel:has(.stage-video) > .arcade-legend {
+  position: relative;
+  z-index: 1;
+}
+.stage-skip {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 7;
+}
+.arcade-panel:has(.stage-video-intro) > .arcade-stop,
+.arcade-panel:has(.stage-video-intro) > .arcade-max {
+  z-index: 7;
+}

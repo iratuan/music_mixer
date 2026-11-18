@@ -37,6 +37,8 @@ interface Props {
   goal?: number;
   /** Abertura da câmera (maior = perspectiva mais dramática). */
   fov?: number;
+  /** Há um vídeo atrás do canvas: não pinta o cenário, só escurece para a esteira ficar legível. */
+  videoBg?: boolean;
 }
 
 /** Segundos de pista visíveis à frente. */
@@ -276,10 +278,10 @@ function paintSet(W: number, H: number, horizon: number): HTMLCanvasElement {
   return c;
 }
 
-export function ArcadeStageCanvas({ feed, lanes, stringNames, goal = 80, fov = 1 }: Props) {
+export function ArcadeStageCanvas({ feed, lanes, stringNames, goal = 80, fov = 1, videoBg = false }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const props = useRef({ lanes, stringNames, goal, fov });
-  props.current = { lanes, stringNames, goal, fov };
+  const props = useRef({ lanes, stringNames, goal, fov, videoBg });
+  props.current = { lanes, stringNames, goal, fov, videoBg };
 
   useEffect(() => {
     const cv = canvas.current;
@@ -314,7 +316,7 @@ export function ArcadeStageCanvas({ feed, lanes, stringNames, goal = 80, fov = 1
       const dt = Math.min(0.05, (t - lastT) / 1000);
       lastT = t;
       const sec = t / 1000;
-      const { lanes: L, stringNames: names, goal: goalPct, fov: FOV } = props.current;
+      const { lanes: L, stringNames: names, goal: goalPct, fov: FOV, videoBg: overVideo } = props.current;
       const f = feed.current;
       const eng = f.engine;
       const now = f.now();
@@ -377,19 +379,30 @@ export function ArcadeStageCanvas({ feed, lanes, stringNames, goal = 80, fov = 1
       if (!f.playing && !eng) rock = 0.5;
 
       /* ------------------------------ cenário ------------------------------ */
-      loadStageBg(() => (setKey = ''));
-      const key = `${Math.round(W)}x${Math.round(H)}${stageBgReady ? 'p' : 'd'}`;
-      if (!set || setKey !== key) {
-        set = stageBgReady ? paintPhoto(W, H) : paintSet(W, H, horizon);
-        setKey = key;
+      if (overVideo) {
+        // Vídeo atrás: canvas transparente com sombra embaixo (esteira e placar legíveis).
+        g.clearRect(0, 0, W, H);
+        const shade = g.createLinearGradient(0, 0, 0, H);
+        shade.addColorStop(0, 'rgba(5,3,12,0.2)');
+        shade.addColorStop(0.45, 'rgba(5,3,12,0.35)');
+        shade.addColorStop(1, 'rgba(5,3,12,0.75)');
+        g.fillStyle = shade;
+        g.fillRect(0, 0, W, H);
+      } else {
+        loadStageBg(() => (setKey = ''));
+        const key = `${Math.round(W)}x${Math.round(H)}${stageBgReady ? 'p' : 'd'}`;
+        if (!set || setKey !== key) {
+          set = stageBgReady ? paintPhoto(W, H) : paintSet(W, H, horizon);
+          setKey = key;
+        }
+        g.drawImage(set, 0, 0, W, H);
+        // Profundidade de campo: o fundo do palco fica levemente suavizado (nítido só na pista).
+        g.save();
+        g.globalAlpha = 0.5;
+        g.filter = 'blur(2.5px)';
+        g.drawImage(set, 0, 0, W, horizon + 6, 0, 0, W, horizon + 6);
+        g.restore();
       }
-      g.drawImage(set, 0, 0, W, H);
-      // Profundidade de campo: o fundo do palco fica levemente suavizado (nítido só na pista).
-      g.save();
-      g.globalAlpha = 0.5;
-      g.filter = 'blur(2.5px)';
-      g.drawImage(set, 0, 0, W, horizon + 6, 0, 0, W, horizon + 6);
-      g.restore();
 
       // Canhões de luz: roxo, azul e rosa, balançando no tempo e abrindo com o combo.
       const cols = ['#a35bff', '#4a9bff', '#ff4fb4', '#a35bff', '#4a9bff', '#ff4fb4'];

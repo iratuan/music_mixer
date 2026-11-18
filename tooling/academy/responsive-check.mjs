@@ -19,11 +19,11 @@ const out = process.argv[3] ?? null;
 if (out) mkdirSync(out, { recursive: true });
 
 const DEVICES = [
-  { id: 'celular-retrato', width: 375, height: 812, touch: true, compact: true },
-  { id: 'celular-paisagem', width: 812, height: 375, touch: true, compact: true },
-  { id: 'tablet-retrato', width: 768, height: 1024, touch: true, compact: true },
-  { id: 'tablet-paisagem', width: 1024, height: 768, touch: true, compact: false },
-  { id: 'desktop', width: 1280, height: 800, touch: false, compact: false },
+  { id: 'celular-retrato', width: 375, height: 812, touch: true, compact: true, video: false },
+  { id: 'celular-paisagem', width: 812, height: 375, touch: true, compact: true, video: false },
+  { id: 'tablet-retrato', width: 768, height: 1024, touch: true, compact: true, video: false },
+  { id: 'tablet-paisagem', width: 1024, height: 768, touch: true, compact: false, video: true },
+  { id: 'desktop', width: 1280, height: 800, touch: false, compact: false, video: true },
 ];
 const SCREENS = ['home', 'trails', 'exercises', 'harmony', 'theory', 'ear', 'profiles', 'achievements'];
 
@@ -33,14 +33,16 @@ const fail = (msg) => {
   console.log(`  FALHOU ${msg}`);
 };
 
-const browser = await chromium.launch();
+// Chrome/Edge instalados tocam H.264 (o Chromium do Playwright não); sem eles, usa o Chromium.
+const browser = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch({ channel: 'msedge' })).catch(() => chromium.launch());
 for (const dev of DEVICES) {
   console.log(`\n== ${dev.id} (${dev.width}x${dev.height}${dev.touch ? ', toque' : ''})`);
   const ctx = await browser.newContext({ viewport: { width: dev.width, height: dev.height }, hasTouch: dev.touch, isMobile: dev.touch, deviceScaleFactor: dev.touch ? 2 : 1 });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('console', (m) => m.type() === 'error' && !m.text().startsWith('Failed to load resource') && errors.push(m.text()));
+  page.on('response', (r) => r.status() >= 400 && errors.push(`HTTP ${r.status()} ${new URL(r.url()).pathname}`));
 
   for (const screen of SCREENS) {
     await page.goto(`${base}/?screen=${screen}`);
@@ -116,6 +118,7 @@ for (const dev of DEVICES) {
     await down(lanes.nth(1), 12);
     const both = (await lanes.nth(0).getAttribute('data-down')) === 'true' && (await lanes.nth(1).getAttribute('data-down')) === 'true';
     // O retorno visual precisa aparecer (o estado "apertado" muda a cor da pista).
+    await page.waitForTimeout(400); // transição de cor do botão
     const colors = await lanes.evaluateAll((els) => els.slice(0, 3).map((el) => getComputedStyle(el).backgroundColor));
     if (colors[0] === colors[2]) fail(`pista apertada sem destaque visual (${colors.join(' / ')})`);
     await down(page.locator('.touch-strike'), 13);
@@ -129,6 +132,38 @@ for (const dev of DEVICES) {
     if (!both || !strike || !released || !cancelled) fail(`pistas de toque: dois dedos=${both}, palhetar=${strike}, soltar=${released}, cancelar=${cancelled}`);
     else console.log('  ok desafio por toque (pistas, multitoque, palhetar, palco em tela cheia)');
     await page.getByRole('button', { name: 'Parar o desafio' }).click(); // em tela cheia, o botão do próprio palco
+  }
+  // Vídeo de fundo do palco: só desktop e tablet na horizontal; abertura antes das notas, depois loop mudo.
+  {
+    await page.goto(`${base}/?screen=exercises`);
+    const praticar = page.getByRole('button', { name: 'Praticar', exact: true }).first();
+    await Promise.race([praticar.waitFor({ timeout: 8000 }), page.getByLabel('Desafio').waitFor({ timeout: 8000 })]).catch(() => undefined);
+    if (await praticar.isVisible()) await praticar.click();
+    await page.getByLabel('Desafio').check();
+    await page.getByLabel('Como tocar no desafio').selectOption('keys');
+    await page.locator('.arcade-panel').waitFor();
+    const has = (await page.locator('.stage-video').count()) > 0;
+    if (has !== dev.video) fail(`${dev.id}: vídeo do palco ${has ? 'aparece' : 'não aparece'} (esperado ${dev.video})`);
+    if (dev.video) {
+      await page.getByRole('button', { name: 'Começar', exact: true }).first().click();
+      const intro = page.locator('.stage-video-intro');
+      await intro.waitFor({ timeout: 5000 });
+      await page.waitForTimeout(1500);
+      const iv = await intro.evaluate((v) => ({ t: v.currentTime, paused: v.paused, err: v.error?.code ?? 0, w: v.getBoundingClientRect().width }));
+      const lanesOff = await page.locator('.touch-lane').first().isDisabled();
+      if (iv.err || iv.paused || iv.t < 0.5) fail(`${dev.id}: abertura não toca (${JSON.stringify(iv)})`);
+      if (!lanesOff) fail(`${dev.id}: notas começaram durante a abertura`);
+      if (out) await page.screenshot({ path: join(out, `${dev.id}-abertura.png`) });
+      await page.getByRole('button', { name: 'Pular a abertura' }).click();
+      await page.waitForFunction(() => !document.querySelector('.touch-lane')?.hasAttribute('disabled'), null, { timeout: 15000 });
+      await page.waitForTimeout(1500);
+      const lv = await page.locator('.stage-video video').first().evaluate((v) => ({ t: v.currentTime, paused: v.paused, muted: v.muted, loop: v.loop, err: v.error?.code ?? 0 }));
+      if (lv.err || lv.paused || !lv.muted || !lv.loop || lv.t < 0.5) fail(`${dev.id}: loop de fundo errado (${JSON.stringify(lv)})`);
+      if ((await page.locator('.stage-video-intro').count()) !== 0) fail(`${dev.id}: abertura não saiu`);
+      if (out) await page.screenshot({ path: join(out, `${dev.id}-palco-video.png`) });
+      await page.getByRole('button', { name: 'Parar o desafio' }).click();
+      console.log('  ok vídeo do palco (abertura, pular, loop mudo)');
+    } else console.log('  ok sem vídeo do palco');
   }
   if (errors.length) fail(`${dev.id}: erros no console: ${[...new Set(errors)].slice(0, 3).join(' | ')}`);
   await ctx.close();
