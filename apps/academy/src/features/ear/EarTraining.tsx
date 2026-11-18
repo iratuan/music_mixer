@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { EAR_CATEGORIES, comboMultiplier, earTypesOf, earXp, judgeTaps, randomChallenge, type EarCategory, type EarChallenge, type EarEvent } from '@domain';
-import { EarStage, type StageKind } from '../components/EarStage.js';
-import { call, loadUsers } from '../lib/db.js';
-import { playEvents, playOne, type PlayHandle } from '../lib/earAudio.js';
+import { EarStage, type StageKind } from './EarStage.js';
+import { call, loadUsers } from '../../lib/db.js';
+import { playEvents, playOne, type PlayHandle } from '../../lib/earAudio.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 
 type Mode = 'practice' | 'survival' | 'time';

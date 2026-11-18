@@ -1,4 +1,3 @@
-/* Estrutura: barra lateral + área principal. */
 .shell {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -18,22 +17,6 @@
   align-items: center;
   gap: 10px;
   padding: 4px 8px 8px;
-}
-.brand-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-md);
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-.brand-name {
-  font: 600 16px / 1 var(--font-display);
-}
-.brand-name b {
-  color: var(--accent);
-  font-weight: 700;
 }
 .nav-section {
   display: flex;
@@ -129,7 +112,6 @@
   overflow-y: auto;
 }
 
-/* Telas comuns (com margem) */
 .screen {
   padding: var(--s-6) var(--s-8);
   display: flex;
@@ -148,7 +130,6 @@
   gap: var(--s-3);
 }
 
-/* Marca MixerMonster na barra lateral. */
 .brand-logo {
   width: 32px;
   height: 32px;
@@ -156,7 +137,6 @@
   object-fit: contain;
 }
 
-/* Menu sempre expandido e com rolagem; tela do mixer rola na vertical. */
 .side { overflow-y: auto; overflow-x: hidden; min-height: 0; }
 .side-toggle { display: none !important; }
 .content.full { overflow-y: auto; }

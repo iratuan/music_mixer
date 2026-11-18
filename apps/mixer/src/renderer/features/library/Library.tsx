@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { errorText } from '@baixaria/ui-core';
 import { Icon } from '@baixaria/ui-core';
 import { Progress } from '@baixaria/ui-core';
-import type { SongJob, UrlDownload } from '../App.js';
-import { cleanName } from '../App.js';
-import type { LibrarySong } from '../../preload/preload.js';
-import { sortStems, stemInfo } from '../lib/stems.js';
+import type { SongJob, UrlDownload } from '../../App.js';
+import { cleanName } from '../../App.js';
+import type { LibrarySong } from '../../../preload/preload.js';
+import { sortStems, stemInfo } from '../../lib/stems.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 
 interface Props {

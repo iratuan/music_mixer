@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Icon, type IconName, applyTheme, readTheme, THEMES, type ThemeName } from '@baixaria/ui-core';
-import { Home } from './screens/Home.js';
-import { Trails } from './screens/Trails.js';
-import { Exercises } from './screens/Exercises.js';
-import { Harmony } from './screens/Harmony.js';
-import { Academy } from './screens/Academy.js';
-import { EarTraining } from './screens/EarTraining.js';
-import { Profiles } from './screens/Profiles.js';
-import { Achievements } from './screens/Achievements.js';
-import { XpBar } from './components/XpBar.js';
-import { Splash } from './components/Splash.js';
-import { LegacyImportBanner } from './components/LegacyImportBanner.js';
+import { Home } from './features/home/Home.js';
+import { Trails } from './features/trails/Trails.js';
+import { Exercises } from './features/practice/Exercises.js';
+import { Harmony } from './features/harmony/Harmony.js';
+import { Academy } from './features/theory/Academy.js';
+import { EarTraining } from './features/ear/EarTraining.js';
+import { Profiles } from './features/profile/Profiles.js';
+import { Achievements } from './features/profile/Achievements.js';
+import { XpBar } from './shared/XpBar.js';
+import { Splash } from './shared/Splash.js';
+import { LegacyImportBanner } from './shared/LegacyImportBanner.js';
 import markUrl from './assets/logo.png';
 
 /** Telas do Academy (trilhas, prática, harmonia, teoria, ouvido e perfil). Sem nada do estúdio. */

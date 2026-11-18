@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { FofHighwayEngine, HighwayNote } from '@domain';
-import stageBgUrl from '../assets/stage-bg.jpg';
+import stageBgUrl from '../../../assets/stage-bg.jpg';
 
 /**
  * Palco do desafio: esteira em perspectiva cônica indo até o horizonte de um palco de show (amplificadores,

@@ -8,63 +8,24 @@
 .splash-foot>span{opacity:.5;letter-spacing:.08em}
 .splash-bar{width:min(320px,70vw);height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .splash-bar span{display:block;height:100%;background:linear-gradient(90deg,#ff7a2f,#e56b9f,#3ec8ff);transition:width 300ms var(--spring)}
-.home-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s-4);flex-wrap:wrap}
-.home-head h1{margin:0;font:750 var(--fs-xl)/1.1 var(--font-display)}
-.home-pills{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.home-badge{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);min-width:240px}
-.home-avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff7a2f,#8b5cf6);color:#fff;font-size:20px}
-.home-badge .dash-bar{margin:6px 0 4px;width:150px}
-.home-bento{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-4)}
-.home-card{display:flex;flex-direction:column;gap:var(--s-2);padding:var(--s-4)}
-.home-card h3{margin:0;font:700 var(--fs-lg)/1.2 var(--font-display)}
-.home-card p{margin:0}
-.home-card>button{margin-top:auto;align-self:flex-start}
-.home-white{background:#fff;color:#111;border:0;border-radius:999px;padding:10px 20px;font-weight:700;min-height:44px}
-.home-game{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 22%,var(--glass)),var(--glass))}
-.home-sugg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.home-sugg button{width:100%;display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-height:44px}
-.home-progress{padding:var(--s-4)}
-.home-progress h3{margin:0 0 var(--s-3)}
-.home-prog-row{display:flex;align-items:center;gap:var(--s-6);flex-wrap:wrap}
-.home-spark{flex:1;min-width:220px}
-.home-dock{position:sticky;bottom:var(--s-3);display:flex;justify-content:space-between;align-items:center;gap:var(--s-3);flex-wrap:wrap;padding:var(--s-2) var(--s-3);border-radius:999px}
-.home-dock-tools{display:flex;gap:6px;flex-wrap:wrap}
-.tool-scrim{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:var(--scrim);backdrop-filter:blur(10px)}
-.tool-sheet{width:min(420px,calc(100vw - 32px));padding:var(--s-5);display:flex;flex-direction:column;gap:var(--s-4);animation:sheet-in 400ms var(--spring) both}
-.tool-head{display:flex;justify-content:space-between;align-items:center}
-.tool-head h2{margin:0;font:700 var(--fs-lg)/1 var(--font-display)}
 .tuner,.metro{display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
-.tuner-note{font:800 72px/1 var(--font-display)}
 .tuner.ok .tuner-note{color:var(--good)}
-.tuner-scale{position:relative;width:100%;height:8px;border-radius:8px;background:var(--surface-3)}
-.tuner-scale::after{content:'';position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--good)}
-.tuner-scale i{position:absolute;top:-5px;width:6px;height:18px;margin-left:-3px;border-radius:3px;background:var(--accent);transition:left 120ms linear}
-.metro-bpm{font:800 72px/1 var(--font-display)}
 .metro input{width:100%}
-.metro-btns{display:flex;gap:var(--s-2)}
 @media (max-width:1100px){.home-bento{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){.home-bento{grid-template-columns:1fr}.home-dock{border-radius:20px}}
 
-/* Marca grande, só o logotipo (já traz o nome). */
 .brand{flex-wrap:wrap;justify-content:center;padding:8px 4px 14px}
 .brand-logo{width:100%;height:auto;max-height:110px;filter:drop-shadow(0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent))}
 .side-collapsed .brand-logo{width:48px;max-height:48px}
 
-/* Gradientes e transparências. */
 .shell{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--bg)),var(--bg) 40%,color-mix(in srgb,var(--accent-2) 9%,var(--bg)))}
 .side{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--surface) 70%,transparent) 45%,color-mix(in srgb,var(--accent-2) 10%,transparent))!important}
 .card{background:linear-gradient(145deg,color-mix(in srgb,#fff 7%,var(--glass)),color-mix(in srgb,var(--accent) 5%,var(--glass)))!important}
 .nav-item.active{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 28%,transparent),color-mix(in srgb,var(--accent) 4%,transparent))}
 .nav-item:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent-2) 80%,var(--accent)))!important;box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 35%,transparent)}
-.dash-bar span{background:linear-gradient(90deg,#ff7a2f,#e56b9f,#3ec8ff)}
 .page-head h1,.home-head h1{background:linear-gradient(90deg,var(--text),color-mix(in srgb,var(--accent) 75%,var(--text)));-webkit-background-clip:text;background-clip:text;color:transparent}
-.home-game{background:linear-gradient(150deg,color-mix(in srgb,#ff7a2f 30%,transparent),color-mix(in srgb,#8b5cf6 28%,transparent))!important}
-.home-dock{background:color-mix(in srgb,var(--surface) 55%,transparent)!important;backdrop-filter:blur(30px) saturate(1.5)}
 
-/* Layout ocupa toda a área, também em monitores largos. */
 .screen{max-width:none!important;width:100%}
 .grab-screen,.import [role='tabpanel']{max-width:none}
-.home-bento{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.dash-medals{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 @media (min-width:1700px){.home-prog-row{gap:var(--s-8)}.home-card{min-height:200px}}

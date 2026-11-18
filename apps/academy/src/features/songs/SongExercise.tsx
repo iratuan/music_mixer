@@ -4,7 +4,7 @@ import { Icon } from '@baixaria/ui-core';
 import { Knob } from '@baixaria/ui-core';
 import { Neck, type NeckMark } from '@baixaria/ui-core';
 import { getAudioContext } from '@baixaria/audio-synth';
-import { INSTRUMENT_INPUT, clickAt, listInputs, pluckAt, startInput, type InputEngine } from '../lib/practice.js';
+import { INSTRUMENT_INPUT, clickAt, listInputs, pluckAt, startInput, type InputEngine } from '../../lib/practice.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { PACK_EXTENSION, parsePack, type PackSong } from '@baixaria/exchange-contract';
 

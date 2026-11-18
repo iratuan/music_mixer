@@ -442,6 +442,10 @@ button:active:not(:disabled) {
   z-index: 6;
   background: #000;
 }
+/* Abertura montada mas fora de uso: fica oculta, para o clique poder tocá-la. */
+.stage-video .stage-video-intro.stage-video-idle {
+  display: none;
+}
 .arcade-panel:has(.stage-video) > .arcade-canvas,
 .arcade-panel:has(.stage-video) > .touch-lanes,
 .arcade-panel:has(.stage-video) > .arcade-legend {

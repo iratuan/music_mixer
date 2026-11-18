@@ -32,7 +32,7 @@ import {
   type Ring,
 } from '@domain';
 import { CircleOfFifthsWheel } from '@baixaria/ui-core';
-import { CadencePlayerPanel } from '../components/CadencePlayerPanel.js';
+import { CadencePlayerPanel } from '../practice/CadencePlayerPanel.js';
 import { GuitarChord } from '@baixaria/ui-core';
 import { HarmonicGrid, type MapDensity, type MapView } from '@baixaria/ui-core';
 import { HarmonicMapToolbar } from '@baixaria/ui-core';
@@ -44,7 +44,7 @@ import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, st
 import { harmonicStore } from '@baixaria/ui-core';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { errorText } from '@baixaria/ui-core';
-import { platform, type SaveResult } from '../platform/bridge.js';
+import { platform, type SaveResult } from '../../platform/bridge.js';
 import { getAudioContext } from '@baixaria/audio-synth';
 
 /**

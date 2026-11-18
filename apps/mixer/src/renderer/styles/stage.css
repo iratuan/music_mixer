@@ -1,90 +1,10 @@
-/* Palco do desafio (pista de notas) em tela dividida e o resumo do resultado. */
-.ex-single,
-.ex-left {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-  min-width: 0;
-}
-.ex-split {
-  display: grid;
-  grid-template-columns: minmax(0, 45fr) minmax(380px, 55fr);
-  gap: var(--s-4);
-  align-items: start;
-}
-/* Com o palco aberto, a tela usa a largura toda e os ajustes ficam mais compactos. */
 .screen.exercises:has(.ex-split) {
   max-width: none;
-}
-.ex-split .ex-controls {
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-}
-.ex-split .ex-transport {
-  flex-wrap: wrap;
 }
 @media (max-width: 1050px) {
   .ex-split {
     grid-template-columns: 1fr;
   }
-}
-
-.arcade-panel {
-  position: sticky;
-  top: var(--s-4);
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  overflow: hidden;
-  height: min(calc(100vh - 120px), 820px);
-  min-height: 460px;
-  background: #050507;
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
-}
-.arcade-canvas {
-  display: block;
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-}
-.arcade-legend {
-  margin: 0;
-  padding: var(--s-2) var(--s-3);
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.results-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: var(--scrim);
-}
-.results-card {
-  width: min(460px, calc(100vw - 32px));
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-  padding: var(--s-5);
-  box-shadow: var(--shadow);
-}
-.results-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-.results-head h2 {
-  margin: 0;
-  font: 750 var(--fs-xl) / 1.1 var(--font-display);
-}
-.results-badge {
-  align-self: flex-start;
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  font: 700 var(--fs-2xs) / 1.4 var(--font);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 .results-badge.ok {
   background: color-mix(in srgb, var(--good) 18%, transparent);
@@ -94,62 +14,8 @@
   background: color-mix(in srgb, var(--warn) 18%, transparent);
   color: var(--warn);
 }
-.results-stars {
-  color: var(--focus);
-  font-size: 20px;
-  letter-spacing: 2px;
-}
 .results-stars .dim {
   color: var(--surface-3);
-}
-.results-big {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-3);
-}
-.results-big > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--s-3);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-.results-big b {
-  font: 800 30px / 1 var(--font-display);
-  color: var(--accent);
-}
-.results-big span,
-.results-grid dt {
-  color: var(--muted);
-  font-size: var(--fs-xs);
-}
-.results-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-2) var(--s-4);
-  margin: 0;
-}
-.results-grid dd {
-  margin: 2px 0 0;
-  font: 700 var(--fs-lg) / 1.2 var(--font);
-}
-.results-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--s-2);
-}
-
-/* Braço clicável: toca a nota e a corda vibra. */
-.neck-hit {
-  fill: transparent;
-  cursor: pointer;
-}
-.neck-hit:hover {
-  fill: color-mix(in srgb, var(--accent) 14%, transparent);
-}
-.neck-string-g.vib .neck-string {
-  animation: string-vib 90ms ease-in-out 7;
 }
 @keyframes string-vib {
   0%,
@@ -168,138 +34,21 @@
     animation: none;
   }
 }
-
-/* Visual: números tabulares nos valores que mudam, superfícies translúcidas nos painéis flutuantes. */
-.bpm-value,
-.score,
-.meter,
-.results-big b,
-.results-grid dd,
-.results-xp,
-.dash-stats dd,
-.dash-table td,
-.bpm-num,
-.cad-chip {
-  font-variant-numeric: tabular-nums;
-}
-.results-scrim {
-  backdrop-filter: blur(10px) saturate(1.2);
-}
-.results-card,
-.arcade-panel {
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.harmony-dock {
-  backdrop-filter: blur(18px);
-}
 button {
   transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 button:active:not(:disabled) {
   transform: scale(0.97);
 }
-.results-xp {
-  margin: 0;
-  color: var(--accent-2);
-  font-weight: 650;
-}
-
-/* Evolução. */
-.dash {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-}
-.dash h2,
-.dash h3 {
-  margin: 0;
-}
-.dash h3 {
-  font: 650 var(--fs-md) / 1.2 var(--font);
-  margin-bottom: var(--s-3);
-}
 .dash > .card,
 .dash-grid2 > .card {
   padding: var(--s-4);
-}
-.dash-level {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.3fr) auto auto auto;
-  align-items: center;
-  gap: var(--s-6);
-}
-.dash-level h2 {
-  font: 750 var(--fs-xl) / 1.15 var(--font-display);
-  margin: 4px 0 var(--s-2);
-}
-.dash-bar {
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  overflow: hidden;
-  margin-bottom: var(--s-2);
-}
-.dash-bar span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--warn));
-  transition: width 400ms var(--ease);
-}
-.dash-stats {
-  display: flex;
-  gap: var(--s-6);
-  margin: 0;
-}
-.dash-stats dt {
-  color: var(--muted);
-  font-size: var(--fs-xs);
-}
-.dash-stats dd {
-  margin: 2px 0 0;
-  font: 750 var(--fs-xl) / 1 var(--font-display);
-}
-.dash-actions {
-  display: flex;
-  gap: var(--s-2);
-}
-.dash-grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-4);
 }
 @media (max-width: 1000px) {
   .dash-grid2,
   .dash-level {
     grid-template-columns: 1fr;
   }
-}
-.dash-chart {
-  width: 100%;
-  height: auto;
-}
-.dash-grid {
-  stroke: var(--line);
-}
-.dash-axis {
-  fill: var(--faint);
-  font-size: 10px;
-}
-.dash-medals {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: var(--s-2);
-}
-.dash-medal {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  color: var(--faint);
-  font-weight: 600;
 }
 .dash-medal.on {
   color: var(--text);
@@ -308,131 +57,13 @@ button:active:not(:disabled) {
 .dash-medal.on b {
   color: var(--focus);
 }
-.dash-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-sm);
-}
-.dash-table th {
-  text-align: left;
-  color: var(--faint);
-  font: 650 var(--fs-2xs) / 1 var(--font);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0 var(--s-2) var(--s-2) 0;
-}
-.dash-table td {
-  padding: var(--s-2) var(--s-2) var(--s-2) 0;
-  border-top: 1px solid var(--line);
-}
-.dash-recent {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.dash-recent li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-2) 0;
-  border-top: 1px solid var(--line);
-}
-.dash-recent li > span {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.dash-recent b.good {
-  color: var(--good);
-}
 .dash-recent b.warn {
   color: var(--warn);
 }
-/* As marcas de nota não seguram o clique: ele chega à casa por baixo. */
-.neck-note {
-  pointer-events: none;
-}
 
-/* Painel de treino em vidro. */
 .ex-left .card {
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-}
-.ex-tags {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-.tag {
-  padding: 2px 9px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  color: var(--muted);
-  font: 600 var(--fs-2xs) / 1.5 var(--font);
-  font-variant-numeric: tabular-nums;
-}
-.ex-split .ex-stage-head {
-  flex-wrap: wrap;
-}
-
-/* Palco maximizado: ocupa a janela toda; o botão fica no canto, abaixo do painel de resultados. */
-.arcade-max {
-  position: absolute;
-  top: 132px;
-  right: 12px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: color-mix(in srgb, var(--accent) 82%, #000);
-  color: #fff;
-  font: 700 var(--fs-sm) / 1 var(--font);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  cursor: pointer;
-}
-.arcade-max span {
-  font-size: 15px;
-}
-.arcade-max:hover {
-  filter: brightness(1.12);
-}
-.arcade-panel.maximized {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  height: 100vh;
-  min-height: 0;
-  border-radius: 0;
-  border: 0;
-}
-
-.arcade-panel:fullscreen {
-  width: 100vw;
-  height: 100vh;
-  border-radius: 0;
-}
-
-.arcade-stop {
-  position: absolute;
-  top: 132px;
-  right: 168px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(12, 10, 22, 0.7);
-  color: #fff;
-  font: 700 var(--fs-sm) / 1 var(--font);
-  cursor: pointer;
 }

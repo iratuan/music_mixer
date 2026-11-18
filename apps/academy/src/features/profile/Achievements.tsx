@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ACHIEVEMENTS, EAR_CATEGORIES, RANKS, levelProgress } from '@domain';
-import { call, loadUsers, type DbUser } from '../lib/db.js';
+import { call, loadUsers, type DbUser } from '../../lib/db.js';
 
 interface Quest {
   quest_code: string;

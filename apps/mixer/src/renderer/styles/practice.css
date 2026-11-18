@@ -1,4 +1,3 @@
-/* Exercícios e estados do braço (compartilhados com o painel do player). */
 .field {
   display: flex;
   flex-direction: column;
@@ -35,44 +34,6 @@ select {
   color: var(--text);
   font-weight: 600;
 }
-
-.ex-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--s-3) var(--s-4);
-  padding: var(--s-4);
-}
-.ex-controls .wide {
-  grid-column: span 2;
-}
-.ex-stage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-.ex-stage-head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-.ex-neck {
-  width: 100%;
-  max-height: 260px;
-}
-.ex-seq {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.ex-pill {
-  font: 600 var(--fs-xs) / 1 var(--font-mono);
-  padding: 5px 6px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  color: var(--muted);
-  min-width: 26px;
-  text-align: center;
-}
 .ex-pill.now {
   background: var(--accent);
   color: var(--accent-ink);
@@ -81,55 +42,12 @@ select {
   background: color-mix(in srgb, var(--good) 30%, transparent);
   color: var(--text);
 }
-.ex-pill.octave {
-  background: color-mix(in srgb, var(--warn) 30%, transparent);
-  color: var(--text);
-}
-.ex-pill.miss {
-  background: color-mix(in srgb, var(--bad) 30%, transparent);
-  color: var(--text);
-}
-.ex-transport {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-4);
-  padding: var(--s-3) var(--s-4);
-}
 .bpm {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.bpm-value {
-  min-width: 78px;
-  text-align: center;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.bpm-value b {
-  font-size: var(--fs-lg);
-  color: var(--text);
-}
-.input-select {
-  max-width: 220px;
-}
-.meter {
-  width: 70px;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--good) calc(var(--lvl) * 100%), var(--surface-3) 0);
-}
-.score {
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-}
-.score b {
-  font-size: var(--fs-lg);
-  color: var(--text);
-}
 
-/* Estados das notas no braço */
 .neck-note.scale circle {
   fill: transparent;
   stroke: var(--line-strong);
@@ -144,191 +62,37 @@ select {
   fill: var(--good);
   stroke: var(--good);
 }
-.neck-note.octave circle {
-  fill: var(--warn);
-  stroke: var(--warn);
-}
-.neck-note.miss circle {
-  fill: var(--bad);
-  stroke: var(--bad);
-}
 .neck-note.hit text,
 .neck-note.octave text,
 .neck-note.miss text {
   fill: var(--bg);
 }
-
-/* Biblioteca de exercícios: filtros, cartões das rotinas e faixa da rotina aberta */
-.routine-filters {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-3);
-  margin-bottom: var(--s-4);
-}
 .routine-filters .coll-bar {
   margin-bottom: 0;
-}
-.routine-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--s-3);
-}
-.routine-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-4);
 }
 .routine-card.current {
   border-color: var(--accent);
 }
-.routine-card h3 {
-  margin: 0;
-  font: 650 var(--fs-md) / 1.25 var(--font-display);
-}
-.routine-card > button {
-  align-self: flex-start;
-  margin-top: auto;
-}
-.routine-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-.routine-meta {
-  color: var(--muted);
-}
-.routine-meta b,
-.routine-rec {
-  color: var(--text);
-}
-.lvl-badge {
-  font: 700 var(--fs-2xs) / 1 var(--font);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 4px 7px;
-  border-radius: var(--r-pill);
-  color: var(--c);
-  background: color-mix(in srgb, var(--c) 16%, transparent);
-}
-.lvl-1 {
-  --c: var(--good);
-}
-.lvl-2 {
-  --c: var(--warn);
-}
-.lvl-3 {
-  --c: var(--bad);
-}
-.done-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: 650 var(--fs-xs) / 1 var(--font);
-  color: var(--good);
-}
-.routine-banner {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-3);
-  padding: var(--s-2) var(--s-4);
-  margin-bottom: var(--s-3);
-}
 .routine-banner.off {
   border-style: dashed;
-}
-.routine-banner-text {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px var(--s-3);
-  min-width: 0;
 }
 .page-head .seg button svg {
   margin-right: 6px;
   vertical-align: -3px;
 }
-
-/* Percurso pelo braço: etapa atual */
-.tour-stage {
-  font: 650 var(--fs-xs) / 1.2 var(--font);
-  color: var(--accent);
-  padding: 4px 8px;
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-}
-
-/* Tom (meio tom, ciclo das quartas) e casas da parte do braço */
-.key-pick {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.key-pick select {
-  flex: 1;
-  min-width: 0;
-}
 .key-pick .icon-btn {
   padding: 6px;
-}
-
-/* Linha do baixo de uma música como exercício */
-.song-ex {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-.song-ex-head {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: var(--s-3) var(--s-4);
 }
 .song-ex-head .semis {
   min-width: 64px;
   text-align: center;
 }
-.song-ex-bars {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-left: 2px solid var(--text);
-  margin-bottom: var(--s-3);
-}
-.song-ex-bar {
-  position: relative;
-  padding: 12px 8px 6px;
-  border-right: 2px solid var(--text);
-  font: 750 var(--fs-lg) / 1.1 var(--font-display);
-}
-.song-ex-bar i {
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  font: 600 var(--fs-2xs) / 1 var(--font);
-  color: var(--faint);
-}
 .song-ex-bar.cur {
   background: var(--accent-soft);
-}
-.song-ex-empty {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
 }
 .ex-stage-head .flip svg {
   transform: scaleX(-1);
 }
-.verdict {
-  font-weight: 700;
-}
 .verdict.hit {
   color: var(--good);
-}
-.verdict.octave {
-  color: var(--warn);
-}
-.verdict.miss {
-  color: var(--bad);
 }

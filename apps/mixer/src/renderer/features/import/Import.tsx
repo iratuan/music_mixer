@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { errorText } from '@baixaria/ui-core';
 import { Icon } from '@baixaria/ui-core';
 import { Progress } from '@baixaria/ui-core';
-import { StemPicker } from '../components/StemPicker.js';
-import { getAudioContext } from '../lib/audio.js';
-import { sortStems, stemInfo } from '../lib/stems.js';
-import type { AudioFormatName, SeparateOptions, VideoPreview } from '../../preload/preload.js';
-import type { UrlDownload, UrlRequest } from '../App.js';
+import { StemPicker } from '../../shared/StemPicker.js';
+import { getAudioContext } from '../../lib/audio.js';
+import { sortStems, stemInfo } from '../../lib/stems.js';
+import type { AudioFormatName, SeparateOptions, VideoPreview } from '../../../preload/preload.js';
+import type { UrlDownload, UrlRequest } from '../../App.js';
 
 interface Props {
   /** Música adicionada à biblioteca a partir de um arquivo. */

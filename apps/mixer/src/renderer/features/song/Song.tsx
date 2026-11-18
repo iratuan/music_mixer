@@ -51,14 +51,14 @@ import {
   type Key,
   type MidiNote,
 } from '@baixaria/music-theory';
-import type { SeparateOptions, SongAnalysis, LibrarySong } from '../../preload/preload.js';
-import type { SongJob } from '../App.js';
-import { cleanName } from '../App.js';
+import type { SeparateOptions, SongAnalysis, LibrarySong } from '../../../preload/preload.js';
+import type { SongJob } from '../../App.js';
+import { cleanName } from '../../App.js';
 import { Icon } from '@baixaria/ui-core';
 import { Progress } from '@baixaria/ui-core';
-import { StemPicker } from '../components/StemPicker.js';
+import { StemPicker } from '../../shared/StemPicker.js';
 import { Knob } from '@baixaria/ui-core';
-import { Waveform } from '../components/Waveform.js';
+import { Waveform } from '../../shared/Waveform.js';
 import { BassNeck, type NeckNote } from '@baixaria/ui-core';
 import { PianoKeys, keyboardRange, type KeyMark } from '@baixaria/ui-core';
 import { GuitarChord } from '@baixaria/ui-core';
@@ -67,8 +67,8 @@ import { VoiceLeadingInspector } from '@baixaria/ui-core';
 import type { MapDensity, MapView } from '@baixaria/ui-core';
 import { encodeWav, playChord as playHarmonyChord } from '@baixaria/audio-synth';
 import { harmonicStore } from '@baixaria/ui-core';
-import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../lib/audio.js';
-import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../lib/stems.js';
+import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../../lib/audio.js';
+import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../../lib/stems.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { PACK_LIMITS, createPack, encodePack, type PackSong } from '@baixaria/exchange-contract';
 

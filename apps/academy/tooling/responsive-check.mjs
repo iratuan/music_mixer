@@ -169,7 +169,7 @@ for (const dev of DEVICES) {
       await page.waitForTimeout(1500);
       const lv = await page.locator('.stage-video video').first().evaluate((v) => ({ t: v.currentTime, paused: v.paused, muted: v.muted, loop: v.loop, err: v.error?.code ?? 0 }));
       if (lv.err || lv.paused || !lv.muted || !lv.loop || lv.t < 0.5) fail(`${dev.id}: loop de fundo errado (${JSON.stringify(lv)})`);
-      if ((await page.locator('.stage-video-intro').count()) !== 0) fail(`${dev.id}: abertura não saiu`);
+      if (await page.locator('.stage-video-intro').isVisible()) fail(`${dev.id}: abertura não saiu`);
       if (out) await page.screenshot({ path: join(out, `${dev.id}-palco-video.png`) });
       await page.getByRole('button', { name: 'Parar o desafio' }).click();
       console.log('  ok vídeo do palco (abertura, pular, loop mudo)');

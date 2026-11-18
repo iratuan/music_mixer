@@ -1,4 +1,3 @@
-/* Player: ocupa toda a área. Cabeçalho, linha do tempo (flex: 1), painel inferior e transporte. */
 .song {
   min-height: 0;
   height: 100%;
@@ -54,7 +53,6 @@
   margin-left: auto;
 }
 
-/* Linha do tempo */
 .timeline {
   flex: 1;
   min-height: 0;
@@ -112,7 +110,6 @@
   max-width: 520px;
 }
 
-/* Régua de compassos */
 .ruler {
   position: relative;
   height: 100%;
@@ -178,7 +175,6 @@
   white-space: nowrap;
 }
 
-/* Faixas: cada cabeçalho é um canal de mesa (M, S, volume, pan, exportar). */
 .lane-head {
   display: grid;
   grid-template-columns: 4px 1fr;
@@ -368,7 +364,6 @@ button.ms.solo.on {
   pointer-events: none;
 }
 
-/* Painel inferior */
 .dock {
   display: grid;
   grid-template-columns: 170px 230px 1fr;
@@ -443,46 +438,6 @@ button.ms.solo.on {
   gap: 8px 12px;
   min-width: 0;
 }
-.bass-neck-box {
-  width: 100%;
-  min-width: 0;
-}
-.bass-neck {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.neck-wood {
-  fill: var(--board);
-}
-.neck-fret {
-  stroke: var(--fret);
-  stroke-width: 2;
-}
-.neck-nut {
-  stroke: var(--text);
-  stroke-width: 5;
-}
-.neck-inlay {
-  fill: var(--inlay);
-}
-.neck-string {
-  stroke: var(--string);
-}
-.neck-open,
-.neck-num {
-  font: 600 var(--fs-xs) var(--font-mono);
-  fill: var(--faint);
-}
-.neck-note circle {
-  fill: var(--surface-3);
-  stroke: var(--line-strong);
-  stroke-width: 1.5;
-}
-.neck-note text {
-  font: 700 var(--fs-xs) var(--font);
-  fill: var(--text);
-}
 .neck-note.done {
   opacity: 0.35;
 }
@@ -500,7 +455,6 @@ button.ms.solo.on {
   fill: var(--accent-ink);
 }
 
-/* Transporte: teclas, visor e ajustes */
 .transport-bar {
   display: flex;
   align-items: center;
@@ -665,72 +619,12 @@ button.tkey.on {
     font-size: 34px;
   }
 }
-
-/* Knob (flat) */
-.knob {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: none;
-}
-.knob-dial {
-  position: relative;
-  line-height: 0;
-  cursor: ns-resize;
-  touch-action: none;
-  border-radius: 50%;
-  outline: none;
-}
-.knob-dial:focus-visible {
-  box-shadow: 0 0 0 2px var(--focus);
-}
-.knob-track {
-  fill: none;
-  stroke: var(--surface-3);
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-.knob-value {
-  fill: none;
-  stroke: var(--c, var(--accent));
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-.knob-body {
-  fill: var(--surface-2);
-}
 .knob-dial:hover .knob-body,
 .knob.active .knob-body {
   fill: var(--surface-3);
 }
-.knob-pointer {
-  stroke: var(--text);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
 .knob.disabled {
   opacity: 0.4;
-}
-.knob-caption {
-  font: 650 8.5px / 1 var(--font);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-.knob-tip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 4px);
-  transform: translateX(-50%);
-  padding: 4px 6px;
-  border-radius: var(--r-sm);
-  background: var(--text);
-  color: var(--bg);
-  font: 650 var(--fs-2xs) / 1 var(--font-mono);
-  white-space: nowrap;
-  z-index: 20;
-  pointer-events: none;
 }
 .lane.silent .knob-value {
   stroke: var(--faint);
@@ -738,32 +632,10 @@ button.tkey.on {
 button.mix-mark:not(.on):hover {
   background: transparent;
 }
-
-/* Teclado do piano (painel inferior) */
-.piano-box {
-  width: 100%;
-  min-width: 0;
-}
 .piano {
   display: block;
   width: 100%;
   height: auto;
-}
-.pkey.white rect {
-  fill: var(--key-white);
-  stroke: var(--key-line);
-  stroke-width: 1;
-}
-.pkey.black rect {
-  fill: var(--key-black);
-}
-.pkey-c {
-  font: 600 10px var(--font);
-  fill: var(--key-dim);
-}
-.pkey-name {
-  font: 700 var(--fs-xs) var(--font);
-  fill: var(--on-color);
 }
 .pkey.now rect {
   fill: var(--stem-piano);
@@ -796,7 +668,6 @@ button.mix-mark:not(.on):hover {
   vertical-align: -2px;
 }
 
-/* Faixas compactas: quando muitas faixas dividem a altura disponível */
 .lane.compact .lane-head,
 .lane.tiny .lane-head {
   row-gap: 2px;
@@ -820,7 +691,7 @@ button.mix-mark:not(.on):hover {
 .lane.tiny .lane-num {
   display: none;
 }
-/* Uma linha só: nome, ✓, M, S, volume e pan; exportar some (continua no "Exportar mixagem"). */
+
 .lane.tiny .lane-head {
   grid-template-columns: 4px minmax(0, 1fr) auto;
   grid-template-rows: auto;
@@ -836,7 +707,6 @@ button.mix-mark:not(.on):hover {
   display: none;
 }
 
-/* Partes da música na régua (faixa de cima) */
 .rbar {
   top: 16px;
 }
@@ -866,7 +736,6 @@ button.mix-mark:not(.on):hover {
 [data-kind='bridge'] { --sec: var(--stem-backing); }
 [data-kind='edge'] { --sec: var(--faint); }
 
-/* Painel do mapa */
 .map-panel {
   margin: 0 var(--s-5) var(--s-3);
   padding: 12px 14px;
@@ -895,62 +764,19 @@ button.mix-mark:not(.on):hover {
   gap: 10px;
   flex-wrap: wrap;
 }
-.map-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.map-row {
-  display: grid;
-  grid-template-columns: 10px 22px 150px 110px 52px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 6px;
-  border-radius: var(--r-sm);
-}
 .map-row.cur {
   background: var(--accent-soft);
-}
-.map-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-sm);
-  background: var(--sec);
 }
 .map-name {
   height: 28px;
   padding: 0 8px;
   font-weight: 650;
 }
-button.map-range {
-  justify-content: flex-start;
-  height: 28px;
-  font-variant-numeric: tabular-nums;
-}
-.map-chords {
-  font: 600 var(--fs-xs) / 1.2 var(--font);
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .song-head button.ghost.on {
   background: var(--accent-soft);
   color: var(--text);
 }
 
-/* Zona da mão no braço */
-.neck-zone {
-  fill: var(--accent);
-  opacity: 0.16;
-}
-
-/* Piano: mão esquerda (acorde base) e direita (arpejo) */
 .hands {
   display: inline-flex;
   align-items: center;
@@ -1005,22 +831,8 @@ button.map-range {
 .pkey.white.suggest rect {
   fill: color-mix(in srgb, var(--hand-left) 10%, var(--key-white));
 }
-
-.neck-zone-next {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-dasharray: 6 4;
-  opacity: 0.8;
-}
 .zone-next b {
   color: var(--accent);
-}
-.map-acts {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: flex-end;
 }
 .map-acts button.icon-btn.on {
   background: var(--accent-soft);
@@ -1056,7 +868,6 @@ button.map-range {
   letter-spacing: 0.02em;
 }
 
-/* Campo harmônico: faixa de acordes da música, clicável. */
 .chord-strip {
   grid-column: 1 / -1;
   display: flex;
@@ -1100,7 +911,6 @@ button.map-range {
   cursor: default;
 }
 
-/* Violão: diagrama do acorde atual e do próximo. */
 .guitar-box {
   display: flex;
   flex-wrap: wrap;
@@ -1125,55 +935,7 @@ button.map-range {
 .gchord-card.next {
   opacity: 0.8;
 }
-.gchord.lg {
-  width: 150px;
-  height: auto;
-}
-.gchord.sm {
-  width: 100px;
-  height: auto;
-}
-.gchord-string {
-  stroke: var(--line-strong);
-  stroke-width: 1.2;
-}
-.gchord-fret {
-  stroke: var(--line-strong);
-  stroke-width: 1;
-}
-.gchord-nut {
-  stroke: var(--text);
-  stroke-width: 4;
-  stroke-linecap: square;
-}
-.gchord-dot {
-  fill: var(--accent);
-}
-.gchord-barre {
-  fill: var(--accent);
-}
-.gchord-dot-text {
-  fill: var(--surface);
-  font: 700 8px / 1 var(--font);
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-.gchord-mark {
-  fill: var(--muted);
-  font: 600 var(--fs-xs) / 1 var(--font);
-  text-anchor: middle;
-}
-.gchord-open {
-  fill: none;
-  stroke: var(--text);
-  stroke-width: 1.5;
-}
-.gchord-base {
-  fill: var(--muted);
-  font: 600 9px / 1 var(--font);
-}
 
-/* Corpo da música: linha do tempo + painel de acordes (embaixo, ou à direita na vertical). */
 .song-body {
   flex: 1 1 220px;
   min-height: 0;
@@ -1219,7 +981,6 @@ button.map-range {
   padding-bottom: 4px;
 }
 
-/* Painel lateral, ajustes de espaço: nada encolhe por rolagem, braço e teclado centralizados, controles mais justos. */
 .dock--side > * {
   flex-shrink: 0;
 }
@@ -1256,7 +1017,6 @@ button.map-range {
   max-height: 84px;
 }
 
-/* Volume geral, na barra de transporte: botão giratório com rótulo. */
 .master-vol {
   display: flex;
   align-items: center;
@@ -1272,7 +1032,6 @@ button.map-range {
   max-width: 118px;
 }
 
-/* Montagem das faixas (cabeçalho da música) */
 .mix-preset {
   display: inline-flex;
   align-items: center;
@@ -1300,7 +1059,6 @@ button.map-range {
   outline-offset: 2px;
 }
 
-/* Configuração das guias harmônicas visuais */
 .acc-panel {
   margin: var(--s-2) var(--s-5) 0;
   padding: var(--s-3) var(--s-4);
@@ -1339,17 +1097,6 @@ button.map-range {
   border-left: 2px solid var(--stem-accomp);
   padding-left: var(--s-2);
 }
-/* Mapa: letra da forma, ajuste do começo da parte, repetição e opções da exportação */
-.map-letter {
-  display: inline-grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-strong);
-  font: 700 var(--fs-xs) / 1 var(--font);
-  color: var(--text);
-}
 .map-shift {
   display: inline-flex;
   gap: 2px;
@@ -1359,10 +1106,6 @@ button.map-range {
 }
 .map-shift .flip svg {
   transform: scaleX(-1);
-}
-.map-rep {
-  color: var(--muted);
-  font-weight: 500;
 }
 .map-opts {
   display: inline-flex;
@@ -1374,7 +1117,6 @@ button.map-range {
   font-size: var(--fs-xs);
 }
 
-/* Mapa da música como cifra de ensaio: forma, partes coloridas e compassos com a harmonia */
 .map-panel.chart {
   max-height: min(48vh, 460px);
 }
@@ -1485,19 +1227,6 @@ button.map-range {
   font: 600 var(--fs-2xs) / 1 var(--font);
   color: var(--faint);
 }
-.bar-chords {
-  display: flex;
-  gap: 10px;
-  min-width: 0;
-}
-.bar-chords b {
-  font: 750 18px / 1.1 var(--font-display);
-  white-space: nowrap;
-}
-.bar-chords.n2 b,
-.bar-chords.n3 b {
-  font-size: var(--fs-md);
-}
 .bar-rep {
   font: 600 var(--fs-lg) / 1 var(--font);
   color: var(--faint);
@@ -1518,7 +1247,6 @@ button.map-range {
   border: 1px dashed var(--line-strong);
 }
 
-/* Estudar uma faixa da mixagem no painel */
 .study-pick {
   display: inline-flex;
   align-items: center;
@@ -1533,7 +1261,6 @@ button.map-range {
   color: var(--text);
 }
 
-/* Tablatura do baixo por compasso */
 .tab-bar {
   flex-direction: column;
   align-items: stretch;
@@ -1560,7 +1287,7 @@ button.map-range {
   fill: var(--text);
   text-anchor: middle;
 }
-/* Nota do baixo soando agora na tablatura */
+
 .tab-svg .tab-now rect {
   fill: var(--stem-bass);
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CURRICULUM, curriculumProgress, type CurriculumExercise, type CurriculumInstrument } from '@domain';
-import { call, loadUsers, type DbSession } from '../lib/db.js';
+import { call, loadUsers, type DbSession } from '../../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 
 const INSTS: ReadonlyArray<{ id: CurriculumInstrument; label: string }> = [
