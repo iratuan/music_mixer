@@ -2,3 +2,6 @@
 *.png binary
 *.wav binary
 *.flac binary
+# Scripts do Windows (gradlew.bat) precisam de CRLF para o cmd.
+*.bat text eol=crlf
+*.cmd text eol=crlf
