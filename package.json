@@ -42,7 +42,6 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
-    "cross-env": "^10.1.0",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
     "esbuild": "^0.24.2",
@@ -53,8 +52,7 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "sql.js": "^1.16.0"
+    "react-dom": "^18.3.1"
   },
   "author": "Baixaria Fina (local)"
 }
