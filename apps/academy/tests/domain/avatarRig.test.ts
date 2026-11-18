@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Spring, fretToNeck, midiToKeyPos, moodFor, twoBoneIK } from '../src/index.js';
+import { Spring, fretToNeck, midiToKeyPos, moodFor, twoBoneIK } from '../../src/domain/index.js';
 
 describe('esqueleto do músico', () => {
   it('IK: a mão chega ao alvo e os ossos mantêm o comprimento', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EAR_CATEGORIES, EAR_TYPES, earTypesOf, judgeTaps, pickIsRight, randomChallenge } from '../src/index.js';
+import { EAR_CATEGORIES, EAR_TYPES, earTypesOf, judgeTaps, pickIsRight, randomChallenge } from '../../src/domain/index.js';
 
 describe('ear training', () => {
   it('tem 8 categorias e mais de 60 variações, cada uma gera desafios válidos', () => {

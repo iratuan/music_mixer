@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CURRICULUM_EXERCISES, curriculumProgress } from '../src/index.js';
+import { CURRICULUM_EXERCISES, curriculumProgress } from '../../src/domain/index.js';
 
 describe('currículo', () => {
   it('tem cerca de 100 exercícios e libera em ordem', () => {

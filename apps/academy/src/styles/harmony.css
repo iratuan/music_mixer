@@ -1,4 +1,3 @@
-/* Harmonia: ciclo das quintas, campo harmônico, cadências e mapa harmônico. Só tokens do tema. */
 .harmony-top {
   display: grid;
   grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.4fr);
@@ -146,85 +145,6 @@
   background: color-mix(in srgb, var(--accent) 24%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
 }
-
-.harmony-visual-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  padding: var(--s-4);
-}
-.harmony-visual-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--s-3);
-  flex-wrap: wrap;
-  padding-bottom: var(--s-2);
-  border-bottom: 1px solid var(--line);
-}
-.harmony-visual-head b {
-  display: block;
-  margin-bottom: 3px;
-  font: 700 var(--fs-lg) / 1.2 var(--font-display);
-}
-.harmony-visual-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2) var(--s-3);
-  justify-content: flex-start;
-  flex-wrap: wrap;
-}
-.harmony-control-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-}
-.harmony-control-label {
-  color: var(--muted);
-  font: 600 var(--fs-2xs) / 1 var(--font);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.harmony-visual-panel {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--s-3);
-  min-height: 270px;
-  padding: var(--s-3);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--surface-2) 92%, var(--surface));
-  overflow: hidden;
-}
-.harmony-visual-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, transparent));
-}
-.harmony-visual-panel > * {
-  position: relative;
-  z-index: 1;
-}
-.harmony-visual-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-2);
-  flex-wrap: wrap;
-}
-.harmony-visual-meta strong {
-  font: 800 var(--fs-xl) / 1 var(--font-display);
-}
-.harmony-visual-meta span {
-  color: var(--muted);
-  font: 600 var(--fs-xs) / 1.2 var(--font);
-}
 .harmony-visual-meta .small-btn {
   flex: none;
 }
@@ -250,19 +170,6 @@
 .harmony-tone-chip span {
   color: var(--muted);
   font: 500 var(--fs-2xs) / 1 var(--font);
-}
-.harmony-instrument-scroll {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-color: var(--line-strong) transparent;
-  scrollbar-width: thin;
-}
-.harmony-tuning-meta {
-  min-height: 18px;
-  margin-bottom: var(--s-1);
 }
 .harmony-instrument-scroll .bass-neck-box,
 .harmony-instrument-scroll .piano-box {
@@ -297,7 +204,6 @@
   }
 }
 
-/* Campo harmônico e cadências */
 .cadence-panel {
   display: flex;
   flex-direction: column;
@@ -397,42 +303,6 @@
 .cad-chip.now {
   background: var(--stem-accomp);
   color: var(--bg);
-}
-
-/* Mapa harmônico */
-.hm-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-4);
-}
-.hm-input {
-  display: flex;
-  gap: var(--s-2);
-  align-items: flex-end;
-}
-.hm-input textarea {
-  flex: 1;
-  font: 500 var(--fs-sm) / 1.4 var(--font-mono);
-  color: var(--text);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 8px 10px;
-  resize: vertical;
-}
-.hm-play {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-.hm-body {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--s-3);
-}
-.hm-body.with-inspector {
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
 }
 .hm-toolbar {
   display: flex;
@@ -575,7 +445,6 @@
   border-left-color: var(--accent-2);
 }
 
-/* Inspetor de condução */
 .vl-inspector {
   display: flex;
   flex-direction: column;
@@ -634,24 +503,8 @@
   color: var(--text);
   width: 160px;
 }
-
-/* Ciclo sincronizado no mapa da música */
-.map-cof {
-  display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: var(--s-3);
-  align-items: start;
-}
 .map-cof .cof-wrap {
   max-width: 280px;
-}
-
-/* Mapa da música com graus, notas-alvo e correções */
-.chart-bar .bar-harm {
-  display: flex;
-  width: 100%;
-  gap: 4px;
-  min-width: 0;
 }
 .chart-bar.sel {
   outline: 2px solid var(--accent);
@@ -660,20 +513,6 @@
 .chart-bar.edited .bar-n::after {
   content: ' ✎';
   color: var(--accent);
-}
-.map-cof {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-.map-cof-wheel {
-  width: 260px;
-}
-
-/* Instrumento embaixo, na largura toda: o braço (ou teclado) fica sempre à vista no fim da tela. */
-.harmony-dock {
-  margin-top: var(--s-4);
-}
-.harmony-dock .harmony-visual-panel {
-  min-height: 0;
 }
 .harmony-dock .harmony-instrument-scroll .bass-neck-box,
 .harmony-dock .harmony-instrument-scroll .piano-box {
@@ -685,30 +524,6 @@
 .harmony-tone-list.bass-order .harmony-tone-chip.rest b {
   color: var(--faint);
 }
-
-/* O instrumento fica preso na parte de baixo da tela enquanto a página rola (pode recolher). */
-.harmony-dock {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  max-height: 62vh;
-  overflow-y: auto;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
-}
-.harmony-dock.closed > :not(.harmony-visual-head) {
-  display: none;
-}
-.harmony-dock.closed .harmony-visual-head {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-.harmony-dock.closed .harmony-visual-head p {
-  display: none;
-}
-.dock-toggle {
-  margin-left: var(--s-2);
-  vertical-align: middle;
-}
 .harmony-tone-list.bass-order .harmony-tone-chip.on {
   background: var(--accent);
   border-color: var(--accent);
@@ -717,11 +532,7 @@
 .harmony-tone-list.bass-order .harmony-tone-chip.on span {
   color: var(--on-color);
 }
-.hm-input textarea {
-  min-height: 96px;
-}
 
-/* Notas do acorde que está soando, embaixo do ciclo. */
 .chord-now {
   display: flex;
   flex-direction: column;
@@ -754,7 +565,6 @@ button.cad-chip:hover {
   border-color: var(--accent);
 }
 
-/* Barra de som (rótulo em cima, controle embaixo) e lista de progressões. */
 .cad-controls {
   align-items: flex-end;
   gap: var(--s-3) var(--s-4);

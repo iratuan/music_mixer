@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCALE_BANK, THEORY_MODULES, THEORY_SOURCES, THEORY_TOPICS } from '../src/index.js';
+import { SCALE_BANK, THEORY_MODULES, THEORY_SOURCES, THEORY_TOPICS } from '../../src/domain/index.js';
 
 describe('teoria musical', () => {
   it('tem 7 módulos e 21 tópicos completos, todos com fonte e no máximo 3 pontos', () => {

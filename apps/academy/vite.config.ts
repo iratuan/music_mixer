@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@domain': here('../../packages/domain/src/index.ts'),
+      '@domain': here('src/domain/index.ts'),
       '@baixaria/music-theory': here('../../packages/music-theory/src/index.ts'),
     },
   },

@@ -1,4 +1,3 @@
-/* Base: tipografia, controles e componentes comuns. Só tokens, nenhum valor de cor literal. */
 *,
 *::before,
 *::after {
@@ -50,7 +49,6 @@ kbd {
   outline-offset: 2px;
 }
 
-/* Botões */
 button {
   font: 550 var(--fs-sm) / 1 var(--font);
   color: var(--text);
@@ -120,17 +118,8 @@ button.small-btn {
   padding: 6px 10px;
   font-size: var(--fs-xs);
 }
-button.tiny-btn {
-  padding: 4px 6px;
-  font: 700 10px / 1 var(--font-mono);
-  letter-spacing: 0.04em;
-}
 button.icon-btn {
   padding: 5px 7px;
-}
-button.chip-btn {
-  border-radius: var(--r-pill);
-  padding: 7px 12px;
 }
 button.chip-btn.on {
   background: var(--accent-soft);
@@ -145,7 +134,6 @@ button.link {
   text-decoration: underline;
 }
 
-/* Grupo segmentado */
 .seg {
   display: inline-flex;
   padding: 3px;
@@ -173,7 +161,6 @@ button.link {
   font-size: var(--fs-xs);
 }
 
-/* Interruptor */
 .switch {
   position: relative;
   display: inline-block;
@@ -189,25 +176,6 @@ button.link {
   cursor: pointer;
   z-index: 1;
 }
-.switch-track {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  transition: background var(--dur) var(--ease);
-  pointer-events: none;
-}
-.switch-track::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text);
-  transition: transform var(--dur) var(--ease);
-}
 .switch input:checked + .switch-track {
   background: var(--c, var(--accent));
 }
@@ -220,7 +188,6 @@ button.link {
   outline-offset: 2px;
 }
 
-/* Campos */
 input[type='search'],
 input[type='text'] {
   font: inherit;
@@ -234,7 +201,6 @@ input[type='range'] {
   accent-color: var(--c, var(--accent));
 }
 
-/* Cartões e avisos */
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -254,7 +220,6 @@ input[type='range'] {
   color: var(--good);
 }
 
-/* Progresso */
 .progress {
   display: flex;
   flex-direction: column;
@@ -296,102 +261,4 @@ input[type='range'] {
   to {
     left: 100%;
   }
-}
-
-/* Botão-alvo grande (importar, biblioteca vazia) */
-.import-drop {
-  width: 100%;
-  max-width: 640px;
-  flex-direction: column;
-  gap: 10px;
-  padding: 40px 24px;
-  border: 1.5px dashed var(--line-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--text);
-  white-space: normal;
-  text-align: center;
-}
-.import-drop strong {
-  font-size: var(--fs-lg);
-}
-
-/* Cores por faixa */
-.stem-vocals { --c: var(--stem-vocals); }
-.stem-lead { --c: var(--stem-lead); }
-.stem-backing { --c: var(--stem-backing); }
-.stem-guitar { --c: var(--stem-guitar); }
-.stem-piano { --c: var(--stem-piano); }
-.stem-bass { --c: var(--stem-bass); }
-.stem-drums { --c: var(--stem-drums); }
-.stem-other { --c: var(--stem-other); }
-.stem-rest { --c: var(--stem-rest); }
-.stem-metro { --c: var(--stem-metro); }
-.stem-accomp { --c: var(--stem-accomp); }
-.info-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-}
-.info-line svg {
-  color: var(--accent);
-}
-
-/* Rodapé da barra lateral: versão e atalhos */
-.about-line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  margin-top: var(--s-3, 12px);
-  font-size: var(--fs-xs);
-  color: var(--muted);
-}
-button.link-btn {
-  height: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-button.link-btn:hover:not(:disabled) {
-  background: none;
-  color: var(--text);
-}
-
-/* Download do modelo de voz */
-.voice-dl {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3, 12px);
-  margin-top: 8px;
-  padding: 10px 12px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-.voice-dl > :first-child {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-}
-.alert-inline {
-  color: var(--bad);
-}
-
-/* Texto só para leitores de tela */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
 }

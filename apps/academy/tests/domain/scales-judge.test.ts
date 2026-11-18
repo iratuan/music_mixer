@@ -13,7 +13,7 @@ import {
   stringGroups,
   yinPitch,
   type ScaleContext,
-} from '../src/index.js';
+} from '../../src/domain/index.js';
 
 const b4 = BASS_TUNINGS[0]!;
 const aMinorPent: ScaleContext = { tuning: b4, root: 9, mode: SCALE_BANK['Pentatônica']!['Menor']! };
@@ -120,7 +120,7 @@ describe('julgamento e detecção de altura', () => {
 
 describe('braço inteiro: grupos maiores e regiões da oitava de cima', () => {
   it('baixo de 5 cordas tem grupos de 2, 3 e 4 cordas; 6 cordas também de 5', async () => {
-    const { groupsOfSize } = await import('../src/index.js');
+    const { groupsOfSize } = await import('../../src/domain/index.js');
     expect(groupsOfSize(5, 4).map((g) => g.strings)).toEqual([
       [0, 1, 2, 3],
       [1, 2, 3, 4],
@@ -129,14 +129,14 @@ describe('braço inteiro: grupos maiores e regiões da oitava de cima', () => {
     expect(groupsOfSize(4, 2).map((g) => g.label)).toEqual(['3–4', '2–3', '1–2']);
   });
   it('regiões continuam depois da casa 12 até o fim do braço', async () => {
-    const { neckWindows } = await import('../src/index.js');
+    const { neckWindows } = await import('../../src/domain/index.js');
     const w = neckWindows(9, 3, 20);
     expect(w.length).toBeGreaterThan(5);
     expect(Math.max(...w.map(([, e]) => e))).toBeLessThanOrEqual(20);
     expect(w.some(([s]) => s >= 12)).toBe(true);
   });
   it('percurso por regiões: cada etapa fica na sua região e as etapas sobem pelo braço', async () => {
-    const { buildNeckTour } = await import('../src/index.js');
+    const { buildNeckTour } = await import('../../src/domain/index.js');
     const tour = buildNeckTour(aMinorPent, 1, 'positions', stringGroups(4)[0]!, 0, 2);
     let last = -1;
     for (const st of tour.stages) {
@@ -152,7 +152,7 @@ describe('braço inteiro: grupos maiores e regiões da oitava de cima', () => {
 
 describe('região do braço escolhida pelo aluno', () => {
   it('percurso por regiões fica dentro das casas pedidas, em qualquer tom', async () => {
-    const { buildNeckTour, SCALE_BANK: BANK } = await import('../src/index.js');
+    const { buildNeckTour, SCALE_BANK: BANK } = await import('../../src/domain/index.js');
     for (let root = 0; root < 12; root++) {
       for (const [cat, modes] of Object.entries(BANK)) {
         for (const mode of Object.values(modes)) {
@@ -172,7 +172,7 @@ describe('região do braço escolhida pelo aluno', () => {
     expect(ex.sequence.length).toBeGreaterThan(10);
   });
   it('região alta (depois da casa 12) existe no baixo de 24 casas', async () => {
-    const { windowsInRange, neckWindows } = await import('../src/index.js');
+    const { windowsInRange, neckWindows } = await import('../../src/domain/index.js');
     const w = neckWindows(9, 3, 24);
     const ks = windowsInRange(w, [12, 24]);
     expect(ks.length).toBeGreaterThan(0);

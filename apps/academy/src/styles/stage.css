@@ -1,4 +1,3 @@
-/* Palco do desafio (pista de notas) em tela dividida e o resumo do resultado. */
 .ex-single,
 .ex-left {
   display: flex;
@@ -12,7 +11,7 @@
   gap: var(--s-4);
   align-items: start;
 }
-/* Com o palco aberto, a tela usa a largura toda e os ajustes ficam mais compactos. */
+
 .screen.exercises:has(.ex-split) {
   max-width: none;
 }
@@ -140,7 +139,6 @@
   gap: var(--s-2);
 }
 
-/* Braço clicável: toca a nota e a corda vibra. */
 .neck-hit {
   fill: transparent;
   cursor: pointer;
@@ -169,7 +167,6 @@
   }
 }
 
-/* Visual: números tabulares nos valores que mudam, superfícies translúcidas nos painéis flutuantes. */
 .bpm-value,
 .score,
 .meter,
@@ -191,9 +188,6 @@
   backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.harmony-dock {
-  backdrop-filter: blur(18px);
-}
 button {
   transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
@@ -206,7 +200,6 @@ button:active:not(:disabled) {
   font-weight: 650;
 }
 
-/* Evolução. */
 .dash {
   display: flex;
   flex-direction: column;
@@ -351,12 +344,11 @@ button:active:not(:disabled) {
 .dash-recent b.warn {
   color: var(--warn);
 }
-/* As marcas de nota não seguram o clique: ele chega à casa por baixo. */
+
 .neck-note {
   pointer-events: none;
 }
 
-/* Painel de treino em vidro. */
 .ex-left .card {
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   backdrop-filter: blur(20px);
@@ -380,7 +372,6 @@ button:active:not(:disabled) {
   flex-wrap: wrap;
 }
 
-/* Palco maximizado: ocupa a janela toda; o botão fica no canto, abaixo do painel de resultados. */
 .arcade-max {
   position: absolute;
   top: 132px;
@@ -437,8 +428,6 @@ button:active:not(:disabled) {
   cursor: pointer;
 }
 
-/* ------------------------------ vídeo de fundo do palco ------------------------------ */
-/* Desktop e tablet na horizontal (StageVideo.tsx): loop atrás da esteira; abertura cobre o palco. */
 .stage-video video,
 .stage-video img {
   position: absolute;

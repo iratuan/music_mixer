@@ -12,7 +12,7 @@ import {
   keyUsesFlats,
   transposeChord,
   transposeKey,
-} from '../src/index.js';
+} from '../../src/domain/index.js';
 
 describe('nomes e transposição', () => {
   it('tom em cifra e em solfejo, com bemóis quando o tom pede', () => {

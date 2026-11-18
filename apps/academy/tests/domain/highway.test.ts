@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FofHighwayEngine, baseMultiplier, exerciseToFofChart, fofHitWindow, isHopo, parseSongIni, sustainFor, type FofNoteEvent } from '../src/index.js';
+import { FofHighwayEngine, baseMultiplier, exerciseToFofChart, fofHitWindow, isHopo, parseSongIni, sustainFor, type FofNoteEvent } from '../../src/domain/index.js';
 
 const note = (id: number, time: number, lane = 0, extra: Partial<FofNoteEvent> = {}): FofNoteEvent => ({ id, time, lane, fret: 3, midi: 31 + lane * 5, hopo: false, sustain: 0, bpm: 120, ...extra });
 

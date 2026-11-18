@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUEST_POOL, comboMultiplier, dailyQuests, earXp, levelProgress, practiceXp, xpForLevel } from '../src/index.js';
+import { QUEST_POOL, comboMultiplier, dailyQuests, earXp, levelProgress, practiceXp, xpForLevel } from '../../src/domain/index.js';
 
 describe('gamificação', () => {
   it('níveis 1 a 100 com títulos', () => {

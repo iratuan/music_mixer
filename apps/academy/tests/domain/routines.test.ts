@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_ROUTINES, BASS_TUNINGS, EXERCISES, ROUTINES, ROUTINE_LEVELS, ROUTINE_TOPICS, SCALE_BANK, TRAILS, buildNeckTour, buildScaleExercise, groupsOfSize, mergeRecord, routineMastered, stringGroups } from '../src/index.js';
+import { ALL_ROUTINES, BASS_TUNINGS, EXERCISES, ROUTINES, ROUTINE_LEVELS, ROUTINE_TOPICS, SCALE_BANK, TRAILS, buildNeckTour, buildScaleExercise, groupsOfSize, mergeRecord, routineMastered, stringGroups } from '../../src/domain/index.js';
 
 describe('biblioteca de exercícios', () => {
   it('cada rotina aponta para escala, variação e padrão que existem', () => {

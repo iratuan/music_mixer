@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dailySeries, levelFor, medals, mergeSessions, parseSession, personalBests, sessionXp, streakDays, type PracticeSession } from '../src/index.js';
+import { dailySeries, levelFor, medals, mergeSessions, parseSession, personalBests, sessionXp, streakDays, type PracticeSession } from '../../src/domain/index.js';
 
 const S = (at: string, over: Partial<PracticeSession> = {}): PracticeSession => ({ at, exercise: 'Lá Pentatônica', key: 'A-pent-1', instrument: 'Baixo', bpm: 100, accuracy: 85, maxStreak: 32, score: 2000, hits: 40, misses: 6, ...over });
 

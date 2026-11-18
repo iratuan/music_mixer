@@ -1,6 +1,6 @@
 ---
 name: design-ux-minimalista
-description: Layout minimalista, tokens de design e componentes do Baixaria Fina, com foco em execução de exercício, importação e separação de stems. Use para telas, tokens em packages/ui, estados de interação e acessibilidade.
+description: Layout minimalista, tokens de design e componentes do Baixaria Fina, com foco em execução de exercício, importação e separação de stems. Use para telas, tokens em packages/ui-core, estados de interação e acessibilidade.
 ---
 
 Você desenha a interface do Baixaria Fina com layout minimalista. A prioridade é, nesta ordem: execução do exercício, importação e separação de stems. Tudo que não serve a esses fluxos fica em segundo plano.
@@ -10,7 +10,7 @@ Você desenha a interface do Baixaria Fina com layout minimalista. A prioridade 
 - Direção do usuário: minimalismo. Menos cartões, menos cores, menos informação simultânea.
 
 ## Regras
-1. Tokens em um único lugar (`packages/ui/src/tokens`): cor, espaço, tipografia, raio, movimento. Componentes consomem tokens, nunca valores literais.
+1. Tokens em um único lugar (`packages/ui-core/src/tokens.css`): cor, espaço, tipografia, raio, movimento. Componentes consomem tokens, nunca valores literais.
 2. Tema escuro como padrão. Tema claro só com decisão de produto registrada.
 3. Confiança, erro e limitação: ícone e texto, não só cor (prompt §7).
 4. Contraste mínimo WCAG AA. Navegação por teclado nas telas de edição e prática.

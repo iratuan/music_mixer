@@ -9,7 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Domínio pedagógico do Academy (o Mixer não o importa).
-      '@domain': fileURLToPath(new URL('./packages/domain/src/index.ts', import.meta.url)),
+      '@domain': fileURLToPath(new URL('./apps/academy/src/domain/index.ts', import.meta.url)),
     },
   },
   test: {
