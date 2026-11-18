@@ -1,6 +1,6 @@
 {
   "appId": "br.local.mixercraft",
-  "productName": "mixerCraft",
+  "productName": "MixerMonster",
   "directories": {
     "output": "release"
   },
@@ -32,8 +32,8 @@
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
-    "shortcutName": "mixerCraft",
-    "artifactName": "mixerCraft-Setup-${version}.${ext}"
+    "shortcutName": "MixerMonster",
+    "artifactName": "MixerMonster-Setup-${version}.${ext}"
   },
   "extraResources": [
     {

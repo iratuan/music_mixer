@@ -8,7 +8,7 @@ import { sanitizeSections } from './songmap.js';
 /**
  * Exportar e reimportar a biblioteca. Sem Electron: testável.
  *
- * Exportação: uma pasta "mixerCraft - biblioteca AAAA-MM-DD" com uma subpasta por música
+ * Exportação: uma pasta "MixerMonster - biblioteca AAAA-MM-DD" com uma subpasta por música
  * ("001 - Nome da música") contendo as faixas separadas com nomes legíveis (Baixo.flac, Bateria.flac…),
  * a análise, a capa e, se pedido, o áudio original. O arquivo biblioteca.json descreve tudo (nomes,
  * coleções, mapa, estado inicial do mixer) e é o que a importação lê. Um LEIA-ME.txt explica a pasta.
@@ -125,7 +125,7 @@ export async function exportLibrary(library: Library, dest: string, opts: Export
   const all = await library.list();
   const chosen = opts.ids ? all.filter((s) => opts.ids!.includes(s.id)) : all;
   const day = now.toISOString().slice(0, 10);
-  const root = await freshFolder(dest, opts.collection ? safeName(`mixerCraft - ${opts.collection} ${day}`) : `mixerCraft - biblioteca ${day}`);
+  const root = await freshFolder(dest, opts.collection ? safeName(`MixerMonster - ${opts.collection} ${day}`) : `MixerMonster - biblioteca ${day}`);
   const songs: ManifestSong[] = [];
   const skipped: string[] = [];
   let bytes = 0;
@@ -199,14 +199,14 @@ export async function exportLibrary(library: Library, dest: string, opts: Export
   await writeFile(
     path.join(root, 'LEIA-ME.txt'),
     [
-      'Biblioteca exportada pelo mixerCraft',
+      'Biblioteca exportada pelo MixerMonster',
       `Data: ${now.toLocaleString('pt-BR')}`,
       `Músicas: ${songs.length} · faixas: ${stemCount}`,
       '',
       'Cada pasta é uma música, com as faixas separadas (Baixo, Bateria, Voz…) em arquivos de áudio',
       'que abrem em qualquer programa de música. "analise.json" guarda andamento, compassos e acordes.',
       '',
-      'Para trazer de volta ao mixerCraft: Biblioteca > Importar biblioteca, e escolha esta pasta.',
+      'Para trazer de volta ao MixerMonster: Biblioteca > Importar biblioteca, e escolha esta pasta.',
       'Não renomeie as pastas nem o arquivo biblioteca.json.',
     ].join('\r\n'),
     'utf8',
@@ -221,7 +221,7 @@ export async function readManifest(folder: string): Promise<{ root: string; mani
   if (!existsSync(path.join(root, MANIFEST))) {
     // O usuário pode ter escolhido a pasta onde a exportação foi salva: procura uma exportação dentro dela.
     const inside = existsSync(folder) ? (await readdir(folder, { withFileTypes: true })).filter((d) => d.isDirectory() && existsSync(path.join(folder, d.name, MANIFEST))) : [];
-    if (inside.length !== 1) throw new Error('esta pasta não é uma biblioteca exportada pelo mixerCraft (falta o biblioteca.json)');
+    if (inside.length !== 1) throw new Error('esta pasta não é uma biblioteca exportada pelo MixerMonster (falta o biblioteca.json)');
     root = path.join(folder, inside[0]!.name);
   }
   const raw = await readFile(path.join(root, MANIFEST), 'utf8');
@@ -231,7 +231,7 @@ export async function readManifest(folder: string): Promise<{ root: string; mani
   } catch {
     throw new Error('biblioteca.json ilegível');
   }
-  if (data.format !== EXPORT_FORMAT || typeof data.version !== 'number' || data.version > EXPORT_VERSION) throw new Error('biblioteca exportada por uma versão diferente do mixerCraft');
+  if (data.format !== EXPORT_FORMAT || typeof data.version !== 'number' || data.version > EXPORT_VERSION) throw new Error('biblioteca exportada por uma versão diferente do MixerMonster');
   if (!Array.isArray(data.songs) || data.songs.length > 500) throw new Error('biblioteca.json inválido');
   const collections = Array.isArray(data.collections)
     ? data.collections.flatMap((c) => {

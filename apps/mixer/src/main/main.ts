@@ -514,8 +514,8 @@ function registerIpc(): void {
   });
 
   /**
-   * Escolher a pasta da biblioteca. Se a pasta já tem uma biblioteca do mixerCraft, passa a usar essa.
-   * Senão, a biblioteca atual é copiada para "mixerCraft - biblioteca" dentro da pasta escolhida (a
+   * Escolher a pasta da biblioteca. Se a pasta já tem uma biblioteca do MixerMonster, passa a usar essa.
+   * Senão, a biblioteca atual é copiada para "MixerMonster - biblioteca" dentro da pasta escolhida (a
    * antiga fica onde estava, para apagar quando quiser). Com keep, só confirma a pasta atual.
    */
   ipcMain.handle('library:choose-location', async (event, input: unknown) => {
@@ -533,7 +533,7 @@ function registerIpc(): void {
     const picked = res.filePaths[0];
     if (res.canceled || !picked) return { canceled: true as const };
     const chosen = path.resolve(picked);
-    const target = existsSync(path.join(chosen, 'index.json')) ? chosen : path.join(chosen, 'mixerCraft - biblioteca');
+    const target = existsSync(path.join(chosen, 'index.json')) ? chosen : path.join(chosen, 'MixerMonster - biblioteca');
     const cur = path.resolve(libraryRoot);
     if (target.toLowerCase() === cur.toLowerCase()) {
       await saveLibraryLocation(cur);

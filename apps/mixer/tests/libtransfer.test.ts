@@ -48,7 +48,7 @@ describe('exportar e reimportar a biblioteca', () => {
     const r = await exportLibrary(libA, out, { includeOriginal: true, now: new Date('2026-11-15T12:00:00Z') });
     expect(r.songs).toBe(1);
     expect(r.stems).toBe(3);
-    expect(path.basename(r.folder)).toBe('mixerCraft - biblioteca 2026-11-15');
+    expect(path.basename(r.folder)).toBe('MixerMonster - biblioteca 2026-11-15');
     const songDir = path.join(r.folder, 'Groove teste');
     expect((await readdir(songDir)).sort()).toEqual(['Baixo.flac', 'Bateria.flac', 'Original.wav', 'Voz.flac', 'analise.json'].sort());
     expect(existsSync(path.join(r.folder, 'LEIA-ME.txt'))).toBe(true);

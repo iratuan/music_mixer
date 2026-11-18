@@ -217,7 +217,7 @@ export function App() {
     <div className={`shell ${sideCollapsed ? 'side-collapsed' : ''}`}>
       <nav className="side" aria-label="Navegação principal">
         <div className="brand">
-          <img className="brand-logo" src={markUrl} alt="ScaleMonster" />
+          <img className="brand-logo" src={markUrl} alt="MixerMonster" />
           <button
             hidden
             className="side-toggle"

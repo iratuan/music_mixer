@@ -2,7 +2,7 @@
   "name": "baixaria-fina",
   "version": "0.5.0-beta.3",
   "private": true,
-  "description": "Monorepo: mixerCraft (apps/mixer, desktop) e Academy (apps/academy). O pacote Electron da raiz é o Mixer.",
+  "description": "Monorepo: MixerMonster (apps/mixer, estúdio desktop) e ScaleMonster (apps/academy, formação: web, desktop e Android). O pacote Electron da raiz é o MixerMonster.",
   "type": "module",
   "engines": {
     "node": ">=22"

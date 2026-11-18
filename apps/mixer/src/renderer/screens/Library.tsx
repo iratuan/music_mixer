@@ -362,7 +362,7 @@ export function Library({ jobs, download, currentId, onOpen, onImport, onRemoved
             <h2>Pasta da biblioteca</h2>
             <p className="muted small">
               Tudo fica em <b className="loc-path">{location?.root ?? '…'}</b>. Ao escolher outra pasta, a biblioteca é copiada para lá; se a pasta já tiver uma biblioteca do
-              mixerCraft, ela é aberta.
+              MixerMonster, ela é aberta.
             </p>
             <div className="loc-acts">
               <button className="ghost small-btn" disabled={!!transfer || anyJob} onClick={() => void chooseLocation()}>

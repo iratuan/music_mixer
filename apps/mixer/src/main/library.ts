@@ -231,7 +231,7 @@ export class Library {
     await writeFile(tmp, JSON.stringify(index, null, 2), 'utf8');
     await rename(tmp, this.indexPath); // troca atômica: o índice nunca fica pela metade
     // Lista legível para quem abrir a pasta: nome da música → pasta dela.
-    const lines = ['Biblioteca do mixerCraft. Cada música fica em songs/<pasta>, com as faixas em "faixas".', ''];
+    const lines = ['Biblioteca do MixerMonster. Cada música fica em songs/<pasta>, com as faixas em "faixas".', ''];
     for (const s of index.songs) lines.push(`${s.name}  ->  ${s.folder ?? `songs/${s.id}`}`);
     await writeFile(path.join(this.root, 'MUSICAS.txt'), lines.join('\r\n'), 'utf8').catch(() => undefined);
   }
