@@ -10,6 +10,8 @@ apps/mixer/tooling/runtime/python/
 apps/mixer/tooling/runtime/models/
 apps/mixer/tooling/rubberband/
 apps/mixer/tooling/ytdlp/*.exe
+*.jks
+*.keystore
 apps/mixer/tooling/stems/.venv/
 apps/mixer/tooling/stems/ffmpeg/
 apps/mixer/tooling/stems/out/
