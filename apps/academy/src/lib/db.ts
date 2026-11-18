@@ -1,6 +1,7 @@
 import { readStore, writeStore } from '@baixaria/ui-core';
+import { academyData } from '../platform/bridge.js';
 
-/** Acesso ao banco SQLite (processo principal) e ao músico ativo. */
+/** Acesso ao banco SQLite do Academy (via DatabaseAdapter da plataforma) e ao músico ativo. */
 export interface DbUser {
   id: string;
   name: string;
@@ -15,7 +16,7 @@ export interface DbSession {
   bpm: number;
 }
 
-export const call = <T>(op: string, args?: Record<string, unknown>): Promise<T> => window.baixaria.db(op, args) as Promise<T>;
+export const call = <T>(op: string, args?: Record<string, unknown>): Promise<T> => academyData().call(op, args) as Promise<T>;
 
 export function activeUserId(): string | null {
   return readStore<string | null>('bf-user', null);

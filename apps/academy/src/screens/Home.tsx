@@ -11,7 +11,7 @@ const INSTS: ReadonlyArray<{ id: Inst; label: string }> = [
   { id: 'guitar', label: 'Guitarra' },
   { id: 'acoustic', label: 'Violão' },
 ];
-export type HomeTarget = 'exercises' | 'library' | 'harmony' | 'achievements' | 'trails' | 'theory' | 'ear' | 'profiles';
+export type HomeTarget = 'exercises' | 'harmony' | 'achievements' | 'trails' | 'theory' | 'ear' | 'profiles';
 interface Quest {
   quest_code: string;
   title: string;
@@ -26,7 +26,6 @@ const SHORTCUTS: ReadonlyArray<{ id: HomeTarget; title: string; text: string; co
   { id: 'ear', title: 'Ear training', text: '60+ jogos de ouvido', color: '#2563eb' },
   { id: 'theory', title: 'Teoria', text: '21 tópicos e partitura', color: '#16a34a' },
   { id: 'harmony', title: 'Harmonia', text: 'Círculo das quintas', color: '#a855f7' },
-  { id: 'library', title: 'Biblioteca', text: 'Suas músicas e stems', color: '#eab308' },
 ];
 
 function LevelRing({ fraction, level }: { fraction: number; level: number }) {

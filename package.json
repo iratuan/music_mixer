@@ -25,7 +25,10 @@
     "build": "npm run build:renderer && npm run build:electron",
     "start": "npm run build && electron .",
     "pack:win": "npm run build && electron-builder --win --dir -c apps/mixer/electron-builder.json",
-    "dist:win": "npm run build && electron-builder --win -c apps/mixer/electron-builder.json"
+    "dist:win": "npm run build && electron-builder --win -c apps/mixer/electron-builder.json",
+    "academy:dev": "npm run dev -w @baixaria/academy",
+    "academy:build": "npm run build -w @baixaria/academy",
+    "academy:preview": "npm run preview -w @baixaria/academy"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

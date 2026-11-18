@@ -44,6 +44,7 @@ import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, st
 import { harmonicStore } from '@baixaria/ui-core';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { errorText } from '@baixaria/ui-core';
+import { platform, type SaveResult } from '../platform/bridge.js';
 import { getAudioContext } from '@baixaria/audio-synth';
 
 /**
@@ -288,12 +289,14 @@ export function Harmony({ onPracticeScale }: Props) {
     if (!shown) return;
     setError(null);
     try {
-      const picked = await window.baixaria.chooseExportPath(kind, `${shown.title}${semis ? ` (${semis > 0 ? '+' : ''}${semis})` : ''}`);
-      if (picked.canceled) return;
-      if (kind === 'json') await window.baixaria.writeExportFile(picked.path, new TextEncoder().encode(JSON.stringify({ ...shown, analysis: insight }, null, 2)));
-      else if (kind === 'txt') await window.baixaria.writeExportFile(picked.path, new TextEncoder().encode('﻿' + mapText(shown, { degrees: opts.view !== 'chords', flats })));
+      const name = `${shown.title}${semis ? ` (${semis > 0 ? '+' : ''}${semis})` : ''}`;
+      const bridge = platform();
+      let result: SaveResult;
+      if (kind === 'json') result = await bridge.saveFile(name, new TextEncoder().encode(JSON.stringify({ ...shown, analysis: insight }, null, 2)), 'json');
+      else if (kind === 'txt') result = await bridge.saveFile(name, new TextEncoder().encode('﻿' + mapText(shown, { degrees: opts.view !== 'chords', flats })), 'txt');
       else {
-        await window.baixaria.exportMapPdf(picked.path, {
+        if (!bridge.exportMapPdf) throw new Error('PDF indisponível nesta plataforma: exporte em texto ou JSON');
+        result = await bridge.exportMapPdf(name, {
           title: shown.title,
           key: `${chordSymbol({ root: shown.key.tonic, quality: '' }, flats)} ${shown.key.mode === 'minor' ? 'menor' : 'maior'}`,
           bpm: shown.bpm,
@@ -312,6 +315,7 @@ export function Harmony({ onPracticeScale }: Props) {
           })),
         });
       }
+      if (result === 'canceled') return;
       setNotice(`Mapa exportado em ${kind === 'json' ? 'JSON' : kind === 'pdf' ? 'PDF' : 'texto'}.`);
     } catch (e) {
       setError(errorText(e, 'falha ao exportar o mapa'));

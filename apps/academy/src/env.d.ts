@@ -1,18 +1,9 @@
 /// <reference types="vite/client" />
 
-/**
- * Bridge LEGADO (Etapa E4): o subconjunto de `window.baixaria` que as telas estacionadas do Academy
- * ainda chamam. Na Etapa E5 ele é trocado por `PlatformBridge` + `DatabaseAdapter`, e este arquivo some.
- */
-export interface AcademyLegacyBridge {
-  db(op: string, args?: Record<string, unknown>): Promise<unknown>;
-  chooseExportPath(kind: 'midi' | 'wav' | 'pdf' | 'txt' | 'json', suggestedName: string): Promise<{ canceled: true } | { canceled: false; path: string }>;
-  writeExportFile(path: string, bytes: Uint8Array): Promise<{ bytes: number }>;
-  exportMapPdf(path: string, map: unknown): Promise<unknown>;
-}
+// O Academy não tem `window.baixaria`: tudo que depende da plataforma passa por platform/bridge.ts.
 
-declare global {
-  interface Window {
-    baixaria: AcademyLegacyBridge;
-  }
+/** sql.js não traz tipos; o adapter (platform/sqljs.ts) define o subconjunto usado. */
+declare module 'sql.js/dist/sql-wasm-browser.js' {
+  const initSqlJs: (config?: { locateFile?: (file: string) => string }) => Promise<unknown>;
+  export default initSqlJs;
 }

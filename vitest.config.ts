@@ -1,11 +1,19 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
-// Configuração própria: o vite.config.ts aponta a raiz para o renderer (build do app).
+const root = fileURLToPath(new URL('.', import.meta.url));
+
+// Configuração própria: o vite.config.ts aponta a raiz para o renderer do Mixer (build do app).
 export default defineConfig({
-  root: fileURLToPath(new URL('.', import.meta.url)),
+  root,
+  resolve: {
+    alias: {
+      // Domínio pedagógico do Academy (o Mixer não o importa).
+      '@domain': fileURLToPath(new URL('./packages/domain/src/index.ts', import.meta.url)),
+    },
+  },
   test: {
-    include: ['packages/**/tests/**/*.test.ts', 'apps/mixer/tests/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['packages/**/tests/**/*.test.ts', 'apps/mixer/tests/**/*.test.ts', 'apps/academy/tests/**/*.test.ts', 'tests/**/*.test.ts'],
     environment: 'node',
   },
 });

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { HISTORY_FORMAT, dailySeries, levelFor, medals, mergeSessions, personalBests, sessionXp, streakDays, type PracticeSession } from '@domain';
 import { writeStore } from '@baixaria/ui-core';
 import { Icon } from '@baixaria/ui-core';
+import { platform } from '../platform/bridge.js';
 
 /**
  * Evolução (estilo painel de saúde): nível e XP, medalhas, gráficos de precisão e BPM por dia,
@@ -107,9 +108,8 @@ export function ProgressDashboard({ sessions, onChange }: Props) {
 
   async function exportJson() {
     try {
-      const picked = await window.baixaria.chooseExportPath('json', 'mixerCraft - historico de pratica');
-      if (picked.canceled) return;
-      await window.baixaria.writeExportFile(picked.path, new TextEncoder().encode(JSON.stringify({ format: HISTORY_FORMAT, version: 1, exportedAt: new Date().toISOString(), sessions }, null, 2)));
+      const bytes = new TextEncoder().encode(JSON.stringify({ format: HISTORY_FORMAT, version: 1, exportedAt: new Date().toISOString(), sessions }, null, 2));
+      if ((await platform().saveFile('historico de pratica', bytes, 'json')) === 'canceled') return;
       setMsg(`Histórico exportado (${sessions.length} sessões).`);
     } catch {
       setMsg('Não foi possível exportar o histórico.');
