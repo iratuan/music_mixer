@@ -79,7 +79,7 @@
   position: sticky;
   left: 0;
   z-index: 3;
-  width: 252px;
+  width: 300px;
   flex: none;
   background: var(--surface);
   border-right: 1px solid var(--line);
@@ -181,8 +181,8 @@
   grid-template-rows: auto auto;
   align-content: center;
   column-gap: 10px;
-  row-gap: 4px;
-  padding: 4px 8px 4px 0;
+  row-gap: 6px;
+  padding: 8px 12px 8px 0;
   overflow: hidden;
 }
 .lane-color {
@@ -215,6 +215,7 @@
 }
 .lane-num {
   margin-left: 0;
+  color: var(--muted);
 }
 button.mix-mark {
   margin-left: auto;
@@ -248,22 +249,43 @@ button.mix-mark.on {
 .lane-ctrls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
+  flex-wrap: nowrap;
+  padding: 8px 0;
 }
+.knob svg {
+  overflow: visible;
+}
+.lane-ctrls > * {
+  flex: none;
+}
+.lane-ctrls .lane-export {
+  margin-left: auto;
+}
+/* M e S como um único bloco segmentado, com a mesma altura dos knobs. */
 .ms-pair {
-  display: flex;
-  gap: 3px;
+  display: inline-flex;
+  flex: none;
+  align-items: stretch;
+  height: 26px;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
 }
 button.ms {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  min-width: 26px;
+  height: 100%;
+  min-height: 0;
   padding: 0;
   justify-content: center;
   font: 750 var(--fs-xs) / 1 var(--font);
-  border-radius: var(--r-sm);
-  background: var(--surface-3);
-  border-color: transparent;
+  border-radius: calc(var(--r-sm) - 2px);
+  background: transparent;
+  border: 0;
   color: var(--muted);
 }
 button.ms:hover:not(:disabled) {
@@ -277,8 +299,11 @@ button.ms.solo.on {
   background: var(--warn);
   color: var(--bg);
 }
+/* Ações da faixa (exportar, enviar): ícones alinhados à direita, sem divisória. */
 .lane-export {
   display: flex;
+  align-items: center;
+  gap: 2px;
   margin-left: auto;
 }
 .lane-export button.icon-btn {
@@ -619,12 +644,56 @@ button.tkey.on {
     font-size: 34px;
   }
 }
+/* Knob: o SVG sem estas regras pinta os arcos de preto e some com a trilha e o ponteiro. */
+.knob-dial {
+  position: relative;
+  display: block;
+  cursor: ns-resize;
+  outline: none;
+}
+.knob-dial:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.knob-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.knob-value {
+  fill: none;
+  stroke: var(--c, var(--accent));
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.knob-body {
+  fill: var(--surface-2);
+}
+.knob-pointer {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 .knob-dial:hover .knob-body,
 .knob.active .knob-body {
   fill: var(--surface-3);
 }
 .knob.disabled {
   opacity: 0.4;
+}
+.knob-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: var(--bg);
+  font: 650 var(--fs-2xs) / 1 var(--font-mono);
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
 }
 .lane.silent .knob-value {
   stroke: var(--faint);
@@ -670,8 +739,8 @@ button.mix-mark:not(.on):hover {
 
 .lane.compact .lane-head,
 .lane.tiny .lane-head {
-  row-gap: 2px;
-  padding: 2px 8px 2px 0;
+  row-gap: 3px;
+  padding: 4px 10px 4px 0;
 }
 .lane.compact .lane-title,
 .lane.tiny .lane-title {
@@ -686,6 +755,14 @@ button.mix-mark:not(.on):hover {
 .lane.compact .lane-export button.icon-btn,
 .lane.tiny .lane-export button.icon-btn {
   padding: 3px;
+}
+/* Knob com a altura do próprio diâmetro: nada além da linha da faixa. */
+.lane.compact .knob,
+.lane.compact .knob-dial,
+.lane.tiny .knob,
+.lane.tiny .knob-dial {
+  height: 22px;
+  overflow: visible;
 }
 .lane.compact .lane-num,
 .lane.tiny .lane-num {
@@ -1300,3 +1377,116 @@ button.mix-mark:not(.on):hover {
 .tab-svg .tab-done text {
   fill: var(--faint);
 }
+
+/* Braço, cordas, trastes e acordes de violão (portado do ScaleMonster; sem isso o desenho fica preto). */
+.neck-wood {
+  fill: var(--board);
+}
+.neck-fret {
+  stroke: var(--fret);
+  stroke-width: 2;
+}
+.neck-nut {
+  stroke: var(--text);
+  stroke-width: 5;
+}
+.neck-inlay {
+  fill: var(--inlay);
+}
+.neck-string {
+  stroke: var(--string);
+}
+.neck-open,
+.neck-num {
+  font: 600 var(--fs-xs) var(--font-mono);
+  fill: var(--faint);
+}
+.neck-note circle {
+  fill: var(--surface-3);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.neck-note text {
+  font: 700 var(--fs-xs) var(--font);
+  fill: var(--text);
+}
+.neck-zone {
+  fill: var(--accent);
+  opacity: 0.16;
+}
+.neck-zone-next {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  opacity: 0.8;
+}
+.gchord.lg {
+  width: 150px;
+  height: auto;
+}
+.gchord.sm {
+  width: 100px;
+  height: auto;
+}
+.gchord-string {
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+}
+.gchord-fret {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.gchord-nut {
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linecap: square;
+}
+.gchord-dot {
+  fill: var(--accent);
+}
+.gchord-barre {
+  fill: var(--accent);
+}
+.gchord-dot-text {
+  fill: var(--surface);
+  font: 700 8px / 1 var(--font);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.gchord-mark {
+  fill: var(--muted);
+  font: 600 var(--fs-xs) / 1 var(--font);
+  text-anchor: middle;
+}
+.gchord-open {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.gchord-base {
+  fill: var(--muted);
+  font: 600 9px / 1 var(--font);
+}
+
+/* Teclas base do piano (cor branca/preta e rótulos); portado do ScaleMonster. */
+.pkey.white rect {
+  fill: var(--key-white);
+  stroke: var(--key-line);
+  stroke-width: 1;
+}
+.pkey.black rect {
+  fill: var(--key-black);
+}
+.pkey-c {
+  font: 600 10px var(--font);
+  fill: var(--key-dim);
+}
+.pkey-name {
+  font: 700 var(--fs-xs) var(--font);
+  fill: var(--on-color);
+}
+.pkey.white.next .pkey-name,
+.pkey.white.later .pkey-name,
+.pkey.white.done .pkey-name {
+  fill: var(--key-black);

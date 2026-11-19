@@ -101,7 +101,7 @@ interface LaneMix {
   exp?: boolean;
 }
 
-const HEADER_W = 252;
+const HEADER_W = 300;
 /** Braço do violão/guitarra para estudar uma faixa (6 cordas, Mi Lá Ré Sol Si Mi). */
 const GUITAR_STUDY_TUNING = { id: 'g6', label: 'Violão (E A D G B E)', strings: [40, 45, 50, 55, 59, 64], frets: 19 } as const;
 /** Estado de uma faixa sem ajuste salvo. */
@@ -128,9 +128,9 @@ const GUITAR_REGIONS: ReadonlyArray<{ id: number; label: string }> = [
 /** Abaixo disso a faixa fica compacta (knobs menores, sem legenda); abaixo de TINY_LANE_H, uma linha só. */
 const FULL_LANE_H = 58;
 const TINY_LANE_H = 40;
-const TRACK_H = 62;
+const TRACK_H = 72;
 const RULER_H = 62;
-const METRO_H = 44;
+const METRO_H = 52;
 const MIN_PPS = 4;
 const MAX_PPS = 400;
 
@@ -621,7 +621,8 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
   const pxPerSec = pps ?? 20;
   pxRef.current = pxPerSec;
   const density = laneH >= FULL_LANE_H ? '' : laneH >= TINY_LANE_H ? 'compact' : 'tiny';
-  const knobSize = density ? 22 : 30;
+  // Knob menor no modo cheio: título, controles e a linha inteira precisam caber na altura da faixa.
+  const knobSize = density ? 22 : 28;
 
   const zoom = useCallback(
     (factor: number) => {
@@ -2034,7 +2035,6 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                         step={0.01}
                         defaultValue={0.8}
                         size={knobSize}
-                        caption={density ? undefined : 'Vol'}
                         label={`Volume de ${info.label}`}
                         format={fmtGain}
                         onChange={(v) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), vol: v } }))}
@@ -2047,7 +2047,6 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                         defaultValue={0}
                         bipolar
                         size={knobSize}
-                        caption={density ? undefined : 'Pan'}
                         label={`Pan de ${info.label}`}
                         format={fmtPan}
                         onChange={(v) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), pan: v } }))}

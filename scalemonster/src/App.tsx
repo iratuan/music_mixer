@@ -74,10 +74,14 @@ const MORE = NAV.flatMap((s) => s.items).filter((i) => !TABS.some((t) => t.id ==
 
 function ThemePick({ theme, onPick }: { theme: ThemeName; onPick(t: ThemeName): void }) {
   return (
-    <div className="theme-pick" role="radiogroup" aria-label="Tema">
-      {THEMES.map((t) => (
-        <button key={t.id} className={`t-${t.id}`} role="radio" aria-checked={theme === t.id} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => onPick(t.id)} />
-      ))}
+    <div className="theme-pick">
+      <select aria-label="Tema" value={theme} onChange={(e) => onPick(e.target.value as ThemeName)}>
+        {THEMES.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

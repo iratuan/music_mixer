@@ -92,13 +92,18 @@ function chordTones(chord: Chord): { midi: number; interval: number }[] {
 }
 
 export function Harmony({ onPracticeScale }: Props) {
-  const [opts, setOpts] = useState(() =>
-    readStore('bf-harmony', { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: false, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'triad' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: false, chordBeats: 4 }),
-  );
+  const HARMONY_DEFAULTS = { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: false, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'groove' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: true, chords: false, chordBeats: 4, v: 2 };
+  const [opts, setOpts] = useState<typeof HARMONY_DEFAULTS>(() => {
+    const saved = readStore<Partial<typeof HARMONY_DEFAULTS>>('bf-harmony', {});
+    // Versão 2: a base toca a cozinha (levada + bateria) e os acordes só tocam se ligados.
+    // Preferências antigas (v1) passam para a cozinha, sem arpejo do baixo.
+    return saved.v === 2 ? { ...HARMONY_DEFAULTS, ...saved } : { ...HARMONY_DEFAULTS, ...saved, v: 2, bassRole: 'groove', drums: true, chords: false };
+  });
   useEffect(() => writeStore('bf-harmony', opts), [opts]);
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) => setOpts((o) => ({ ...o, [k]: v }));
-  // Opções guardadas antes desta versão não têm o papel do baixo.
-  const bassRole: BassRole = opts.bassRole ?? 'triad';
+  const bassRole: BassRole = opts.bassRole ?? 'groove';
+  /** Acordes tocando junto com a cozinha (desligado por padrão: a base é baixo + bateria). */
+  const chordsOn = opts.chords ?? false;
   const bassOn = opts.bassOn ?? true;
   const playStyle: PlayStyle = opts.style ?? 'chord';
   useEffect(() => {
@@ -158,6 +163,7 @@ export function Harmony({ onPracticeScale }: Props) {
         loop: opts.loop,
         rhythm: opts.rhythm ?? 'block',
         drums: !!opts.drums,
+        chordLevel: chordsOn ? 1 : 0,
         ...(bassLine ? { bass: bassLine } : {}),
         onBeat: (_i: number, b: number) => setBeatNow(b),
         onStep: (i) => {
@@ -273,6 +279,9 @@ export function Harmony({ onPracticeScale }: Props) {
     handle.current = playProgression(steps, opts.bpm, {
       timbre: opts.timbre,
       loop: opts.loop,
+      chordLevel: chordsOn ? 1 : 0,
+      drums: !!opts.drums,
+      rhythm: opts.rhythm ?? 'block',
       ...(bassLine ? { bass: bassLine } : {}),
       onBeat: (_i: number, b: number) => setBeatNow(b),
       onStep: (i) => {
@@ -403,6 +412,16 @@ export function Harmony({ onPracticeScale }: Props) {
                 Arpejo
               </button>
             </div>
+            <div className="seg tiny" role="group" aria-label="Papel do baixo">
+              {BASS_ROLES.map((r) => (
+                <button key={r.id} aria-pressed={bassRole === r.id} className={bassRole === r.id ? 'on' : ''} onClick={() => set('bassRole', r.id)} title={r.hint}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <button aria-pressed={chordsOn} className={`ghost small-btn ${chordsOn ? 'on' : ''}`} onClick={() => set('chords', !chordsOn)} title="Liga ou desliga os acordes tocando junto com a cozinha">
+              {chordsOn ? 'Acordes: ligados' : 'Acordes: desligados'}
+            </button>
             <div className="chord-now-head">
               <span className="muted small">{active ? 'Tocando agora' : 'Acorde do tom'}</span>
               <b>{chordSymbol(currentChord, flats)}</b>
@@ -468,7 +487,7 @@ export function Harmony({ onPracticeScale }: Props) {
     handle.current = playProgression(
       chords.map((f) => ({ chord: f.chord, beats: 2 })),
       opts.bpm,
-      { timbre: opts.timbre, ...(bassLine ? { bass: bassLine } : {}), onBeat: (_i: number, b: number) => setBeatNow(b), onStep: (i) => (setActive(chords[i]!.chord), harmonicStore.set({ active: chords[i]!.chord })), onEnd: () => stop() },
+      { timbre: opts.timbre, chordLevel: chordsOn ? 1 : 0, drums: !!opts.drums, rhythm: opts.rhythm ?? 'block', ...(bassLine ? { bass: bassLine } : {}), onBeat: (_i: number, b: number) => setBeatNow(b), onStep: (i) => (setActive(chords[i]!.chord), harmonicStore.set({ active: chords[i]!.chord })), onEnd: () => stop() },
     );
   }
 }

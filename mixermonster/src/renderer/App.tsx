@@ -270,10 +270,14 @@ export function App() {
         )}
         <div className="side-foot">
           <div className="nav-title">Tema</div>
-          <div className="theme-pick" role="radiogroup" aria-label="Tema">
-            {THEMES.map((t) => (
-              <button key={t.id} className={`t-${t.id}`} role="radio" aria-checked={theme === t.id} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => setTheme(t.id)} />
-            ))}
+          <div className="theme-pick">
+            <select aria-label="Tema" value={theme} onChange={(e) => setTheme(e.target.value as ThemeName)}>
+              {THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="about-line">
             <span title="Versão do app">{version ? `v${version.replace('-beta.', ' beta ')}` : ''}</span>

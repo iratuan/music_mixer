@@ -107,8 +107,23 @@
     padding: var(--s-4) var(--s-4) var(--s-6);
     gap: var(--s-4);
   }
+  /* Barra de XP cabe na largura do aparelho: a faixa de progresso encolhe e o título do nível some. */
   .topbar {
     padding: 6px 12px 0;
+    justify-content: stretch;
+  }
+  .topbar .xpbar {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+  .topbar .xpbar-title {
+    display: none;
+  }
+  .topbar .xpbar-track {
+    flex: 1;
+    width: auto;
+    min-width: 40px;
   }
   .content {
     overflow-x: hidden;
@@ -151,26 +166,6 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-  }
-  /* Seletor de tema: bolinhas com área de toque de 44 px. */
-  .theme-pick {
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-  .theme-pick button {
-    flex: none;
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    border-width: 10px;
-    border-style: solid;
-    border-color: transparent;
-    background-clip: padding-box;
-    box-shadow: inset 0 0 0 2px var(--line-strong);
-  }
-  .theme-pick button[aria-pressed='true'] {
-    border-color: transparent;
-    box-shadow: inset 0 0 0 3px var(--accent);
   }
   /* Botões só de ícone e segmentos pequenos: área de toque quadrada de 44 px. */
   .icon-btn,
@@ -230,4 +225,15 @@
   background: var(--accent) !important;
   color: var(--accent-ink) !important;
   transform: scale(0.98);
+}
+
+/* Celular: a linha de progressão tem 3 colunas (tocar, nome, favorito); os acordes descem para uma segunda linha. */
+@media (max-width: 600px) {
+  .cad-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .cad-row > .cad-chords {
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
 }

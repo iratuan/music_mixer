@@ -6,9 +6,10 @@ import { fingerLine, type BassTuning, type FretPos } from '../instrument/bass.js
 import { type Chord } from './harmony.js';
 import { chordIntervals } from './circleOfFifths.js';
 
-export type BassRole = 'root' | 'triad' | 'arpeggio';
+export type BassRole = 'groove' | 'root' | 'triad' | 'arpeggio';
 
 export const BASS_ROLES: ReadonlyArray<{ readonly id: BassRole; readonly label: string; readonly hint: string }> = [
+  { id: 'groove', label: 'Cozinha', hint: 'Levada da base: fundamental, fundamental, quinta, fundamental. Sem arpejo; para improvisar em cima' },
   { id: 'root', label: 'Tônica', hint: 'Só a fundamental do acorde, nos tempos 1 e 3' },
   { id: 'triad', label: 'Tríade', hint: 'Fundamental, terça e quinta: 1-3-5-3' },
   { id: 'arpeggio', label: 'Arpejo', hint: 'Todas as notas do acorde subindo (com a sétima, se houver) e a oitava' },
@@ -28,7 +29,8 @@ export function bassRolePattern(chord: Chord, role: BassRole, beats = 4): Array<
   const fifth = ints.find((i) => i >= 6 && i <= 8) ?? 7;
   const seventh = ints.find((i) => i === 9 || i === 10 || i === 11);
   let cell: Array<number | null>;
-  if (role === 'root') cell = [r, null];
+  if (role === 'groove') cell = [r, r, r + fifth, r];
+  else if (role === 'root') cell = [r, null];
   else if (role === 'triad') cell = [r, r + third, r + fifth, r + third];
   else cell = [r, r + third, r + fifth, seventh !== undefined ? r + seventh : r + 12];
   const out: Array<number | null> = [];

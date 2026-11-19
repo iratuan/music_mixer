@@ -64,24 +64,12 @@
   gap: 6px;
 }
 .theme-pick {
-  display: flex;
-  gap: 6px;
   padding: 4px 8px;
 }
-.theme-pick button {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid var(--line-strong);
+.theme-pick select {
+  width: 100%;
+  min-height: 34px;
 }
-.theme-pick button[aria-pressed='true'] {
-  border-color: var(--accent);
-}
-.theme-pick .t-dark { background: #14161b; }
-.theme-pick .t-light { background: #ffffff; }
-.theme-pick .t-wood { background: #6b4527; }
-.theme-pick .t-paper { background: #f4f1ea; }
 
 .main-col {
   min-width: 0;
