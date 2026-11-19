@@ -3,20 +3,22 @@ node_modules/
 dist/
 release/
 release-next/
+
+# (cada produto tem seu node_modules, dist e release)
 coverage/
 
 # Ferramentas e runtimes montados localmente (não versionados; ver README)
-apps/mixer/tooling/runtime/python/
-apps/mixer/tooling/runtime/models/
-apps/mixer/tooling/rubberband/
-apps/mixer/tooling/ytdlp/*.exe
+mixermonster/tooling/runtime/python/
+mixermonster/tooling/runtime/models/
+mixermonster/tooling/rubberband/
+mixermonster/tooling/ytdlp/*.exe
 *.jks
 *.keystore
-apps/mixer/tooling/stems/.venv/
-apps/mixer/tooling/stems/ffmpeg/
-apps/mixer/tooling/stems/out/
-apps/mixer/tooling/stems/models-sep/*.ckpt
-apps/mixer/tooling/stems/models-sep/download_checks.json
+mixermonster/tooling/stems/.venv/
+mixermonster/tooling/stems/ffmpeg/
+mixermonster/tooling/stems/out/
+mixermonster/tooling/stems/models-sep/*.ckpt
+mixermonster/tooling/stems/models-sep/download_checks.json
 
 # Pesos de modelo e binários
 *.ckpt

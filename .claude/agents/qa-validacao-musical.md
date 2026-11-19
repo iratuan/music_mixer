@@ -14,7 +14,7 @@ Você valida o Baixaria Fina com evidência. Nenhuma funcionalidade é concluíd
 6. Ao declarar um critério de aceite, o critério é registrado antes da medição.
 
 ## Estado atual (Etapa 3)
-- `packages/music-theory/tests/` — harmonia, baixo, piano, guitarra, seções, MIDI e acompanhamento; `apps/academy/tests/domain/` — currículo, ear training, rotinas e julgamento.
+- `scalemonster/packages/music-theory/tests/` — harmonia, baixo, piano, guitarra, seções, MIDI e acompanhamento; `scalemonster/tests/domain/` — currículo, ear training, rotinas e julgamento.
 - `packages/audio/tests/yin-bench.test.ts` — benchmark YIN sintético por instrumento.
 - Comandos: `npm run typecheck` e `npm test`.
 

@@ -1,0 +1,87 @@
+{
+  "appId": "br.local.mixercraft",
+  "productName": "MixerMonster",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "package.json"
+  ],
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "npmRebuild": false,
+  "forceCodeSigning": false,
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "shortcutName": "MixerMonster",
+    "artifactName": "MixerMonster-Setup-${version}.${ext}"
+  },
+  "extraResources": [
+    {
+      "from": "tooling/runtime/python",
+      "to": "python",
+      "filter": [
+        "**/*",
+        "!**/__pycache__/**"
+      ]
+    },
+    {
+      "from": "tooling/runtime/models",
+      "to": "models"
+    },
+    {
+      "from": "tooling/rubberband/rubberband-4.0.0-gpl-executable-windows",
+      "to": "rubberband"
+    },
+    {
+      "from": "tooling/stems/bf_tools.py",
+      "to": "tools/bf_tools.py"
+    },
+    {
+      "from": "tooling/ytdlp/yt-dlp.exe",
+      "to": "ytdlp/yt-dlp.exe"
+    },
+    {
+      "from": "tooling/stems/ffmpeg/ffmpeg.exe",
+      "to": "ffmpeg/ffmpeg.exe"
+    },
+    {
+      "from": "tooling/licenses",
+      "to": "licenses"
+    },
+    {
+      "from": "tooling/stems/bf_roformer",
+      "to": "tools/bf_roformer",
+      "filter": [
+        "**/*",
+        "!**/__pycache__/**"
+      ]
+    },
+    {
+      "from": "tooling/stems/models-sep",
+      "to": "models/voice",
+      "filter": [
+        "*_config.yaml"
+      ]
+    }
+  ]
+}

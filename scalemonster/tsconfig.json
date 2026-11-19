@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@domain": ["src/domain/index.ts"],
+      "@baixaria/music-theory": ["packages/music-theory/src/index.ts"],
+      "@baixaria/audio-synth": ["packages/audio-synth/src/index.ts"],
+      "@baixaria/ui-core": ["packages/ui-core/src/index.ts"],
+      "@baixaria/exchange-contract": ["packages/exchange-contract/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "shells/desktop/src/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "capacitor.config.ts", "vite.config.ts", "vitest.config.ts"]
+}

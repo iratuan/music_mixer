@@ -1,0 +1,40 @@
+{
+  "name": "mixermonster",
+  "version": "0.5.0-beta.3",
+  "private": true,
+  "description": "MixerMonster: estúdio de mixagem para desktop (Electron). Codebase independente, com instalador próprio.",
+  "type": "module",
+  "main": "dist/main/main.cjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:renderer": "vite build",
+    "build:electron": "esbuild src/main/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/main/main.cjs && esbuild src/preload/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist/preload/preload.cjs",
+    "build": "npm run build:renderer && npm run build:electron",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win --dir -c electron-builder.json",
+    "dist:win": "npm run build && electron-builder --win -c electron-builder.json"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.2",
+    "playwright": "^1.65.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.4"
+  },
+  "author": "Baixaria Fina (local)"
+}

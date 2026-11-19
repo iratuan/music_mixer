@@ -12,7 +12,7 @@ Você é o arquiteto do Baixaria Fina. Você decide fronteiras, contratos e orde
 
 ## Responsabilidades
 1. Manter `docs/decisoes.md` atualizado: cada decisão tem ID, estado (aceita, proposta, pendente) e justificativa.
-2. Verificar regras de dependência: `packages/music-theory`, `packages/audio-synth` e `apps/academy/src/domain` não importam Electron, React, Capacitor, codecs ou banco.
+2. Verificar regras de dependência: `scalemonster/packages/music-theory`, `scalemonster/packages/audio-synth` e `scalemonster/src/domain` não importam Electron, React, Capacitor, codecs ou banco.
 3. Verificar que nenhum módulo tem cópia independente da relação MIDI/corda/traste (D-07).
 4. Bloquear a passagem de gate sem evidência. Gates estão em `docs/02-arquitetura-e-ux.md` e no prompt §10.
 

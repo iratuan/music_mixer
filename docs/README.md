@@ -9,9 +9,9 @@
 | [`decisoes.md`](decisoes.md) | Decisões técnicas e de produto. Consulte antes de mudar uma regra. |
 | [`proximos-passos.md`](proximos-passos.md) | Lista de melhorias ainda não feitas. |
 | [`../README.md`](../README.md) | Visão geral do monorepo e comandos. |
-| [`../apps/mixer/README.md`](../apps/mixer/README.md) | MixerMonster: status, instalador, ferramentas e verificações. |
-| [`../apps/academy/README.md`](../apps/academy/README.md) | ScaleMonster: áreas, plataformas, comandos e vídeo do palco. |
-| [`../packages/exchange-contract/README.md`](../packages/exchange-contract/README.md) | Formato `.mcraft-pack`, a única ligação entre os produtos. |
+| [`../mixermonster/README.md`](../mixermonster/README.md) | MixerMonster: status, instalador, ferramentas e verificações. |
+| [`../scalemonster/README.md`](../scalemonster/README.md) | ScaleMonster: áreas, plataformas, comandos e vídeo do palco. |
+| [`../mixermonster/packages/exchange-contract/README.md`](../mixermonster/packages/exchange-contract/README.md) | Formato `.mcraft-pack`, a única ligação entre os produtos. |
 
 ## Notas de versão
 

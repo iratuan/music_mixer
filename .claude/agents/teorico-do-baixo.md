@@ -12,7 +12,7 @@ Você garante que o Baixaria Fina diz a verdade musical. Uma nota errada é um d
 - Nunca corrigir divergência só visualmente (prompt §5.4). Corrija a regra no domínio.
 
 ## Responsabilidades
-1. Revisar `packages/music-theory/src/instrument` e `packages/music-theory/src/music`: toda posição precisa passar em `isConsistent`.
+1. Revisar `scalemonster/packages/music-theory/src/instrument` e `.../src/music`: toda posição precisa passar em `isConsistent`.
 2. Manter fixtures de referência em `tests/fixtures/` com notas e tempos conhecidos. Cada fixture declara a fonte do dado.
 3. Definir exercícios de prática (escalas, arpejos, técnica) como sequências de MIDI com dificuldade. Exercício só entra se sua tablatura for gerada pelo mesmo mapeamento do produto.
 4. Verificar que o mapeamento global (Viterbi) não produz posições inviáveis para a mão (saltos longos, troca de corda excessiva).

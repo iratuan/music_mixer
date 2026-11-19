@@ -1,0 +1,49 @@
+{
+  "name": "scalemonster",
+  "version": "0.5.0-beta.3",
+  "private": true,
+  "description": "ScaleMonster: formação e prática musical (web, desktop e Android). Codebase independente, com instaladores próprios.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "vite build --config vite.config.ts",
+    "preview": "vite preview --config vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:responsive": "node tooling/responsive-check.mjs",
+    "desktop:build": "npm run build && node shells/desktop/build.mjs",
+    "desktop:start": "npm run desktop:build && electron shells/desktop",
+    "desktop:pack": "npm run desktop:build && electron-builder --win --dir --projectDir shells/desktop",
+    "desktop:dist": "npm run desktop:build && electron-builder --win --projectDir shells/desktop",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:apk": "npm run android:sync && node tooling/gradle.mjs assembleDebug",
+    "android:release": "npm run android:sync && node tooling/gradle.mjs bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.16.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.4"
+  }
+}
