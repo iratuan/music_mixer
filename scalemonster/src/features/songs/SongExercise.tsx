@@ -6,7 +6,8 @@ import { Neck, type NeckMark } from '@baixaria/ui-core';
 import { getAudioContext } from '@baixaria/audio-synth';
 import { INSTRUMENT_INPUT, clickAt, listInputs, pluckAt, startInput, type InputEngine } from '../../lib/practice.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
-import { PACK_EXTENSION, parsePack, type PackSong } from '@baixaria/exchange-contract';
+import { PACK_EXTENSION, parseExchange, type Exercise, type PackSong } from '@baixaria/exchange-contract';
+import { addToLibrary, exerciseToSong, loadLibrary, saveLibrary, type LibraryItem } from './exerciseLibrary.js';
 
 /**
  * Linha do baixo de uma música como exercício progressivo (enviada pela Tablatura da música).
@@ -34,15 +35,19 @@ function transposeName(name: string, semis: number): string {
   return `${nm(c.root)}${m[2] ?? ''}${c.bass !== undefined ? `/${nm(c.bass)}` : ''}`;
 }
 
-/** Botão "Importar música": lê um .mcraft-pack (arquivo não confiável, validado pelo contrato). */
-function ImportPack({ onImported, label }: { onImported(song: SongExerciseData): void; label: string }) {
+/** Botão de importação: lê um .mcraft-pack de música ou de exercício (arquivo não confiável, validado pelo contrato). */
+function ImportPack({ onImported, onExercise, label }: { onImported(song: SongExerciseData): void; onExercise(ex: Exercise): void; label: string }) {
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const pick = async (file: File | undefined) => {
     if (!file) return;
     setError(null);
-    const r = parsePack(new Uint8Array(await file.arrayBuffer()));
-    if (!r.ok) return setError(`Não deu para importar "${file.name}": ${r.error}.`);
+    const r = parseExchange(new Uint8Array(await file.arrayBuffer()));
+    if (!r.ok) {
+      const detail = r.issues?.slice(0, 5).map((i) => `${i.path || 'exercício'}: ${i.message}`).join('; ');
+      return setError(`Não deu para importar "${file.name}": ${r.error}${detail ? ` (${detail})` : ''}.`);
+    }
+    if (r.kind === 'exercise') return onExercise(r.pack.exercise);
     onImported(r.pack.song);
   };
   return (
@@ -70,8 +75,58 @@ function ImportPack({ onImported, label }: { onImported(song: SongExerciseData):
   );
 }
 
+/** Biblioteca de exercícios importados: tocar abre o exercício no treino; remover tira da lista. */
+function ExerciseLibrary({ items, onPlay, onRemove, notice }: { items: LibraryItem[]; onPlay(ex: Exercise): void; onRemove(id: string): void; notice: string | null }) {
+  return (
+    <section className="card exercise-library" aria-label="Biblioteca de exercícios">
+      <h3>Exercícios importados</h3>
+      {notice && (
+        <p className="muted small" role="status">
+          {notice}
+        </p>
+      )}
+      {items.length === 0 ? (
+        <p className="muted small">Nenhum exercício guardado. Importe um pacote de exercício (gerado no MixerMonster ou por outra ferramenta).</p>
+      ) : (
+        <ul className="exercise-library-list">
+          {items.map((it) => (
+            <li key={it.id}>
+              <span>
+                <b>{it.exercise.title}</b>{' '}
+                <span className="muted small">
+                  · nível {it.exercise.level} · {it.exercise.steps.length} notas · {it.exercise.bpm} BPM · {it.exercise.origin.type === 'mixer' ? 'do MixerMonster' : 'autoral'}
+                </span>
+              </span>
+              <span className="spacer" />
+              <button className="ghost small-btn" onClick={() => onPlay(it.exercise)}>
+                Tocar
+              </button>
+              <button className="ghost small-btn" onClick={() => onRemove(it.id)} aria-label={`Remover ${it.exercise.title}`}>
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function SongExercise() {
   const [data, setData] = useState(() => readStore<SongExerciseData | null>(KEY, null));
+  const [library, setLibrary] = useState<LibraryItem[]>(() => loadLibrary());
+  const [notice, setNotice] = useState<string | null>(null);
+  const addExercise = (ex: Exercise) => {
+    const next = addToLibrary(library, ex);
+    saveLibrary(next);
+    setLibrary(next);
+    setNotice(`Exercício "${ex.title}" guardado na biblioteca.`);
+  };
+  const removeExercise = (id: string) => {
+    const next = library.filter((x) => x.id !== id);
+    saveLibrary(next);
+    setLibrary(next);
+  };
   const imported = (song: SongExerciseData) => {
     writeStore(KEY, song);
     setData(song);
@@ -81,6 +136,8 @@ export function SongExercise() {
   const [o, setO] = useState(() => readStore(OPTS, { semis: 0, chunk: 4 as number | 'section', progressive: true, every: 2, strings: 4, ramp: true, label: 'finger' as 'finger' | 'fret' | 'note', click: true, sound: true }));
   useEffect(() => writeStore(OPTS, o), [o]);
   const set = <K extends keyof typeof o>(k: K, v: (typeof o)[K]) => setO((x) => ({ ...x, [k]: v }));
+  /** Tocar um exercício da biblioteca: entra no treino como um trecho de música (sem acordes). */
+  const playExercise = (ex: Exercise) => imported(exerciseToSong(ex));
   const [bpm, setBpm] = useState(() => Math.max(40, Math.round((data?.bpm ?? 100) * 0.7)));
   const tuning = BASS_TUNINGS.find((t) => t.strings.length === o.strings) ?? BASS_TUNINGS[0]!;
 
@@ -248,13 +305,16 @@ export function SongExercise() {
 
   if (!data) {
     return (
+      <>
       <div className="card song-ex-empty">
         <Icon name="tab" size={22} />
         <p className="muted">
           Estude a linha do baixo de uma música, compasso a compasso com a harmonia. No <b>MixerMonster</b>, abra a música, clique em <b>Tablatura</b> e em <b>Enviar ao ScaleMonster</b>; depois importe o arquivo aqui.
         </p>
-        <ImportPack label="Importar música" onImported={imported} />
+        <ImportPack label="Importar música" onImported={imported} onExercise={addExercise} />
       </div>
+      <ExerciseLibrary items={library} onPlay={playExercise} onRemove={removeExercise} notice={notice} />
+      </>
     );
   }
 
@@ -280,6 +340,7 @@ export function SongExercise() {
 
   return (
     <div className="song-ex">
+      <ExerciseLibrary items={library} onPlay={playExercise} onRemove={removeExercise} notice={notice} />
       <div className="card song-ex-head">
         <div>
           <h2>{data.title}</h2>
@@ -288,7 +349,7 @@ export function SongExercise() {
           </span>
         </div>
         <div className="spacer" />
-        <ImportPack label="Importar outra" onImported={imported} />
+        <ImportPack label="Importar outra" onImported={imported} onExercise={addExercise} />
         <div className="field">
           <span>Transpor</span>
           <div className="key-pick">

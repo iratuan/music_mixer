@@ -1,83 +1,122 @@
 # ScaleMonster
 
-Produto B: formação e prática musical. Uma aplicação web única, com banco embarcado e 100% offline, empacotada para navegador, desktop (Electron) e Android (Capacitor, APK e AAB). Tela pensada para celular, tablet e desktop.
+Aplicativo de formação e prática musical para baixistas e músicos. Trilhas de escalas no braço, exercícios, ear training, teoria e harmonia, treino no palco com juiz de notas e músicas importadas do MixerMonster.
 
-**Fronteira:** sem download de mídia externa, sem separação de faixas, sem mixer multipista, sem FFmpeg, Python ou IA nativa. O núcleo de `src/` não importa `electron` nem `node:*`. A única ligação com o MixerMonster é o arquivo `.mcraft-pack`.
+Esta pasta é um projeto completo e independente: tem o próprio `package.json`, build, shell desktop e projeto Android. Não depende da pasta `mixermonster/`.
 
-## Áreas
+Roda em três lugares a partir do mesmo código:
 
-Cada área do app fica em `src/features/`:
+- **Navegador** (desenvolvimento e uso web).
+- **Desktop Windows** (shell Electron que embrulha o build web).
+- **Android** (Capacitor, APK de depuração e AAB de release).
 
-| Pasta | Conteúdo |
+Funciona 100% offline. Não usa rede, FFmpeg, Python nem IA.
+
+## O que ele faz
+
+| Área | Conteúdo |
 |---|---|
-| `features/home/` | Início, painel de progresso |
-| `features/trails/` | Trilhas de escalas e técnica |
-| `features/practice/` | Exercícios, metrônomo, afinador, palco de desafio (`stage/`) |
-| `features/ear/` | Ear training |
-| `features/harmony/` | Harmonia e círculo das quintas |
-| `features/theory/` | Teoria e leitura |
-| `features/songs/` | Músicas importadas do MixerMonster |
-| `features/profile/` | Perfis de músicos e conquistas |
+| Início | Painel de progresso e atalhos. |
+| Trilhas | Trilhas de escalas e técnica, por etapa. |
+| Prática | Exercícios, metrônomo, afinador e o palco de desafio. |
+| Ear training | Reconhecimento de intervalos, acordes e escalas por ouvido. |
+| Harmonia | Harmonia e círculo das quintas. |
+| Teoria | Teoria e leitura. |
+| Músicas | Músicas importadas do MixerMonster (pacote `.mcraft-pack`). |
+| Perfis | Perfis de músicos e conquistas. |
 
-Componentes comuns ficam em `src/shared/`. Regras puras (currículo, gamificação, juiz de notas, engine de ear training, cifras) ficam em `src/domain/`, sem React nem plataforma.
+**Fronteira:** sem download de mídia, sem separação de faixas, sem mixer multipista. O núcleo de `src/` não importa `electron` nem `node:*`. A única ligação com o MixerMonster é o arquivo `.mcraft-pack`.
+
+## Início rápido
+
+Dentro desta pasta:
+
+```powershell
+cd scalemonster
+npm install
+npm run dev        # desenvolvimento em http://localhost:5174
+```
+
+## Comandos
+
+Rodam dentro de `scalemonster/`:
+
+| Comando | Faz |
+|---|---|
+| `npm run dev` | Desenvolvimento em `http://localhost:5174`. |
+| `npm run typecheck` | Checagem de tipos (TypeScript estrito). |
+| `npm test` | Testes de dados, domínio e pacotes (Vitest). |
+| `npm run build` | Build estático em `dist/`. |
+| `npm run preview` | Serve o build em `http://localhost:4174`. |
+| `npm run check:responsive` | Telas, toque e vídeo do palco em 5 dispositivos. Precisa de Chrome ou Edge e do `preview` rodando. |
+| `npm run check:exercise` | Importação de exercício (biblioteca, Tocar, Remover). Precisa do `preview` rodando na porta 4174. |
+| `node tooling/validate-pack.mjs <arquivo>` | Valida um `.mcraft-pack` de música ou exercício. Protocolo em `docs/06-protocolo-exercicios.md`. |
+| `npm run desktop:start` | Abre o shell Electron a partir do build. |
+| `npm run desktop:pack` | Pasta pronta do shell desktop. |
+| `npm run desktop:dist` | Instalador Windows do shell desktop (`shells/desktop/release/`). |
+| `npm run android:sync` | Copia o build web para o projeto Android. |
+| `npm run android:apk` | APK de depuração. Precisa de JDK 21 e Android SDK (`ANDROID_HOME`). |
+| `npm run android:release` | AAB de release. Assina só se `android/gradle.properties` tiver `SCALEMONSTER_KEYSTORE` e as senhas. |
+
+**Assinatura de release:** o `build.gradle` assina o release só quando `gradle.properties` tem `SCALEMONSTER_KEYSTORE`, `SCALEMONSTER_KEY_ALIAS` e as senhas. As chaves (`*.jks`, `*.keystore`) não são versionadas. Sem elas, `assembleRelease` gera um APK não assinado.
 
 ## Estrutura
 
 ```text
 src/
   App.tsx, main.tsx     entrada e navegação (botão Voltar do Android incluído)
-  features/             telas por área (acima)
+  features/             telas por área: home, trails, practice (stage/), ear, harmony,
+                        theory, songs, profile
   shared/               componentes comuns
-  platform/             DatabaseAdapter, bridge, implementações: web, desktop, android
+  platform/             DatabaseAdapter e implementações: web, desktop, android
   data/                 esquema (migrações) e serviços do banco
   lib/                  áudio de ouvido, captura de microfone e MIDI, utilidades
   domain/               regras musicais e pedagógicas (sem plataforma)
   styles/               folhas globais, carregadas na ordem de main.tsx
   assets/               logos, fundo do palco e vídeos do desafio
-shells/desktop/         shell Electron que embrulha o build web
-android/                projeto nativo Capacitor (Gradle)
-tests/                  testes de dados e do domínio
-tooling/                verificações e ferramentas (ver abaixo)
+packages/             cópias de music-theory, audio-synth, ui-core e exchange-contract
+shells/desktop/       shell Electron que embrulha o build web
+android/              projeto nativo Capacitor (Gradle)
+tests/                testes de dados e do domínio
+tooling/              verificações e ferramentas (ver abaixo)
+capacitor.config.ts   id br.local.scalemonster, webDir dist
 ```
 
-## Persistência por plataforma
+## Persistência
+
+Toda escrita passa por `DatabaseAdapter` (`src/platform/database.ts`), então trocar a implementação não muda as regras do app.
 
 - **Navegador:** banco sql.js (WebAssembly) guardado no IndexedDB.
-- **Desktop:** arquivo `academy.sqlite` na pasta de dados (`%APPDATA%/scalemonster`), gravação atômica e backups dos 3 últimos inícios.
-- **Android:** arquivo `scalemonster.sqlite` na área privada do app (Capacitor Filesystem), mesma política de gravação e backups.
+- **Desktop:** arquivo `academy.sqlite` em `%APPDATA%/scalemonster`, com gravação atômica e backups dos 3 últimos inícios.
+- **Android:** arquivo `scalemonster.sqlite` na área privada do app (Capacitor Filesystem), com a mesma política de gravação e backups.
 
-Toda a escrita passa por `DatabaseAdapter` (`src/platform/database.ts`), então trocar a implementação não muda as regras.
+O nome `academy` do arquivo e do protocolo do desktop (`academy://app`) é o nome da versão anterior e ficou para não quebrar dados existentes.
 
-## Comandos
+**Migração do app antigo (desktop):** o shell importa o `mixercraft.sqlite` da versão anterior por cópia. O original não é alterado, e a cópia é conferida por SHA-256.
 
-Rodam na raiz do repositório:
+## Shell desktop e Android
 
-| Comando | Faz |
-|---|---|
-| `npm run dev` | Desenvolvimento em `http://localhost:5174`. |
-| `npm run build` | Build estático em `dist/`. |
-| `npm run preview` | Serve o build em `http://localhost:4174`. |
-| `npm run desktop:start` | Abre o shell Electron. |
-| `npm run desktop:pack` / `:dist` | Pasta pronta ou instalador do shell (Windows). |
-| `npm run android:sync` | Copia o build web para o projeto Android. |
-| `npm run android:apk` | APK de depuração. Precisa de JDK 21 e Android SDK (`ANDROID_HOME`). |
-| `npm run android:release` | AAB de release. Assina só se `gradle.properties` tiver `SCALEMONSTER_KEYSTORE` e as senhas. |
-| `npm run check:responsive` | Telas, toque e vídeo do palco em 5 dispositivos. |
+- **Desktop:** janela com sandbox e `contextIsolation`, navegação e popups bloqueados, só microfone e MIDI liberados.
+- **Android:** `loggingBehavior: 'none'`, para o logcat não expor o banco. Permissão de microfone para o juiz de notas e o afinador. Ícone e splash são gerados por `tooling/make-android-art.py` a partir de `src/assets/logo.png`.
 
-**Shell desktop:** protocolo próprio `academy://app`, janela com sandbox e `contextIsolation`, navegação e popups bloqueados, só microfone e MIDI. Importa o `mixercraft.sqlite` do app antigo por cópia (o original não é alterado), conferido por SHA-256.
+## Vídeo do palco
 
-**Android:** `capacitor.config.ts` usa `br.local.scalemonster`, `webDir: dist` e `loggingBehavior: 'none'`, para o logcat não expor o banco. Permissão de microfone para o juiz de notas e o afinador. Ícone e splash são gerados por `tooling/make-android-art.py` a partir de `src/assets/logo.png`.
-
-**Vídeo do palco (desafio):** a abertura (0–10 s, com som) toca antes das notas, e o loop (11–20 s, sem som) fica atrás da pista. Em paisagem nos tablets e desktops; com "reduzir animações", mostra um quadro parado. Tocar o loop no emulador Android trava o app; a solução (loop menor ou quadro parado no Android) ainda não foi escolhida.
+No desafio, a abertura (0 a 10 s, com som) toca antes das notas, e o loop (11 a 20 s, sem som) fica atrás da pista. O vídeo aparece em paisagem em tablets e desktops. Com "reduzir animações" ativado, mostra um quadro parado.
 
 ## Verificação
 
-- **Automatizada:** `npm test` (Vitest) inclui `tests`.
-- **Tipos:** `npm run typecheck` checa também este app.
-- **Responsividade e toque:** `npm run check:responsive` (precisa de Chrome ou Edge).
-- **Importação de pacote:** `tooling/pack-import-check.mjs`.
-- **Gradle:** `tooling/gradle.mjs` roda o wrapper pelo caminho explícito (o `gradlew` não funciona direto no Windows).
+- **Automatizada:** `npm test` e `npm run typecheck`.
+- **Responsividade e toque:** `npm run check:responsive` (com `npm run preview` rodando em outra janela; se a porta 4174 estiver ocupada, passe a URL como argumento: `node tooling/responsive-check.mjs http://localhost:<porta>`).
+- **Importação de pacote:** `node tooling/pack-import-check.mjs [url]`, com o preview rodando.
+- **Gradle:** `tooling/gradle.mjs` roda o wrapper pelo caminho explícito, porque no Windows o `gradlew` não roda direto.
+
+## Limitações conhecidas
+
+- **Loop do vídeo do palco no Android:** tocar o loop no emulador trava o app. A escolha entre loop menor ou quadro parado no Android ainda está em aberto.
+- **Assinatura de release:** exige a chave do próprio dono, que não vem no repositório.
+- **Web MIDI** não está disponível no WebView do Android.
+- **Instaladores sem assinatura digital** e com o ícone padrão do Electron no shell desktop.
 
 ## Status
 
-Versão 0.5.0-beta.3. Em aberto: loop do vídeo no Android (travada no emulador), assinatura de release com a chave do próprio dono e Web MIDI indisponível no WebView do Android.
+Versão 0.5.0-beta.3, beta privado. Visão geral dos dois produtos no [README da raiz](../README.md).

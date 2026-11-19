@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:responsive": "node tooling/responsive-check.mjs",
+    "check:exercise": "node tooling/exercise-import-check.mjs",
     "desktop:build": "npm run build && node shells/desktop/build.mjs",
     "desktop:start": "npm run desktop:build && electron shells/desktop",
     "desktop:pack": "npm run desktop:build && electron-builder --win --dir --projectDir shells/desktop",

@@ -42,7 +42,7 @@
 | Dados | `%APPDATA%/baixaria-fina` | `%APPDATA%/scalemonster` (desktop); banco próprio no Android |
 | Precisa de internet | Não, exceto para baixar por link ou o modelo de voz | Não (100% offline) |
 
-Os dois produtos **não dependem um do outro para funcionar**. O único ponto de contato é o arquivo `.mcraft-pack`: o MixerMonster exporta a linha do baixo de uma música e o ScaleMonster a importa (contrato em [`packages/exchange-contract`](packages/exchange-contract/README.md)).
+Os dois produtos **não dependem um do outro para funcionar**. O único ponto de contato é o arquivo `.mcraft-pack`: o MixerMonster exporta a linha do baixo de uma música e o ScaleMonster a importa (contrato em [`mixermonster/packages/exchange-contract`](mixermonster/packages/exchange-contract/README.md), cópia idêntica em `scalemonster/packages/`).
 
 Resumo do que cada um faz:
 
@@ -165,7 +165,7 @@ Decisões técnicas estão em [`docs/decisoes.md`](docs/decisoes.md).
 | [`docs/05-two-separate-codebases.md`](docs/05-two-separate-codebases.md) | Separação em dois produtos (monorepo). |
 | [`mixermonster/README.md`](mixermonster/README.md) | MixerMonster: status, instalador, ferramentas. |
 | [`scalemonster/README.md`](scalemonster/README.md) | ScaleMonster: status, plataformas, comandos. |
-| [`packages/*/README.md`](packages/) | Regras e status de cada pacote compartilhado. |
+| [`*/packages/`](mixermonster/packages/) | Pacotes compartilhados (cópias em cada produto). |
 
 ---
 
