@@ -1,7 +1,7 @@
 # packages/music-theory
 
-Biblioteca técnica pura e agnóstica de plataforma: notas, escalas, modos, acordes, harmonia, círculo das quintas, seções, linhas de baixo, mapeamento de braço/teclado e I/O MIDI.
+Biblioteca musical pura, sem plataforma: notas, escalas e modos, acordes, harmonia, círculo das quintas, seções, linhas de baixo, mapeamento de braço e teclado, e leitura/escrita MIDI.
 
-**Regras:** sem regras de negócio de um produto (nada de XP, currículo ou biblioteca), sem `electron`, `node:*` ou DOM.
+**Regras:** nada de regras de um produto (XP, currículo, biblioteca), nada de `electron`, `node:*` ou DOM. Quem usa: MixerMonster e ScaleMonster, pelo `@baixaria/music-theory`.
 
-**Status (E2):** harmonia, piano, guitarra, braço (`instrument/bass`), seções, linhas de baixo, acompanhamento, círculo das quintas, análise e mapa harmônico, e leitura MIDI. `packages/domain` reexporta tudo, então `@domain` continua funcionando.
+**Testes:** `packages/music-theory/tests/` (harmonia, baixo, piano, guitarra, seções, MIDI, acompanhamento e círculo das quintas), rodados por `npm test` na raiz.

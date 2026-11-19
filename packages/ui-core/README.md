@@ -1,7 +1,12 @@
 # packages/ui-core
 
-Tokens de design, tema, componentes base (Knob, Icons, Progress) e visualizadores puros (braço, teclado, acordes, pauta, círculo das quintas, voice leading).
+Tokens de design, tema e componentes visuais compartilhados entre os dois produtos: Knob, Icons, Progress, braço, teclado, acordes, pauta, círculo das quintas, mapa harmônico e inspetor de condução de vozes.
 
-**Regras:** componentes controlados por props, sem acesso a IPC, banco ou bridge; alvos de toque ≥ 44 px.
+**Regras:** componentes controlados por props, sem acesso a IPC, banco ou bridge. Alvos de toque com pelo menos 44 px.
 
-**Status (E3):** `tokens.css` (importado como `@baixaria/ui-core/tokens.css`), `lib/` (store, theme, errors, harmonicSyncStore) e 12 componentes (Icons, Knob, Progress, Neck, BassNeck, PianoKeys, GuitarChord, Staff, CircleOfFifthsWheel, HarmonicGrid, HarmonicMapToolbar, VoiceLeadingInspector). As classes CSS dos componentes ainda vivem nas folhas globais do app. O `packages/ui/src/tokens/tokens.css` antigo (70 linhas, sem uso) não foi tocado.
+**Conteúdo:**
+- `tokens.css`: importado como `@baixaria/ui-core/tokens.css`.
+- `lib/`: store, tema, erros e store de sincronia harmônica.
+- `components/`: 12 componentes visuais.
+
+As classes de estilo desses componentes ainda estão nas folhas globais de cada app (`styles/`). Mover essas classes para o pacote é um passo futuro.

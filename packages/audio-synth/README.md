@@ -1,7 +1,7 @@
 # packages/audio-synth
 
-Síntese WebAudio pura: timbres, acordes/progressões, metrônomo, relógio master e codificação WAV.
+Síntese com Web Audio: timbres, acordes e progressões, metrônomo, relógio master e codificação/decodificação WAV.
 
-**Regras:** só APIs WebAudio padrão; sem `electron`, `node:*`, sidecars ou entrada de microfone (captura e detecção de pitch pertencem ao Academy).
+**Regras:** só APIs padrão do Web Audio; sem `electron`, `node:*`, processos auxiliares ou entrada de microfone. Captura de microfone e detecção de altura ficam no ScaleMonster; o player multipista fica no MixerMonster.
 
-**Status (E3):** `context` (AudioContext único), `wav` (encodeWav/decodeWavPcm16), `voices` (pluck, distorção, barramento, clique), `synth` (vozes do acompanhamento) e `harmonyAudioEngine`. A captura de microfone/MIDI continua no app (Academy) e o player multipista no app (Mixer).
+**Módulos:** `context` (AudioContext único), `wav` (codificação e decodificação PCM16), `voices` (pluck, distorção, barramento, clique), `synth` (vozes do acompanhamento) e `harmonyAudioEngine`.

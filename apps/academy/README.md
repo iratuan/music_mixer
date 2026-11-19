@@ -1,33 +1,83 @@
 # apps/academy — ScaleMonster
 
-Produto B — Formação & Prática Musical. Aplicação web pura (WebAudio, SQLite embarcado via `DatabaseAdapter`) empacotada para desktop, tablet e Android (APK/AAB). 100% offline.
+Produto B: formação e prática musical. Uma aplicação web única, com banco embarcado e 100% offline, empacotada para navegador, desktop (Electron) e Android (Capacitor, APK e AAB). Tela pensada para celular, tablet e desktop.
 
-**Fronteira negativa:** sem download de mídia externa, sem separação de stems, sem mixer multipista, sem FFmpeg/Python/IA nativa, sem imports de `electron` ou `node:*` no núcleo.
+**Fronteira:** sem download de mídia externa, sem separação de faixas, sem mixer multipista, sem FFmpeg, Python ou IA nativa. O núcleo de `src/` não importa `electron` nem `node:*`. A única ligação com o MixerMonster é o arquivo `.mcraft-pack`.
 
-**Status (E5): roda no navegador.** `npm run academy:dev` (desenvolvimento, porta 5174) ou `npm run academy:build` + `npm run academy:preview` (porta 4174). Saída estática em `apps/academy/dist/`.
+## Áreas
 
-- `src/platform/database.ts`: `DatabaseAdapter` (assíncrono). `src/platform/sqljs.ts`: implementação sql.js/WebAssembly, que entrega o arquivo inteiro a cada transação confirmada.
-- `src/platform/web.ts`: plataforma navegador (banco no IndexedDB, arquivos pelo seletor do navegador ou download). `src/platform/bridge.ts`: `PlatformBridge`, a única porta das telas para a plataforma.
-- `src/data/schema.ts` (migrações v1–v3, iguais às do app antigo) e `src/data/services.ts` (regras de músicos, sessões, missões, conquistas, ear training e teoria, portadas sem mudar SQL). Operações em fila, cada escrita numa transação; leituras não regravam o banco.
-- Testes: `apps/academy/tests/data.test.ts` (sql.js real em Node).
-- Sem `electron`, `node:*` ou `window.baixaria` em `src/`.
-- Pendências: PDF do mapa harmônico (a web não gera PDF; `exportMapPdf` é opcional na bridge), poda das folhas de estilo copiadas do Mixer, shells desktop (E6) e Android (E7), responsividade/toque (E8), importação do `mixercraft.sqlite` legado (E6).
+Cada área do app fica em `src/features/`:
 
-**Status (E6): shell desktop.** `npm run academy:desktop:start` (desenvolvimento), `npm run academy:desktop:pack` / `academy:desktop:dist` (Windows). Código em [`shells/desktop/`](shells/desktop/): Electron mínimo que só embrulha o build web.
+| Pasta | Conteúdo |
+|---|---|
+| `features/home/` | Início, painel de progresso |
+| `features/trails/` | Trilhas de escalas e técnica |
+| `features/practice/` | Exercícios, metrônomo, afinador, palco de desafio (`stage/`) |
+| `features/ear/` | Ear training |
+| `features/harmony/` | Harmonia e círculo das quintas |
+| `features/theory/` | Teoria e leitura |
+| `features/songs/` | Músicas importadas do MixerMonster |
+| `features/profile/` | Perfis de músicos e conquistas |
 
-- Protocolo próprio `academy://app` (origem estável para IndexedDB, `fetch` do WebAssembly e CSP `'self'` + `'wasm-unsafe-eval'`); janela endurecida (sandbox, contextIsolation, navegação e popups bloqueados, só microfone de áudio e MIDI).
-- IPC mínimo com origem conferida: banco (`academy.sqlite` na pasta de dados, gravação atômica, só aceita SQLite), salvar arquivo (diálogo do sistema, tipos fixos), importação do legado.
-- Backups em `backups/` ao abrir e antes de importar (ficam os 3 últimos).
-- Importação do `mixercraft.sqlite` do app antigo: oferta dentro do app até o aluno decidir; COPIA (o original fica intocado), confere por SHA-256 e registra a decisão em `legacy-import.json`.
-- Identidade oficial (Decisão 1): ScaleMonster, `br.local.scalemonster`, pasta `%APPDATA%/scalemonster` (`shells/desktop/src/policy.ts`).
-- Sem Python, FFmpeg, modelos ou yt-dlp no pacote (271 MB descompactado, quase tudo é o runtime do Electron).
-- Pendências: ícone próprio, PDF do mapa harmônico (pode usar `printToPDF` do shell), histórico de prática legado guardado no localStorage do app antigo (não é alcançável a partir do arquivo SQLite).
+Componentes comuns ficam em `src/shared/`. Regras puras (currículo, gamificação, juiz de notas, engine de ear training, cifras) ficam em `src/domain/`, sem React nem plataforma.
 
-**Status (E7): Android (Capacitor 8).** `npm run academy:android:apk` gera `android/app/build/outputs/apk/debug/app-debug.apk` (precisa de JDK 21 e Android SDK; `ANDROID_HOME`). `npm run academy:android:sync` só copia o build web para o projeto nativo.
+## Estrutura
 
-- `capacitor.config.ts`: `br.local.scalemonster`, `webDir: dist`, `loggingBehavior: 'none'` (o logcat não recebe o banco do aluno).
-- `src/platform/android.ts`: o mesmo build web no WebView; banco `scalemonster.sqlite` na área privada do app (Filesystem, gravação atômica com `.tmp` + rename, backups dos 3 últimos inícios); salvar arquivos pela folha de compartilhamento (Share).
-- Manifesto: microfone (`RECORD_AUDIO`) para o juiz de notas e o afinador; `INTERNET` é o padrão do Capacitor (o app funciona offline).
-- Projeto nativo em `android/` versionado (fontes Gradle); `assets/public`, `build/` e APKs ficam fora do Git.
-- Banco no Android usa sql.js + arquivo (sem plugin nativo de terceiros); o `DatabaseAdapter` permite trocar por SQLite nativo depois sem mexer nas regras.
-- Pendências: ícone/splash nativos do ScaleMonster (hoje os do Capacitor), assinatura de release (AAB), Web MIDI indisponível no WebView do Android, layout de celular e toque (E8).
+```text
+src/
+  App.tsx, main.tsx     entrada e navegação (botão Voltar do Android incluído)
+  features/             telas por área (acima)
+  shared/               componentes comuns
+  platform/             DatabaseAdapter, bridge, implementações: web, desktop, android
+  data/                 esquema (migrações) e serviços do banco
+  lib/                  áudio de ouvido, captura de microfone e MIDI, utilidades
+  domain/               regras musicais e pedagógicas (sem plataforma)
+  styles/               folhas globais, carregadas na ordem de main.tsx
+  assets/               logos, fundo do palco e vídeos do desafio
+shells/desktop/         shell Electron que embrulha o build web
+android/                projeto nativo Capacitor (Gradle)
+tests/                  testes de dados e do domínio
+tooling/                verificações e ferramentas (ver abaixo)
+```
+
+## Persistência por plataforma
+
+- **Navegador:** banco sql.js (WebAssembly) guardado no IndexedDB.
+- **Desktop:** arquivo `academy.sqlite` na pasta de dados (`%APPDATA%/scalemonster`), gravação atômica e backups dos 3 últimos inícios.
+- **Android:** arquivo `scalemonster.sqlite` na área privada do app (Capacitor Filesystem), mesma política de gravação e backups.
+
+Toda a escrita passa por `DatabaseAdapter` (`src/platform/database.ts`), então trocar a implementação não muda as regras.
+
+## Comandos
+
+Rodam na raiz do repositório:
+
+| Comando | Faz |
+|---|---|
+| `npm run academy:dev` | Desenvolvimento em `http://localhost:5174`. |
+| `npm run academy:build` | Build estático em `apps/academy/dist/`. |
+| `npm run academy:preview` | Serve o build em `http://localhost:4174`. |
+| `npm run academy:desktop:start` | Abre o shell Electron. |
+| `npm run academy:desktop:pack` / `:dist` | Pasta pronta ou instalador do shell (Windows). |
+| `npm run academy:android:sync` | Copia o build web para o projeto Android. |
+| `npm run academy:android:apk` | APK de depuração. Precisa de JDK 21 e Android SDK (`ANDROID_HOME`). |
+| `npm run academy:android:release` | AAB de release. Assina só se `gradle.properties` tiver `SCALEMONSTER_KEYSTORE` e as senhas. |
+| `npm run academy:check:responsive` | Telas, toque e vídeo do palco em 5 dispositivos. |
+
+**Shell desktop:** protocolo próprio `academy://app`, janela com sandbox e `contextIsolation`, navegação e popups bloqueados, só microfone e MIDI. Importa o `mixercraft.sqlite` do app antigo por cópia (o original não é alterado), conferido por SHA-256.
+
+**Android:** `capacitor.config.ts` usa `br.local.scalemonster`, `webDir: dist` e `loggingBehavior: 'none'`, para o logcat não expor o banco. Permissão de microfone para o juiz de notas e o afinador. Ícone e splash são gerados por `tooling/make-android-art.py` a partir de `src/assets/logo.png`.
+
+**Vídeo do palco (desafio):** a abertura (0–10 s, com som) toca antes das notas, e o loop (11–20 s, sem som) fica atrás da pista. Em paisagem nos tablets e desktops; com "reduzir animações", mostra um quadro parado. Tocar o loop no emulador Android trava o app; a solução (loop menor ou quadro parado no Android) ainda não foi escolhida.
+
+## Verificação
+
+- **Automatizada:** `npm test` (Vitest) inclui `apps/academy/tests`.
+- **Tipos:** `npm run typecheck` checa também este app.
+- **Responsividade e toque:** `npm run academy:check:responsive` (precisa de Chrome ou Edge).
+- **Importação de pacote:** `tooling/pack-import-check.mjs`.
+- **Gradle:** `tooling/gradle.mjs` roda o wrapper pelo caminho explícito (o `gradlew` não funciona direto no Windows).
+
+## Status
+
+Versão 0.5.0-beta.3. Em aberto: loop do vídeo no Android (travada no emulador), assinatura de release com a chave do próprio dono e Web MIDI indisponível no WebView do Android.

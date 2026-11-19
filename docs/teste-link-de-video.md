@@ -1,6 +1,6 @@
 # Teste manual: importar pelo link de um vídeo
 
-O roteiro automático (`node tooling/screens/url-import.mjs`) usa um yt-dlp falso e não depende da internet. Este é o passo com download real.
+O roteiro automático (`node apps/mixer/tooling/screens/url-import.mjs`) usa um yt-dlp falso e não depende da internet. Este é o passo com download real.
 
 ## Vídeo de teste
 

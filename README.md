@@ -1,221 +1,164 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="mixerCraft" width="280">
+  <img src="docs/assets/logo.png" alt="MixerMonster e ScaleMonster" width="220">
 </p>
 
-<h1 align="center">mixerCraft</h1>
+<h1 align="center">Baixaria Fina</h1>
 
 <p align="center">
-  <b>Separe as faixas de qualquer música, veja a harmonia e aprenda a linha de baixo no braço e no teclado.</b>
+  Monorepo com dois produtos para baixistas e músicos: <b>MixerMonster</b> (estúdio de mixagem) e <b>ScaleMonster</b> (formação e prática).
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.3-2979ff" alt="Versão 0.5.0-beta.3">
-  <img src="https://img.shields.io/badge/plataforma-Windows%2010%2F11%20x64-1f2430" alt="Windows 10/11 x64">
   <img src="https://img.shields.io/badge/Electron-33-1f2430" alt="Electron 33">
+  <img src="https://img.shields.io/badge/Capacitor-8-1f2430" alt="Capacitor 8">
   <img src="https://img.shields.io/badge/TypeScript-5-1f2430" alt="TypeScript 5">
   <img src="https://img.shields.io/badge/status-beta%20privado-orange" alt="Beta privado">
 </p>
-
-![Player com o painel de acordes à direita](docs/screens/player-lateral.png)
 
 ---
 
 ## Sumário
 
-- [O que é](#o-que-é)
-- [Recursos](#recursos)
+- [Os dois produtos](#os-dois-produtos)
+- [Estrutura do repositório](#estrutura-do-repositório)
 - [Início rápido](#início-rápido)
-- [Requisitos](#requisitos)
-- [Ferramentas externas](#ferramentas-externas)
-- [Como o áudio é processado](#como-o-áudio-é-processado)
-- [Estrutura do projeto](#estrutura-do-projeto)
+- [Comandos](#comandos)
 - [Testes e verificação](#testes-e-verificação)
-- [Instalador](#instalador)
+- [Arquitetura](#arquitetura)
 - [Documentação](#documentação)
 - [Limitações conhecidas](#limitações-conhecidas)
 - [Licença e créditos](#licença-e-créditos)
 
 ---
 
-## O que é
+## Os dois produtos
 
-O **mixerCraft** é um aplicativo de estudo para baixistas (e para quem toca com eles). Você escolhe uma música, o app separa os instrumentos, descobre o andamento, os compassos e os acordes, e mostra a linha de baixo na posição certa do braço. Tudo roda no seu computador, sem enviar as músicas para a internet.
+| | **MixerMonster** (`apps/mixer`) | **ScaleMonster** (`apps/academy`) |
+|---|---|---|
+| Para | Separar, analisar e estudar as faixas de uma música | Estudar escalas, harmonia, percepção auditiva e tocar no palco |
+| Plataforma | Windows 10/11 x64 (Electron) | Navegador, desktop (Electron) e Android (Capacitor) |
+| Identificador | `br.local.mixercraft` | `br.local.scalemonster` |
+| Dados | `%APPDATA%/baixaria-fina` | `%APPDATA%/scalemonster` (desktop); banco próprio no Android |
+| Precisa de internet | Não, exceto para baixar por link ou o modelo de voz | Não (100% offline) |
 
-## Recursos
+Os dois produtos **não dependem um do outro para funcionar**. O único ponto de contato é o arquivo `.mcraft-pack`: o MixerMonster exporta a linha do baixo de uma música e o ScaleMonster a importa (contrato em [`packages/exchange-contract`](packages/exchange-contract/README.md)).
 
-**Entrada**
-- Importa um arquivo de áudio ou um link do YouTube (via `yt-dlp`).
-- Ferramenta **Baixar MP3**: salva o áudio de um link em uma pasta escolhida, com V0 ou 320 kbps e verificação do arquivo.
-- Biblioteca com coleções (inclusive o filtro "Sem coleção"), ordem por data, nome, tom ou andamento e filtro das músicas prontas ou ainda por separar; cada música guarda seu andamento, tom e seções.
+Resumo do que cada um faz:
 
-- **Exportar e importar a biblioteca:** salva no computador todas as músicas (ou uma coleção, ou as selecionadas) separadas por faixas, uma pasta por música com Baixo, Bateria, Voz… em arquivos de áudio, a análise e, se quiser, o áudio original. O arquivo biblioteca.json guarda nomes, coleções, mapa e mixer; em Biblioteca > Exportar / importar a pasta volta para o app (as músicas que já estão não são duplicadas).
+- **MixerMonster:** importa um arquivo ou link, separa as faixas (Demucs), detecta andamento, compassos, acordes e seções, mostra a linha do baixo no braço, transpõe (Rubber Band) e exporta mixagem WAV, MIDI e mapa da música.
+- **ScaleMonster:** trilhas de escalas e exercícios no braço, ear training, teoria e harmonia, treino com palco e juiz de notas, e músicas importadas do MixerMonster.
 
-**Separação de faixas**
-- Separa voz, baixo, bateria, guitarra, piano e outros com o **Demucs** (`htdemucs_6s`). Funciona **sem internet**.
-- Divisão opcional da voz principal e dos backings com um modelo de karaokê (Mel-Band RoFormer), baixado sob demanda.
-- As faixas são guardadas em **FLAC**, sem perda de qualidade.
+---
 
-**Análise musical**
-- **Andamento** constante ou **variável** (com rubato), e **compassos**.
-- **Acordes** e **tom** da música, com o tom de cada trecho.
-- **Seções** (intro, parte A, refrão…) que você renomeia, divide e junta.
+## Estrutura do repositório
 
-**Player**
-- Mudo (M), solo (S), volume, pan e loop de uma parte da música.
-- **Montagem pelas faixas:** combinações prontas (sem o baixo, sem a voz, só a cozinha, só a harmonia…), acima dos nomes das faixas.
-- **Guias harmônicos**: o braço do baixo pode mostrar uma linha-guia derivada dos acordes, e o violão/guitarra mostra as formas do acorde atual e do próximo com condução harmônica.
-  - Baixo: escolha entre a linha da gravação e uma linha harmônica visual (fundamental, quinta, colcheias, oitavas, arpejo, walking bass, tercinas ou notas longas), com região confortável e sem cordas soltas.
-  - Violão/guitarra: formas CAGED ou abertas, com região ajustável e transição entre acordes.
-  - Piano: o teclado mostra a harmonia principal da análise, com acorde-base na mão esquerda e condução/arpejo na direita.
-  - As guias são visuais: não criam faixa de áudio e não entram na mixagem exportada.
-- **Metrônomo** alinhado aos tempos detectados.
-- **Volume geral** que afeta todo o áudio, inclusive a mixagem exportada.
-- **Transposição** de ±6 semitons ou escolha direta do tom de destino. A voz usa preservação de formantes, para não soar "de esquilo".
+```text
+apps/
+  mixer/           MixerMonster (Electron + React). Ferramentas nativas em apps/mixer/tooling/
+    src/main/        processo principal: IPC, biblioteca, processos Python, downloads
+    src/preload/     API mínima e tipada exposta ao renderer
+    src/renderer/    interface: features/ (telas), shared/ (componentes comuns), lib/, styles/
+    tests/           testes do processo principal e da biblioteca
+    tooling/         Python, ffmpeg, Rubber Band, yt-dlp, modelos e roteiros de verificação
+  academy/         ScaleMonster (web, shell Electron e Android com Capacitor)
+    src/             features/ (telas por área), shared/, platform/, data/, lib/, domain/, styles/
+    shells/desktop/  Electron mínimo que embrulha o build web
+    android/         projeto nativo Capacitor (Gradle)
+    tests/           testes de dados e do domínio pedagógico
+    tooling/         responsive-check, pack-import-check, gradle, geração de ícones
+packages/
+  music-theory/    notas, escalas, acordes, harmonia, baixo, MIDI (puro, sem plataforma)
+  audio-synth/     síntese WebAudio, WAV, metrônomo, relógio master
+  ui-core/         tokens de design, tema e componentes visuais base
+  exchange-contract/  formato .mcraft-pack (exportação e importação entre os produtos)
+build/             ícone do MixerMonster (instalador e atalho)
+tests/fixtures/    áudio de teste controlado
+docs/              decisões, notas de versão, próximos passos e capturas
+```
 
-**Painel de acordes** (embaixo do player ou à direita, na vertical)
-- **Baixo:** digitação por zona do braço, com o dedo de cada nota e a corda.
-- **Piano:** mão esquerda com o acorde base e mão direita com o arpejo.
-- **Violão:** diagrama de acorde com pestana, nos modos **Normal** e **CAGED** (escolhido para facilitar a execução).
-- **Campo harmônico:** todos os acordes da música; clique em um para ir até ele.
-- Braço e teclado podem ficar na horizontal ou girados 90° no painel lateral.
-
-**Exportar**
-- **Mixagem em WAV**, com as faixas marcadas, o volume e o tom atuais.
-- **MIDI** do baixo ou do piano, com mapa de andamento.
-- **Mapa da música** em PDF ou texto: partes com letra da forma (A, B…) e repetições, começo de cada parte ajustável compasso a compasso, tablatura da linha harmônica guiada do baixo em cada compasso, notas do baixo da gravação e os diagramas dos acordes no violão.
-
-**Exercícios**
-- **Biblioteca de exercícios:** 128 rotinas por nível, tema e escala, com meta de andamento e recorde pessoal. Inclui a **trilha do braço** de 28 escalas (pentatônicas, blues, modos gregos, menores harmônica e melódica e seus modos, nordestina, bebop, simétricas, cromática e exóticas), em 4 etapas: duas cordas, três cordas, todas as cordas região por região e o braço inteiro.
-- **Tom e parte do braço à escolha:** toda escala em qualquer tom (meio tom acima/abaixo, ciclo das quartas, ou o tom em que as rotinas abrem, na biblioteca) e na parte do baixo que você quiser usar (primeiras casas, 3–8, 5–10, 7–12, até a 12, depois da 12 ou as casas que escolher); a rotina continua valendo.
-- **Percurso pelo braço:** o exercício avança sozinho pelas regiões (da pestana ao fim do braço, inclusive a oitava de cima) e/ou pelos grupos de 2, 3, 4… cordas, com quantos ciclos por etapa você quiser.
-- Treino livre: escalas e padrões no braço do baixo, com julgamento automático das notas tocadas.
+**Regra de dependência:** os pacotes em `packages/` não conhecem Electron, Capacitor, React nem o banco. Os apps dependem dos pacotes, nunca o contrário. Um app não importa código do outro: a troca é feita pelo arquivo `.mcraft-pack`.
 
 ---
 
 ## Início rápido
 
-```bash
+```powershell
 git clone https://github.com/iratuan/music_mixer.git
 cd music_mixer
 npm install
+```
+
+Para rodar o MixerMonster no desktop:
+
+```powershell
 npm run build     # renderer (Vite) + processo principal e preload (esbuild)
-npm start         # abre o app a partir da pasta de build
+npm start         # abre o MixerMonster a partir do build
 ```
 
-Outros comandos:
+Para rodar o ScaleMonster no navegador:
 
-```bash
-npm run typecheck   # checagem de tipos (TypeScript)
-npm test            # testes automatizados (Vitest)
-npm run pack:win    # pasta pronta para testar (release/win-unpacked)
-npm run dist:win    # instalador (release/mixerCraft-Setup-<versão>.exe)
+```powershell
+npm run academy:dev       # desenvolvimento, em http://localhost:5174
 ```
 
-Para separar, analisar e transpor de verdade, antes é preciso preparar as ferramentas da seção [Ferramentas externas](#ferramentas-externas).
+Para separar, analisar e transpor de verdade, antes é preciso preparar as ferramentas em [`apps/mixer/README.md`](apps/mixer/README.md#ferramentas-externas).
 
 ---
 
-## Requisitos
+## Comandos
 
-| Para | Precisa |
+**Raiz (vale para o monorepo)**
+
+| Comando | Faz |
 |---|---|
-| Usar o instalador | Windows 10 ou 11 (x64). Cerca de 355 MB para o aplicativo, mais o espaço das músicas. |
-| Desenvolver | Windows 10/11 x64, **Node.js 22 ou superior**, npm. |
-| Separar mais rápido (opcional) | Placa NVIDIA com CUDA. Sem ela, a separação roda na CPU, em cerca de 1,7× o tempo da música. |
-| Montar o runtime Python | `uv` e Python 3.11. |
+| `npm install` | Instala as dependências de todos os workspaces. |
+| `npm run typecheck` | Checagem de tipos (MixerMonster e ScaleMonster). |
+| `npm test` | Testes automatizados (Vitest). |
 
----
+**MixerMonster**
 
-## Ferramentas externas
+| Comando | Faz |
+|---|---|
+| `npm run build` | Gera o renderer e o processo principal. |
+| `npm start` | Abre o app a partir do build. |
+| `npm run pack:win` | Pasta pronta para testar (`release/`). |
+| `npm run dist:win` | Instalador NSIS (`release/MixerMonster-Setup-<versão>.exe`). |
 
-Binários, modelos e ambientes Python **não são versionados** (veja o `.gitignore`). Prepare estes itens na pasta `apps/mixer/tooling/`:
+**ScaleMonster**
 
-| Item | Onde fica | Como obter |
-|---|---|---|
-| Runtime Python (torch CPU, Demucs, librosa, Basic Pitch) | `apps/mixer/tooling/runtime/python` e `models` | `apps/mixer/tooling/runtime/build-runtime.sh`. O script tem caminhos da máquina de origem (`BASE` e o cache do Hugging Face); ajuste antes de rodar. |
-| ffmpeg | `apps/mixer/tooling/stems/ffmpeg/ffmpeg.exe` | Build oficial do ffmpeg para Windows. |
-| Rubber Band 4.0.0 (transposição) | `apps/mixer/tooling/rubberband/rubberband-4.0.0-gpl-executable-windows/` | Executável oficial. Outro caminho: variável `BF_RUBBERBAND`. |
-| yt-dlp (download por link) | `apps/mixer/tooling/ytdlp/yt-dlp.exe` | Release oficial. `apps/mixer/tooling/ytdlp/SHA2-256SUMS` traz as somas para conferir. Outro caminho: `BF_YTDLP`. |
-| Ambiente com GPU (opcional) | `apps/mixer/tooling/stems/.venv` | Venv com `torch` CUDA. Se existir, o app usa a GPU. |
-| Modelo de divisão de voz (opcional) | Pasta de dados do app | Baixado pelo próprio app, quando você pedir. |
+| Comando | Faz |
+|---|---|
+| `npm run academy:dev` | Servidor de desenvolvimento (porta 5174). |
+| `npm run academy:build` | Build web em `apps/academy/dist/`. |
+| `npm run academy:preview` | Serve o build (porta 4174). |
+| `npm run academy:desktop:start` | Abre o shell Electron. |
+| `npm run academy:desktop:dist` | Instalador do shell desktop (Windows). |
+| `npm run academy:android:apk` | APK de depuração (precisa de JDK 21 e Android SDK). |
+| `npm run academy:android:release` | AAB de release (assinatura via `gradle.properties`, veja abaixo). |
+| `npm run academy:check:responsive` | Confere layout e toque em 5 dispositivos × 8 telas. |
 
-As licenças de cada ferramenta estão em [`apps/mixer/tooling/licenses/`](apps/mixer/tooling/licenses/).
-
----
-
-## Como o áudio é processado
-
-```
-arquivo ou link ──► yt-dlp (se for link)
-        │
-        ▼
-  Demucs htdemucs_6s ──► voz · baixo · bateria · guitarra · piano · outros   (FLAC)
-        │                    │
-        │                    └─ opcional: RoFormer karaokê ──► voz principal · backings
-        ▼
-  análise (apps/mixer/tooling/stems/bf_tools.py analyze)
-     andamento · compassos · acordes · tom · seções
-        │
-        ├─► transcrição do baixo e do piano (Basic Pitch) ──► digitação no braço e nas mãos
-        ├─► transposição (Rubber Band) ──► faixas no tom escolhido
-        └─► exportação: WAV da mixagem · MIDI com mapa de andamento · mapa da música
-```
-
-O processo principal do Electron coordena os processos Python, com cancelamento e encerramento de árvore de processos. O renderer só recebe o que a interface precisa, por um canal IPC com lista de permissões.
-
----
-
-## Estrutura do projeto
-
-```text
-apps/
-  desktop/
-    src/
-      main/        processo principal: IPC, biblioteca, processos Python, downloads
-      preload/     API tipada e mínima exposta ao renderer
-      renderer/    interface React (telas, componentes, estilos e áudio via Web Audio)
-    tests/         testes do processo principal e da biblioteca
-  mobile/          entrada React reservada a um app Android (ainda não iniciado)
-packages/
-  domain/          regras musicais puras: harmonia, piano, violão, digitação do baixo, MIDI, seções
-  ui/              tokens de design compartilhados
-build/             ícone do aplicativo (instalador e atalho)
-apps/mixer/tooling/   (ferramentas do MixerMonster)
-  stems/           bf_tools.py (análise, MIDI, compactação, separação) e bf_roformer/
-  runtime/         script e requisitos do runtime Python portátil
-  screens/         roteiros ponta a ponta (Playwright, com o Electron real)
-  fixtures/        avaliações com resposta conhecida (acordes, baixo, andamento)
-  licenses/        avisos de terceiros
-tests/fixtures/    áudio de teste controlado
-docs/              decisões, notas de versão, próximos passos e capturas
-```
-
-A regra de dependência é simples: `packages/domain` não conhece Electron nem React. A interface e o processo principal dependem dele, nunca o contrário.
+**Assinatura de release do ScaleMonster:** o `build.gradle` só assina o release se `gradle.properties` tiver `SCALEMONSTER_KEYSTORE`, `SCALEMONSTER_KEY_ALIAS` e as senhas. As chaves (`*.jks`, `*.keystore`) não são versionadas.
 
 ---
 
 ## Testes e verificação
 
-- **Automatizados:** `npm test` roda os 199 testes do domínio musical e do processo principal.
-- **Ponta a ponta:** os roteiros em `apps/mixer/tooling/screens/` abrem o app real (Electron + Playwright) com uma biblioteca isolada, sem tocar na sua. Exemplo:
-  ```bash
-  npm run build
-  node apps/mixer/tooling/screens/compact-check.mjs
-  node apps/mixer/tooling/screens/tempo-check.mjs
-  ```
-- **Avaliações:** `apps/mixer/tooling/fixtures/eval-*.py` comparam a análise com material de resposta conhecida.
+- **Automatizados:** `npm test` roda os 275 testes de `packages/`, `apps/mixer/tests`, `apps/academy/tests` e `tests/`.
+- **Mixer, ponta a ponta:** os roteiros em `apps/mixer/tooling/screens/` abrem o app real (Electron + Playwright) com uma biblioteca isolada. Ex.: `node apps/mixer/tooling/screens/compact-check.mjs <userData> <id>`.
+- **ScaleMonster, interface:** `npm run academy:check:responsive` (Chrome ou Edge) confere telas, vídeo do palco e toque nos dispositivos de [`apps/academy/tooling/responsive-check.mjs`](apps/academy/tooling/responsive-check.mjs).
+- **Pacote `.mcraft-pack`:** `apps/academy/tooling/pack-import-check.mjs`.
 
 ---
 
-## Instalador
+## Arquitetura
 
-```bash
-npm run dist:win
-```
+- **Fronteiras de segurança (Electron):** `contextIsolation`, `sandbox`, CSP, protocolo próprio e canais IPC com lista de permissões. O renderer recebe só o que a interface precisa.
+- **Persistência do ScaleMonster:** um `DatabaseAdapter` com sql.js. No navegador o banco fica no IndexedDB; no desktop e no Android, em arquivo, com gravação atômica e backups.
+- **Telas do ScaleMonster:** organizadas por área em `src/features/`. Estilos globais ficam em `src/styles/`, na ordem definida em `main.tsx`.
+- **Áudio:** síntese e metrônomo em `packages/audio-synth`; captura de microfone e juiz de notas no ScaleMonster; player multipista no MixerMonster.
 
-Gera `release/mixerCraft-Setup-<versão>.exe` (NSIS, instalação por usuário, com atalho na área de trabalho). O instalador leva o runtime Python, o Demucs e os pesos do `htdemucs_6s`, então a separação funciona sem internet. O modelo de voz não entra no instalador; é baixado quando você pedir.
-
-**Ainda sem assinatura digital:** o Windows pode pedir confirmação ao instalar.
+Decisões técnicas estão em [`docs/decisoes.md`](docs/decisoes.md).
 
 ---
 
@@ -223,16 +166,18 @@ Gera `release/mixerCraft-Setup-<versão>.exe` (NSIS, instalação por usuário, 
 
 | Arquivo | Conteúdo |
 |---|---|
-| [`docs/decisoes.md`](docs/decisoes.md) | Registro das decisões técnicas e de produto. |
-| [`docs/versao-0.5.0-beta.md`](docs/versao-0.5.0-beta.md) | Notas das betas da versão 0.5. |
-| [`docs/proximos-passos.md`](docs/proximos-passos.md) | Próximas melhorias. |
-| [`docs/architecture/`](docs/architecture/) | Arquitetura e diagramas. |
-| [`docs/screens/`](docs/screens/) | Capturas das telas. |
+| [`docs/README.md`](docs/README.md) | Índice da documentação, com o que é atual e o que é histórico. |
+| [`docs/decisoes.md`](docs/decisoes.md) | Decisões técnicas e de produto. |
+| [`docs/05-two-separate-codebases.md`](docs/05-two-separate-codebases.md) | Separação em dois produtos (monorepo). |
+| [`apps/mixer/README.md`](apps/mixer/README.md) | MixerMonster: status, instalador, ferramentas. |
+| [`apps/academy/README.md`](apps/academy/README.md) | ScaleMonster: status, plataformas, comandos. |
+| [`packages/*/README.md`](packages/) | Regras e status de cada pacote compartilhado. |
 
 ---
 
 ## Limitações conhecidas
 
+**MixerMonster**
 - **Só Windows** por enquanto. O código é multiplataforma, mas o empacotamento e as ferramentas estão preparados apenas para Windows x64.
 - **Instalador sem assinatura digital.**
 - **Acordes com extensões** (9, 11, 13) ainda não são detectados; o modo Completo usa as 9 qualidades atuais.
@@ -241,11 +186,16 @@ Gera `release/mixerCraft-Setup-<versão>.exe` (NSIS, instalação por usuário, 
 - **A voz também muda de tom** junto com as demais faixas, inclusive na mixagem exportada.
 - **Download por link** depende do `yt-dlp` e das regras do YouTube no momento.
 
+**ScaleMonster**
+- **Loop do vídeo do palco no Android:** tocar o loop em emulador trava o app. Problema ainda não resolvido: a escolha entre loop menor ou quadro parado no Android está em aberto.
+- **Assinatura de release (AAB):** exige a chave do próprio dono, que não vem no repositório.
+- **Web MIDI** não está disponível no WebView do Android.
+
 ---
 
 ## Licença e créditos
 
 - Código do projeto: **licença ainda não definida** (uso privado).
 - Componentes de terceiros têm licenças próprias, inclusive o **Rubber Band** (GPL). Os avisos estão em [`apps/mixer/tooling/licenses/`](apps/mixer/tooling/licenses/).
-- Ferramentas usadas: **Demucs** (separação), **Basic Pitch** (transcrição), **librosa** (análise), **Rubber Band** (transposição), **yt-dlp** (download), **mido** e **pretty_midi** (MIDI). Modelo de voz: Mel-Band RoFormer karaokê (aufr33/viperx).
+- Ferramentas usadas pelo MixerMonster: **Demucs** (separação), **Basic Pitch** (transcrição), **librosa** (análise), **Rubber Band** (transposição), **yt-dlp** (download), **mido** e **pretty_midi** (MIDI). Modelo de voz: Mel-Band RoFormer karaokê (aufr33/viperx).
 - O projeto não distribui músicas. Use apenas arquivos e vídeos sobre os quais você tem direito de uso.

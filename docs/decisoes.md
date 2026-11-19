@@ -1,5 +1,7 @@
 # Registro de decisões — Baixaria Fina
 
+> **Nota (organização atual):** os caminhos de código citados nos registros são os da época da decisão. Hoje, `packages/domain` virou `packages/music-theory` (música) e `apps/academy/src/domain` (pedagogia); `apps/desktop` virou `apps/mixer`; `tooling/` de cada app ficou em `apps/<app>/tooling/`. Não reescrevemos o histórico.
+
 Formato: uma entrada por decisão. **Aceita** = aprovada pelo usuário. **Proposta** = recomendação aguardando aprovação. **Pendente** = precisa de escolha do usuário.
 
 | ID | Decisão | Estado | Detalhe |
