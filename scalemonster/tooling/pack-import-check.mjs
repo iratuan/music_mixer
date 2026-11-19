@@ -25,7 +25,7 @@ const pack = (patch = {}) => Buffer.from(JSON.stringify({ format: 'mcraft-pack',
 const failures = [];
 const check = (ok, msg) => (ok ? console.log(`  ok ${msg}`) : (failures.push(msg), console.log(`  FALHOU ${msg}`)));
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ channel: "chrome" }).catch(() => chromium.launch({ channel: "msedge" })).catch(() => chromium.launch());
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
