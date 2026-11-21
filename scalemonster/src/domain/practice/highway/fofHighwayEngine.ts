@@ -34,6 +34,8 @@ export interface HighwayEvent {
   readonly perfect?: boolean;
   /** Classe do acerto (só em 'hit'). */
   readonly grade?: 'perfect' | 'great' | 'good';
+  /** Desvio do acerto em ms (negativo = adiantado, positivo = atrasado). */
+  readonly offsetMs?: number;
 }
 
 export interface HighwayStats {
@@ -248,7 +250,7 @@ export class FofHighwayEngine {
     s.score += POINTS_PER_NOTE * this.multiplier();
     s.streak++;
     s.maxStreak = Math.max(s.maxStreak, s.streak);
-    this.events.push({ kind: 'hit', lane: n.lane, at, perfect: n.perfect, grade: n.perfect ? 'perfect' : Math.abs(n.offset) <= GREAT_SEC ? 'great' : 'good' });
+    this.events.push({ kind: 'hit', lane: n.lane, at, perfect: n.perfect, grade: n.perfect ? 'perfect' : Math.abs(n.offset) <= GREAT_SEC ? 'great' : 'good', offsetMs: Math.round(n.offset * 1000) });
     this.onJudged?.(n);
     if (!s.overdrive) {
       s.energy = Math.min(1, s.energy + ENERGY_PER_HIT);

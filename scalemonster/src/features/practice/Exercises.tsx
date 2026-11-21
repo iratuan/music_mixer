@@ -45,6 +45,7 @@ import {
   sessionXp,
   exerciseIdForKey,
   practiceXp,
+  toleranceFor,
   type PracticeSession,
 } from '@domain';
 import { ProgressDashboard } from '../home/ProgressDashboard.js';
@@ -431,7 +432,7 @@ export function Exercises() {
     historyKey.current = { label: `${pcName(s.root, flats)} ${s.category} · ${s.mode} · ${EXERCISES.find((x) => x.id === s.exercise)?.name ?? ''}`, key: `${instrument}|${s.root}|${s.category}|${s.mode}|${s.exercise}`, instrument };
     if (engine && s.inputMode === 'audio') {
       try {
-        input.current = await startInput(deviceId, ({ id, verdict, cents }) => engine.verdict(id, verdict, ctx.currentTime, cents), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz }); // atraso ajustado no exercício da música
+        input.current = await startInput(deviceId, ({ id, verdict, cents }) => engine.verdict(id, verdict, ctx.currentTime, cents), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz, tolerance: toleranceFor(routine?.level) }); // atraso ajustado no exercício da música
       } catch (e) {
         setInputError(errorText(e, 'não foi possível abrir a entrada de áudio'));
         return;

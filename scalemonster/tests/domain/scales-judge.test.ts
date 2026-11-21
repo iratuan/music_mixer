@@ -138,6 +138,24 @@ describe('julgamento: desvio em cents', () => {
   });
 });
 
+describe('tolerância por nível', () => {
+  it('avançado exige mais precisão que iniciante', async () => {
+    const { toleranceFor, NoteJudge: J } = await import('../../src/domain/index.js');
+    expect(toleranceFor('Iniciante')).toBeGreaterThan(toleranceFor('Intermediário'));
+    expect(toleranceFor('Intermediário')).toBeGreaterThan(toleranceFor('Avançado'));
+    const up40 = midiToHz(33) * 2 ** (40 / 1200);
+    const run = (tol) => {
+      const j = new J(tol);
+      j.expect('n', 33, 5.0);
+      j.feed(-1, 0.5, 0.01, 0.01);
+      j.feed(up40, 1.0, 0.6, 0.01);
+      return j.feed(up40, 1.02, 0.6, 0.01);
+    };
+    expect(run(toleranceFor('Iniciante'))).toMatchObject({ verdict: 'hit' });
+    expect(run(toleranceFor('Avançado'))?.verdict).not.toBe('hit');
+  });
+});
+
 describe('braço inteiro: grupos maiores e regiões da oitava de cima', () => {
   it('baixo de 5 cordas tem grupos de 2, 3 e 4 cordas; 6 cordas também de 5', async () => {
     const { groupsOfSize } = await import('../../src/domain/index.js');

@@ -39,7 +39,7 @@ export interface InputEngine {
  * calibra o ruído de fundo por 0,8 s e julga cada nota com YIN + NoteJudge.
  * `latencySec` desloca o relógio (o som tocado chega atrasado à entrada).
  */
-export async function startInput(deviceId: string | null, onResult: (r: { id: number; verdict: Verdict; cents?: number }) => void, latencySec = 0.03, range: { fmin: number; fmax: number } = { fmin: 28, fmax: 450 }): Promise<InputEngine> {
+export async function startInput(deviceId: string | null, onResult: (r: { id: number; verdict: Verdict; cents?: number }) => void, latencySec = 0.03, range: { fmin: number; fmax: number; tolerance?: number } = { fmin: 28, fmax: 450 }): Promise<InputEngine> {
   const ctx = getAudioContext();
   if (ctx.state === 'suspended') await ctx.resume();
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -51,7 +51,7 @@ export async function startInput(deviceId: string | null, onResult: (r: { id: nu
   analyser.smoothingTimeConstant = 0;
   source.connect(analyser); // sem ligar ao destino: não realimenta
   const buf = new Float32Array(analyser.fftSize);
-  const judge = new NoteJudge<number>();
+  const judge = new NoteJudge<number>(range.tolerance);
   let noise = 0.01;
   let calib: number[] | null = [];
   const calibUntil = ctx.currentTime + 0.8;

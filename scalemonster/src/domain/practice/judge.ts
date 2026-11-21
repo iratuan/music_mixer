@@ -4,6 +4,11 @@
  * dentro da janela da nota. Oitava errada (mesma nota, outra oitava) conta como "oitava".
  */
 export const TOLERANCE_CENTS = 60;
+
+/** Tolerância de afinação por nível da trilha: iniciante perdoa mais; avançado pede precisão. */
+export function toleranceFor(level: 'Iniciante' | 'Intermediário' | 'Avançado' | undefined): number {
+  return level === 'Avançado' ? 25 : level === 'Intermediário' ? 40 : TOLERANCE_CENTS;
+}
 export const STABLE_FRAMES = 2;
 export const ATTACK_RATIO = 1.25;
 
@@ -42,6 +47,7 @@ interface Target<T> {
 export class NoteJudge<T> {
   private target: Target<T> | null = null;
   private prevRms = 0;
+  constructor(private readonly tolerance = TOLERANCE_CENTS) {}
 
   /** Registra a próxima nota. Se a anterior ainda não foi resolvida, ela volta como erro. */
   expect(id: T, midi: number, deadline: number): JudgeResult<T> | null {
@@ -59,8 +65,8 @@ export class NoteJudge<T> {
     if (attack) t.attacked = true;
     if (t.attacked && detectedHz > 0) {
       const c = centsBetween(detectedHz, t.hz);
-      const exact = Math.abs(c) <= TOLERANCE_CENTS;
-      const oct = !exact && [1200, -1200, 2400, -2400].some((o) => Math.abs(c - o) <= TOLERANCE_CENTS);
+      const exact = Math.abs(c) <= this.tolerance;
+      const oct = !exact && [1200, -1200, 2400, -2400].some((o) => Math.abs(c - o) <= this.tolerance);
       t.stable = exact ? t.stable + 1 : 0;
       t.octaveStable = oct ? t.octaveStable + 1 : 0;
       if (exact) {
