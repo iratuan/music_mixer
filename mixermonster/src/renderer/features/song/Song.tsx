@@ -128,7 +128,7 @@ const GUITAR_REGIONS: ReadonlyArray<{ id: number; label: string }> = [
 /** Abaixo disso a faixa fica compacta (knobs menores, sem legenda); abaixo de TINY_LANE_H, uma linha só. */
 const FULL_LANE_H = 58;
 const TINY_LANE_H = 40;
-const TRACK_H = 72;
+const TRACK_H = 88;
 const RULER_H = 62;
 const METRO_H = 52;
 const MIN_PPS = 4;

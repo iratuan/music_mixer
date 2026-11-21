@@ -13,15 +13,17 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+import { libraryRoot } from './library-root.mjs';
 const [src, id] = process.argv.slice(2);
+const LIB = libraryRoot(src);
 if (!src || !id) throw new Error('uso: compact-check.mjs <userData> <id>');
 const userData = mkdtempSync(join(tmpdir(), 'bf-compact-'));
-const srcSong = join(src, 'library', 'songs', id);
+const srcSong = join(LIB, 'songs', id);
 const dstSong = join(userData, 'library', 'songs', id);
 mkdirSync(dstSong, { recursive: true });
 for (const d of ['demucs', 'faixas']) if (existsSync(join(srcSong, d))) cpSync(join(srcSong, d), join(dstSong, d), { recursive: true });
 for (const f of ['analise.json', 'capa.img']) if (existsSync(join(srcSong, f))) cpSync(join(srcSong, f), join(dstSong, f));
-const index = JSON.parse(readFileSync(join(src, 'library', 'index.json'), 'utf8'));
+const index = JSON.parse(readFileSync(join(LIB, 'index.json'), 'utf8'));
 index.songs = index.songs.filter((s) => s.id === id);
 const swap = (p) => join(dstSong, p.slice(srcSong.length));
 for (const s of index.songs) {

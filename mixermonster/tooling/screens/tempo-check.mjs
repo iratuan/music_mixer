@@ -13,17 +13,23 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+import { libraryRoot } from './library-root.mjs';
 const [src, id, shot] = process.argv.slice(2);
+const LIB = libraryRoot(src);
 if (!src || !id) throw new Error('uso: tempo-check.mjs <userData> <id> [captura.png]');
 const userData = mkdtempSync(join(tmpdir(), 'bf-tempo-'));
-const index = JSON.parse(readFileSync(join(src, 'library', 'index.json'), 'utf8'));
+const index = JSON.parse(readFileSync(join(LIB, 'index.json'), 'utf8'));
 index.songs = index.songs.filter((s) => s.id === id);
 mkdirSync(join(userData, 'library', 'songs', id), { recursive: true });
 writeFileSync(join(userData, 'library', 'index.json'), JSON.stringify(index, null, 2));
 const anPath = join(userData, 'library', 'songs', id, 'analise.json');
-copyFileSync(join(src, 'library', 'songs', id, 'analise.json'), anPath);
+copyFileSync(join(LIB, 'songs', id, 'analise.json'), anPath);
+// Cópia com versão 2: o app mostra o aviso de andamento e reanalisa (v3).
+const anOld = JSON.parse(readFileSync(anPath, "utf8"));
+anOld.version = 2;
+writeFileSync(anPath, JSON.stringify(anOld));
 const demucs = join(userData, 'library', 'songs', id, 'demucs');
-symlinkSync(join(src, 'library', 'songs', id, 'demucs'), demucs, 'junction');
+symlinkSync(join(LIB, 'songs', id, 'demucs'), demucs, 'junction');
 const check = (cond, msg) => {
   if (!cond) throw new Error(`verificação falhou: ${msg}`);
   console.log(`ok: ${msg}`);

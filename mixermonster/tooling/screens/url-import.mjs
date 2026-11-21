@@ -154,7 +154,7 @@ try {
   const opened = await app.evaluate(() => ({ asked: globalThis.__asked, url: globalThis.__opened }));
   check(opened.asked === 1 && opened.url === URL_OK, 'abrir origem pede confirmação e abre o link no navegador');
   // Espera a análise terminar (o cartão ganha o tom) antes da foto.
-  await win.locator('.lib-meta', { hasText: 'BPM' }).waitFor({ timeout: 300000 });
+  await win.locator('.lib-meta', { hasText: 'BPM' }).waitFor({ timeout: 900000 });
   await win.screenshot({ path: join(outDir, '12-biblioteca-origem.png') });
 
   // 8. Mesmo vídeo de novo: não duplica

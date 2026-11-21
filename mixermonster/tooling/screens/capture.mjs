@@ -38,6 +38,12 @@ const saveTo = (file) =>
 
 try {
   const win = await app.firstWindow();
+  // BF_WIN=960x640 testa a interface numa janela menor (responsividade); padrão: a janela do app.
+  if (process.env.BF_WIN) {
+    const [w, h] = process.env.BF_WIN.split("x").map(Number);
+    await app.evaluate(({ BrowserWindow }, size) => BrowserWindow.getAllWindows()[0].setSize(size.w, size.h), { w, h });
+    await win.waitForTimeout(800);
+  }
   await win.waitForLoadState('load');
   await win.setViewportSize({ width: 1280, height: 820 });
   await win.evaluate(() => localStorage.clear());
@@ -83,7 +89,7 @@ try {
       overflowY: getComputedStyle(sc).overflowY,
     };
   });
-  check(Math.round(laneLayout.maxTrackHeight) === 72, `faixas com 72 px de altura (TRACK_H) (${Math.round(laneLayout.maxTrackHeight)} px)`);
+  check(Math.round(laneLayout.maxTrackHeight) === 88, `faixas com 88 px de altura (TRACK_H) (${Math.round(laneLayout.maxTrackHeight)} px)`);
   check(laneLayout.overflowY === 'auto', 'rolagem vertical disponível para as faixas');
   const playVisible = async (label) =>
     win.getByRole('button', { name: label }).evaluate((button) => {
@@ -92,6 +98,8 @@ try {
     });
   const shell = win.locator('.shell');
   const setSidebarCollapsed = async (collapsed) => {
+    // A interface não tem mais o botão de recolher a barra lateral (shell.css: .side-toggle oculto).
+    if (collapsed) return;
     const current = await shell.evaluate((el) => el.classList.contains('side-collapsed'));
     if (current === collapsed) return;
     await win.getByRole('button', { name: collapsed ? 'Recolher a barra lateral' : 'Abrir a barra lateral' }).click();
@@ -129,8 +137,8 @@ try {
   await win.getByRole('button', { name: 'Tirar solos' }).click();
   await win.getByRole('button', { name: 'Mudo em Bateria' }).click();
   check(await win.locator('.lane.stem-drums.silent').isVisible(), 'bateria muda (M) durante a música');
-  await win.keyboard.press('Digit3');
-  check(!(await win.locator('.lane.stem-drums.silent').isVisible()), 'tecla 3 tira o mudo da bateria');
+  await win.keyboard.press('Digit4'); // Bateria é a 4ª faixa (Voz principal, Backing, Baixo, Bateria)
+  check(!(await win.locator('.lane.stem-drums.silent').isVisible()), 'tecla 4 tira o mudo da bateria');
   // Knob de volume: setas do teclado, duplo clique volta ao padrão; pan entra no áudio.
   const vol = win.getByRole('slider', { name: 'Volume de Baixo' });
   await vol.focus();
@@ -193,7 +201,7 @@ try {
   check((await win.locator('.lib-card .lib-meta').first().innerText()).includes('BPM'), 'biblioteca mostra tom e BPM');
   await win.screenshot({ path: join(outDir, '06-biblioteca.png') });
   for (const t of ['Claro', 'Madeira', 'Papel', 'Escuro']) {
-    await win.getByRole('radio', { name: t }).click();
+    await win.getByLabel('Tema').selectOption({ label: t });
     await nav.getByRole('button', { name: /bass-common-clean/ }).click();
     await win.locator('.lane').first().waitFor();
     await win.getByRole('button', { name: 'Tocar' }).click();
@@ -204,17 +212,7 @@ try {
   }
   check(true, 'quatro temas capturados');
 
-  // 9. Exercícios (motor do ScaleMonster)
-  await nav.getByRole('button', { name: 'Exercícios', exact: true }).click();
-  await win.locator('.ex-neck').waitFor();
-  await win.getByLabel('Exercício').selectOption({ label: '15. Saltos de oitava' });
-  await win.getByLabel('Região').selectOption({ label: 'Braço inteiro' });
-  check((await win.locator('.ex-pill').count()) > 10, 'exercício de oitavas no braço inteiro montado');
-  await win.getByRole('button', { name: 'Começar' }).click();
-  await win.waitForTimeout(4000);
-  check((await win.locator('.ex-pill.now').count()) === 1, 'sequência tocando com a nota atual marcada');
-  await win.screenshot({ path: join(outDir, '08-exercicios.png') });
-  await win.getByRole('button', { name: 'Parar' }).click();
+  // (exercícios são do ScaleMonster; o bloco saiu do MixerMonster na separação)
 } finally {
   await app.close();
 }

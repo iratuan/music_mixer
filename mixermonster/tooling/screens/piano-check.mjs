@@ -12,15 +12,17 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+import { libraryRoot } from './library-root.mjs';
 const [src, id, shot] = process.argv.slice(2);
+const LIB = libraryRoot(src);
 if (!src || !id) throw new Error('uso: piano-check.mjs <userData> <id> [saída.png]');
 const userData = mkdtempSync(join(tmpdir(), 'bf-piano-'));
-const index = JSON.parse(readFileSync(join(src, 'library', 'index.json'), 'utf8'));
+const index = JSON.parse(readFileSync(join(LIB, 'index.json'), 'utf8'));
 index.songs = index.songs.filter((s) => s.id === id);
 if (!index.songs[0]?.stems?.piano) throw new Error('a música não tem a faixa de piano');
 mkdirSync(join(userData, 'library', 'songs', id), { recursive: true });
 writeFileSync(join(userData, 'library', 'index.json'), JSON.stringify(index, null, 2));
-const an = join(src, 'library', 'songs', id, 'analise.json');
+const an = join(LIB, 'songs', id, 'analise.json');
 if (existsSync(an)) copyFileSync(an, join(userData, 'library', 'songs', id, 'analise.json'));
 
 const check = (cond, msg) => {
@@ -60,7 +62,7 @@ try {
       lanes: tracks.length,
     };
   });
-  check(Math.round(laneLayout.maxTrackHeight) === 72 && laneLayout.overflowY === 'auto', `${laneLayout.lanes} faixas com 62 px e rolagem vertical disponível`);
+  check(Math.round(laneLayout.maxTrackHeight) === 88 && laneLayout.overflowY === 'auto', `${laneLayout.lanes} faixas com 62 px e rolagem vertical disponível`);
   const keys = await win.locator('.pkey.white').count();
   const marked = await win.locator('.pkey.now, .pkey.next, .pkey.later, .pkey.done').count();
   const svgW = (await win.locator('svg.piano').boundingBox()).width;
