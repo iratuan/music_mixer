@@ -116,7 +116,7 @@ Para separar, analisar e transpor de verdade no MixerMonster, antes é preciso p
 | `npm run typecheck` / `npm test` | Checagem de tipos e testes (Vitest). |
 | `npm run build` / `npm start` | Gera o build e abre o app. |
 | `npm run pack:win` | Pasta pronta para testar, em `mixermonster/release/`. |
-| `npm run dist:win` | Instalador `mixermonster/release/MixerMonster-Setup-<versão>.exe`. |
+| `npm run dist:win` | Instalador `mixermonster/release/MixerMonster-Setup-<versão>.exe` e versão portable `MixerMonster-Portable-<versão>.exe` (um arquivo, sem instalar). |
 
 **ScaleMonster** (dentro de `scalemonster/`)
 
@@ -125,14 +125,22 @@ Para separar, analisar e transpor de verdade no MixerMonster, antes é preciso p
 | `npm run typecheck` / `npm test` | Checagem de tipos e testes (Vitest). |
 | `npm run dev` / `npm run build` / `npm run preview` | Desenvolvimento, build web em `dist/` e servidor do build (porta 4174). |
 | `npm run desktop:start` | Abre o shell Electron. |
-| `npm run desktop:dist` | Instalador do shell desktop (Windows). |
-| `npm run android:apk` | APK de depuração (precisa de JDK 21 e Android SDK). |
+| `npm run desktop:dist` | Instalador `ScaleMonster-Setup-<versão>.exe` e portable `ScaleMonster-Portable-<versão>.exe` (Windows). |
+| `npm run android:apk` | APK de depuração. Roda em celulares e tablets Android 7.0 ou mais novos (minSdk 24, alvo 36), de qualquer processador (não tem bibliotecas nativas por arquitetura). Precisa de JDK 21 e Android SDK. |
 | `npm run android:release` | AAB de release (assinatura via `gradle.properties`). |
 | `npm run check:responsive` | Telas, toque e vídeo do palco em 5 dispositivos. |
 
 **Assinatura de release do ScaleMonster:** o `build.gradle` só assina o release se `gradle.properties` tiver `SCALEMONSTER_KEYSTORE`, `SCALEMONSTER_KEY_ALIAS` e as senhas. As chaves (`*.jks`, `*.keystore`) não são versionadas.
 
 ---
+
+## Novidades desta versão
+
+- **Pacotes compartilhados na raiz:** `packages/` é a única fonte de música, áudio, interface e contrato `.mcraft-pack`. Os produtos só importam por alias.
+- **Design system:** cores de marca e de estado centralizadas em `packages/ui-core/src/tokens.css`.
+- **MixerMonster:** valor de volume e pan sempre visível, faixas legíveis em 960 px, remover uma música apaga também a pasta com o áudio baixado.
+- **ScaleMonster:** treino de ouvido com trilha de progresso por intervalo, teclas 1 a 9 para responder e medidor de acertos; juiz de notas com desvio em cents, tolerância por nível (iniciante, intermediário, avançado) e direção do tempo no palco.
+- **Instaladores:** NSIS e portable nos dois produtos, na versão 0.5.0-beta.3.
 
 ## Testes e verificação
 

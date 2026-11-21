@@ -43,7 +43,7 @@ Rodam dentro de `mixermonster/`:
 | `npm run build` | Gera `dist/`. |
 | `npm start` | Abre o app a partir do build. |
 | `npm run pack:win` | Pasta pronta para testar, em `release/`. |
-| `npm run dist:win` | Instalador `release/MixerMonster-Setup-<versão>.exe` (NSIS, por usuário, com atalho). |
+| `npm run dist:win` | Instalador `release/MixerMonster-Setup-<versão>.exe` (NSIS, por usuário, com atalho) e portable `release/MixerMonster-Portable-<versão>.exe` (um arquivo, sem instalar). |
 | `node tooling/make-exercise.mjs <música> --de N --ate M --titulo "..." --nivel K` | Gera um exercício de um trecho de música exportada. Protocolo em `docs/06-protocolo-exercicios.md`. |
 | `node tooling/validate-pack.mjs <arquivo>` | Valida um `.mcraft-pack` de música ou exercício. |
 
