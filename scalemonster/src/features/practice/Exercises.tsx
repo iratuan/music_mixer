@@ -269,6 +269,8 @@ export function Exercises() {
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [verdicts, setVerdicts] = useState<Record<number, Verdict>>({});
+  /** Afinação de cada nota julgada (cents): mostra sustenido ou bemol na bolinha. */
+  const [pitch, setPitch] = useState<Record<number, number>>({});
   const [score, setScore] = useState({ hit: 0, octave: 0, miss: 0 });
   const [inputError, setInputError] = useState<string | null>(null);
   const [level, setLevel] = useState(0);
@@ -409,6 +411,7 @@ export function Exercises() {
     }
     setResult(null);
     setVerdicts({});
+    setPitch({});
     setScore({ hit: 0, octave: 0, miss: 0 });
     setLoops(0);
     setInputError(null);
@@ -418,6 +421,7 @@ export function Exercises() {
       engine.onJudged = (n) => {
         const v = n.state as Verdict;
         setVerdicts((x) => ({ ...x, [n.id]: v }));
+        if (n.cents !== undefined) setPitch((x) => ({ ...x, [n.id]: n.cents! }));
         setScore((sc) => ({ ...sc, [v]: sc[v] + 1 }));
       };
     }
@@ -427,7 +431,7 @@ export function Exercises() {
     historyKey.current = { label: `${pcName(s.root, flats)} ${s.category} · ${s.mode} · ${EXERCISES.find((x) => x.id === s.exercise)?.name ?? ''}`, key: `${instrument}|${s.root}|${s.category}|${s.mode}|${s.exercise}`, instrument };
     if (engine && s.inputMode === 'audio') {
       try {
-        input.current = await startInput(deviceId, ({ id, verdict }) => engine.verdict(id, verdict, ctx.currentTime), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz }); // atraso ajustado no exercício da música
+        input.current = await startInput(deviceId, ({ id, verdict, cents }) => engine.verdict(id, verdict, ctx.currentTime, cents), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz }); // atraso ajustado no exercício da música
       } catch (e) {
         setInputError(errorText(e, 'não foi possível abrir a entrada de áudio'));
         return;
@@ -977,6 +981,11 @@ export function Exercises() {
                   return (
                     <span key={k} className={`ex-pill ${k === step ? 'now' : ''} ${verdicts[loops * seqLen + k] ?? ''}`}>
                       {pcName(n.midi, flats)}
+                      {(() => {
+                        const c = pitch[loops * seqLen + k];
+                        if (c === undefined || Math.abs(c) < 15) return null;
+                        return <sup className="ex-pitch" title={`${c > 0 ? '+' : ''}${c} cents: ${c > 0 ? 'acima' : 'abaixo'} da altura certa`} aria-label={c > 0 ? 'acima' : 'abaixo'}>{c > 0 ? '♯' : '♭'}</sup>;
+                      })()}
                     </span>
                   );
                 })}

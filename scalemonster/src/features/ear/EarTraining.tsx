@@ -186,10 +186,17 @@ export function EarTraining() {
         e.preventDefault();
         tap();
       }
+      // Teclas 1–9 escolhem a opção (sem precisar do mouse).
+      const digit = /^Digit([1-9])$/.exec(e.code)?.[1];
+      const c = chRef.current;
+      if (digit && view === 'play' && c && (c.interaction === 'choice' || c.interaction === 'detune') && c.options && Number(digit) <= c.options.length) {
+        e.preventDefault();
+        onChoose(Number(digit) - 1);
+      }
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  }, [view, tap]);
+  }, [view, tap, onChoose]);
 
   function confirmTaps() {
     const c = chRef.current;
@@ -306,7 +313,10 @@ export function EarTraining() {
         <div className="ear-hud-stats">
           {mode === 'survival' && <span className="ear-hearts" aria-label={`${game.lives} vidas`}>{'♥'.repeat(Math.max(0, game.lives))}<i>{'♥'.repeat(Math.max(0, 3 - game.lives))}</i></span>}
           {mode === 'time' && <span className={`ear-time ${timeLeft <= 10 ? 'low' : ''}`}>{Math.max(0, timeLeft)} s</span>}
-          <span>Acertos <b>{game.correct}/{game.total}</b></span>
+          <span className="ear-acc" title="Acertos desta sessão">
+            Acertos <b>{game.correct}/{game.total}</b>
+            <i className="ear-meter" aria-hidden="true"><i style={{ width: `${game.total ? Math.round((game.correct / game.total) * 100) : 0}%` }} /></i>
+          </span>
           <span>Sequência <b>{game.streak}</b>{mult > 1 && <em className="ear-mult">{mult}x</em>}</span>
           <span>XP <b>+{game.xp}</b></span>
         </div>
@@ -340,6 +350,7 @@ export function EarTraining() {
                   disabled={phase === 'listening' && ch.interaction !== 'detune' ? false : done || phase === 'path'}
                   onClick={() => onChoose(i)}
                 >
+                  <kbd className="ear-key" aria-hidden="true">{i + 1}</kbd>
                   {o}
                 </button>
               ))}

@@ -317,3 +317,12 @@ select {
 .verdict.miss {
   color: var(--bad);
 }
+
+/* Afinação da nota tocada: sustenido (acima) ou bemol (abaixo), quando passa de 15 cents. */
+.ex-pitch {
+  margin-left: 2px;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--warn);
+  vertical-align: super;
+}

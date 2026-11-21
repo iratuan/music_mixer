@@ -99,3 +99,14 @@ button.audio:disabled { background: #2b3f72 !important; color: #aab8dd; border-c
 @media (max-width: 900px) { .ach-level { grid-template-columns: 1fr; } .quest-list li { grid-template-columns: 1fr; } }
 
 button.audio, button.audio:disabled { color: var(--on-color) !important; }
+
+/* Medidor de acertos na barra de status e destaque animado do feedback. */
+.ear-acc { display: inline-flex; align-items: center; gap: var(--s-2); }
+.ear-meter { display: inline-block; width: 72px; height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.ear-meter > i { display: block; height: 100%; background: linear-gradient(90deg, var(--ok-green), var(--accent-2)); border-radius: inherit; transition: width 0.4s ease; }
+.ear-key { display: inline-block; min-width: 18px; margin-right: 6px; padding: 0 4px; border-radius: 4px; font: 700 11px/18px var(--font); text-align: center; background: color-mix(in srgb, currentColor 14%, transparent); opacity: 0.85; }
+@keyframes ear-pop { from { transform: translateY(6px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.ear-feedback { animation: ear-pop 0.35s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .ear-feedback, .ear-meter > i { animation: none; transition: none; }
+}

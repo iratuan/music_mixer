@@ -20,6 +20,8 @@ export interface HighwayNote extends FofNoteEvent {
   state: HighwayNoteState;
   /** Desvio do acerto (s; negativo = adiantado). */
   offset?: number;
+  /** Afinação da nota tocada (cents; + acima, − abaixo), quando o juiz de áudio informou. */
+  cents?: number;
   perfect?: boolean;
   /** A cauda ainda está sendo sustentada (perde ao soltar). */
   holding?: boolean;
@@ -128,9 +130,10 @@ export class FofHighwayEngine {
   }
 
   /** Veredito do juiz de áudio para a nota `id`. */
-  verdict(id: number, v: 'hit' | 'octave' | 'miss', at: number): void {
+  verdict(id: number, v: 'hit' | 'octave' | 'miss', at: number, cents?: number): void {
     const n = this.byId.get(id);
     if (!n || n.state !== 'pending') return;
+    if (cents !== undefined) n.cents = cents;
     if (v === 'miss') this.miss(n, at);
     else this.resolve(n, v, at);
   }
