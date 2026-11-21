@@ -1676,6 +1676,9 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
+    // Abaixo deste tamanho a interface (lateral, mixer, braço) fica cortada: não deixa encolher mais.
+    minWidth: 960,
+    minHeight: 640,
     backgroundColor: '#0d0f12',
     show: false,
     webPreferences: {

@@ -1490,3 +1490,4 @@ button.mix-mark:not(.on):hover {
 .pkey.white.later .pkey-name,
 .pkey.white.done .pkey-name {
   fill: var(--key-black);
+}
