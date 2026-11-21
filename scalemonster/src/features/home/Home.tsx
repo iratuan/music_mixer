@@ -22,9 +22,9 @@ interface Quest {
 }
 
 const SHORTCUTS: ReadonlyArray<{ id: HomeTarget; title: string; text: string; color: string }> = [
-  { id: 'trails', title: 'Trilhas', text: '100 exercícios em ordem', color: '#ff6b2c' },
-  { id: 'ear', title: 'Ear training', text: '60+ jogos de ouvido', color: '#2563eb' },
-  { id: 'theory', title: 'Teoria', text: '21 tópicos e partitura', color: '#16a34a' },
+  { id: 'trails', title: 'Trilhas', text: '100 exercícios em ordem', color: 'var(--brand-orange)' },
+  { id: 'ear', title: 'Ear training', text: '60+ jogos de ouvido', color: 'var(--info-blue)' },
+  { id: 'theory', title: 'Teoria', text: '21 tópicos e partitura', color: 'var(--ok-green)' },
   { id: 'harmony', title: 'Harmonia', text: 'Círculo das quintas', color: '#a855f7' },
 ];
 

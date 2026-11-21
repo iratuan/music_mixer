@@ -384,7 +384,7 @@ button:active:not(:disabled) {
   border-radius: var(--r-pill);
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: color-mix(in srgb, var(--accent) 82%, #000);
-  color: #fff;
+  color: var(--on-color);
   font: 700 var(--fs-sm) / 1 var(--font);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   cursor: pointer;
@@ -423,7 +423,7 @@ button:active:not(:disabled) {
   border-radius: var(--r-pill);
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(12, 10, 22, 0.7);
-  color: #fff;
+  color: var(--on-color);
   font: 700 var(--fs-sm) / 1 var(--font);
   cursor: pointer;
 }

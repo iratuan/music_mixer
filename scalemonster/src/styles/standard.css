@@ -61,7 +61,7 @@ button.round,
 button.primary {
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent-2) 70%, var(--accent))) !important;
   color: var(--accent-ink);
-  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on-color) 18%, transparent);
 }
 button:not(.primary):not(.ghost):not(.danger):not(.round):not(.link):not(.link-btn):not(.home-white) {
   background: color-mix(in srgb, var(--surface-2) 70%, transparent);

@@ -4,6 +4,13 @@
  * adaptadas do ScaleMonster (mesmo autor); Escuro é a identidade coral + teal do Baixaria.
  */
 :root {
+  /* Paleta de apoio: cores de marca e de estado usadas pelos dois produtos. Mudar aqui muda tudo. */
+  --brand-orange: #ff6b2c;
+  --ok-green: #16a34a;
+  --warn-amber: #f59e0b;
+  --danger-red: #dc2626;
+  --info-blue: #2563eb;
+
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;

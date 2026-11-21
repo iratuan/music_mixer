@@ -3,7 +3,7 @@
   --glass-border: color-mix(in srgb, var(--text) 9%, transparent);
   --glass: color-mix(in srgb, var(--surface) 74%, transparent);
   --glass-strong: color-mix(in srgb, var(--surface) 86%, transparent);
-  --lift: 0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset, 0 12px 32px rgba(0, 0, 0, 0.18);
+  --lift: 0 1px 0 color-mix(in srgb, var(--on-color) 6%, transparent) inset, 0 12px 32px rgba(0, 0, 0, 0.18);
 }
 
 body {
