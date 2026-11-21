@@ -9,10 +9,10 @@ import { getAudioContext } from './context.js';
 /** Timbres de baixo (modelados em osciladores e filtros; sem amostras externas). */
 export type BassTimbre = 'jazz' | 'precision' | 'stingray' | 'upright' | 'strat' | 'lespaul' | 'steel' | 'nylon' | 'crunch' | 'highgain' | 'bassdrive';
 /** Timbres que cada instrumento oferece. */
-export const TIMBRES_OF: Record<'bass' | 'guitar' | 'acoustic', readonly BassTimbre[]> = {
+export const TIMBRES_OF: Record<'bass' | 'guitar', readonly BassTimbre[]> = {
   bass: ['jazz', 'precision', 'stingray', 'upright', 'bassdrive'],
-  guitar: ['strat', 'lespaul', 'crunch', 'highgain'],
-  acoustic: ['steel', 'nylon'],
+  /* Primeiro o elétrico (padrão, como antes); o violão de aço e o nylon são timbres da mesma guitarra. */
+  guitar: ['strat', 'lespaul', 'crunch', 'highgain', 'steel', 'nylon'],
 };
 interface BassVoice {
   readonly label: string;

@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { CURRICULUM, THEORY_TOPICS, curriculumProgress, levelProgress, streakDays, type CurriculumExercise, type PracticeSession } from '@domain';
 import { call, loadUsers, type DbSession, type DbUser } from '../../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
+import { practiceInstrumentOf } from '@baixaria/music-theory';
 import { MetronomeModal, TunerModal } from '../practice/StudioTools.js';
 import stageBg from '../../assets/stage-bg.jpg';
 
-type Inst = 'bass' | 'guitar' | 'acoustic';
+type Inst = 'bass' | 'guitar';
 const INSTS: ReadonlyArray<{ id: Inst; label: string }> = [
   { id: 'bass', label: 'Contrabaixo' },
-  { id: 'guitar', label: 'Guitarra' },
-  { id: 'acoustic', label: 'Violão' },
+  { id: 'guitar', label: 'Guitarra e violão' },
 ];
 export type HomeTarget = 'exercises' | 'harmony' | 'achievements' | 'trails' | 'theory' | 'ear' | 'profiles';
 interface Quest {
@@ -47,7 +47,7 @@ export function Home({ onGo }: { onGo(screen: HomeTarget): void }) {
   const [dbSessions, setDbSessions] = useState<DbSession[]>([]);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [theoryDone, setTheoryDone] = useState(0);
-  const [inst, setInst] = useState<Inst>(() => readStore<{ instrument?: Inst }>('bf-exercise', {}).instrument ?? 'bass');
+  const [inst, setInst] = useState<Inst>(() => (practiceInstrumentOf(String(readStore<{ instrument?: string }>('bf-exercise', {}).instrument ?? 'bass')) ?? 'bass') as Inst);
   const [tool, setTool] = useState<'tuner' | 'metro' | null>(null);
 
   useEffect(() => {

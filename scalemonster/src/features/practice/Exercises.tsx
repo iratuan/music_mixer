@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { errorText } from '@baixaria/ui-core';
+import { practiceInstrumentOf } from '@baixaria/music-theory';
 import {
   INSTRUMENT_INFO,
   tuningsFor,
@@ -168,7 +169,12 @@ const DEFAULTS: Settings = {
 function load(): Settings {
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Settings>;
+      // Violão salvo antes da unificação vira guitarra.
+      const inst = saved.instrument ? practiceInstrumentOf(String(saved.instrument)) : null;
+      return { ...DEFAULTS, ...saved, instrument: inst ?? DEFAULTS.instrument };
+    }
   } catch {
     /* sem preferência */
   }
@@ -867,7 +873,7 @@ export function Exercises() {
         <div className="field wide">
           <span>Instrumento</span>
           <div className="seg small" role="group" aria-label="Instrumento">
-            {(['bass', 'guitar', 'acoustic'] as const).map((k) => (
+            {(['bass', 'guitar'] as const).map((k) => (
               <button
                 key={k}
                 aria-pressed={instrument === k}
@@ -1095,7 +1101,7 @@ export function Exercises() {
             ) : s.inputMode === 'midi' ? (
               'Toque as notas no instrumento MIDI. Segure as notas com cauda até o fim.'
             ) : (
-              `Toque ${instrument === 'guitar' ? 'na guitarra' : instrument === 'acoustic' ? 'no violão' : 'no baixo'} quando a gema chegar à linha. Gema de miolo branco é ligado (sem novo ataque); deixe soar as notas com cauda.`
+              `Toque ${instrument === 'guitar' ? 'na guitarra ou no violão' : 'no baixo'} quando a gema chegar à linha. Gema de miolo branco é ligado (sem novo ataque); deixe soar as notas com cauda.`
             )}
           </p>
         </aside>

@@ -9,7 +9,7 @@ function switchHistory(from: string, to: string) {
   writeStore('bf-history', readStore<unknown[]>(`bf-history:${to}`, []));
 }
 
-const LABEL = { bass: 'Contrabaixo', guitar: 'Guitarra', keyboard: 'Teclado' } as const;
+const LABEL = { bass: 'Contrabaixo', guitar: 'Guitarra e violão', keyboard: 'Teclado' } as const;
 
 export function Profiles({ onChanged }: { onChanged(): void }) {
   const [list, setList] = useState<DbUser[]>([]);
@@ -77,7 +77,7 @@ export function Profiles({ onChanged }: { onChanged(): void }) {
           <input type="text" value={name} placeholder="Nome" maxLength={40} onChange={(e) => setName(e.target.value)} aria-label="Nome" />
           <select value={instrument} onChange={(e) => setInstrument(e.target.value as DbUser['primary_instrument'])} aria-label="Instrumento principal">
             <option value="bass">Contrabaixo</option>
-            <option value="guitar">Guitarra</option>
+            <option value="guitar">Guitarra e violão</option>
             <option value="keyboard">Teclado</option>
           </select>
           <button className="primary" onClick={() => void add()} disabled={!name.trim()}>
