@@ -211,12 +211,6 @@ export function buildAccompaniment(chords: readonly AccompChord[], beats: readon
     const dur = Math.max(0.03, Math.min(len * bl, x.end - t) * 0.94);
     notes[part].push({ part, t, dur, midi, vel, beat: i, ...extra });
   };
-  const nextChordAfter = (i: number): Chord | null => {
-    const x = info[i]!;
-    const j = i + x.left;
-    return j < beats.length && info[j] ? list[info[j]!.ci]!.chord : null;
-  };
-
   /* ------------------------------ baixo ------------------------------ */
   {
     const { tuning, region, pattern } = opts.bass;

@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Icon, type IconName, applyTheme, readTheme, THEMES, type ThemeName } from '@baixaria/ui-core';
 import { Home } from './features/home/Home.js';
-import { Trails } from './features/trails/Trails.js';
-import { Exercises } from './features/practice/Exercises.js';
-import { Harmony } from './features/harmony/Harmony.js';
-import { Academy } from './features/theory/Academy.js';
-import { EarTraining } from './features/ear/EarTraining.js';
-import { Profiles } from './features/profile/Profiles.js';
-import { Achievements } from './features/profile/Achievements.js';
+// Telas que não são a inicial carregam sob demanda: o app abre mais rápido, sobretudo no tablet.
+const Trails = lazy(() => import('./features/trails/Trails.js').then((m) => ({ default: m.Trails })));
+const Exercises = lazy(() => import('./features/practice/Exercises.js').then((m) => ({ default: m.Exercises })));
+const Harmony = lazy(() => import('./features/harmony/Harmony.js').then((m) => ({ default: m.Harmony })));
+const Academy = lazy(() => import('./features/theory/Academy.js').then((m) => ({ default: m.Academy })));
+const EarTraining = lazy(() => import('./features/ear/EarTraining.js').then((m) => ({ default: m.EarTraining })));
+const Profiles = lazy(() => import('./features/profile/Profiles.js').then((m) => ({ default: m.Profiles })));
+const Achievements = lazy(() => import('./features/profile/Achievements.js').then((m) => ({ default: m.Achievements })));
 import { XpBar } from './shared/XpBar.js';
 import { Splash } from './shared/Splash.js';
 import { LegacyImportBanner } from './shared/LegacyImportBanner.js';
@@ -152,6 +153,7 @@ export function App() {
       )}
       <main key={screen} className="content screen-in">
         {screen === 'home' && <Home onGo={(next) => go(next)} />}
+        <Suspense fallback={null}>
         {screen === 'trails' && <Trails onPractice={() => go('exercises')} />}
         {screen === 'exercises' && <Exercises />}
         {screen === 'harmony' && <Harmony onPracticeScale={() => go('exercises')} />}
@@ -159,6 +161,7 @@ export function App() {
         {screen === 'ear' && <EarTraining />}
         {screen === 'profiles' && <Profiles onChanged={() => go('home')} />}
         {screen === 'achievements' && <Achievements />}
+        </Suspense>
       </main>
     </div>
   );

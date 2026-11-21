@@ -20,7 +20,6 @@ interface Props {
 
 const SHARP_SPELL: ReadonlyArray<readonly [number, boolean]> = [[0, false], [0, true], [1, false], [1, true], [2, false], [3, false], [3, true], [4, false], [4, true], [5, false], [5, true], [6, false]];
 const FLAT_SPELL: ReadonlyArray<readonly [number, boolean]> = [[0, false], [1, true], [1, false], [2, true], [2, false], [3, false], [4, true], [4, false], [5, true], [5, false], [6, true], [6, false]];
-const LETTER_PC = [0, 2, 4, 5, 7, 9, 11];
 
 function spell(midi: number, flats: boolean) {
   const pc = ((midi % 12) + 12) % 12;

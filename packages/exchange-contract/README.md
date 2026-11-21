@@ -32,5 +32,5 @@ Um pacote com `version` maior que a suportada é recusado com aviso para atualiz
 
 - `tests/pack.test.ts`: música.
 - `tests/exercise.test.ts`: exercício (validação, geração, envelope e recusas).
-- `tests/fixtures/exchange/` (em cada produto): exemplos de música, exercício gerado, exercício manual e exercício inválido de propósito.
+- `scalemonster/tests/fixtures/exchange/`: exemplos de música, exercício gerado, exercício manual e exercício inválido de propósito.
 - Ferramentas de linha de comando: `node tooling/validate-pack.mjs <arquivo>` (nos dois) e `node tooling/make-exercise.mjs <música> --de N --ate M --titulo "..." --nivel K` (no MixerMonster).
