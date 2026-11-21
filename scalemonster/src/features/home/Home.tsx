@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { CURRICULUM, THEORY_TOPICS, curriculumProgress, levelProgress, streakDays, type CurriculumExercise, type PracticeSession } from '@domain';
 import { call, loadUsers, type DbSession, type DbUser } from '../../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
+import { practiceInstrumentOf } from '@baixaria/music-theory';
 import { MetronomeModal, TunerModal } from '../practice/StudioTools.js';
 import stageBg from '../../assets/stage-bg.jpg';
 
-type Inst = 'bass' | 'guitar' | 'acoustic';
+type Inst = 'bass' | 'guitar';
 const INSTS: ReadonlyArray<{ id: Inst; label: string }> = [
   { id: 'bass', label: 'Contrabaixo' },
-  { id: 'guitar', label: 'Guitarra' },
-  { id: 'acoustic', label: 'Violão' },
+  { id: 'guitar', label: 'Guitarra e violão' },
 ];
 export type HomeTarget = 'exercises' | 'harmony' | 'achievements' | 'trails' | 'theory' | 'ear' | 'profiles';
 interface Quest {
@@ -22,9 +22,9 @@ interface Quest {
 }
 
 const SHORTCUTS: ReadonlyArray<{ id: HomeTarget; title: string; text: string; color: string }> = [
-  { id: 'trails', title: 'Trilhas', text: '100 exercícios em ordem', color: '#ff6b2c' },
-  { id: 'ear', title: 'Ear training', text: '60+ jogos de ouvido', color: '#2563eb' },
-  { id: 'theory', title: 'Teoria', text: '21 tópicos e partitura', color: '#16a34a' },
+  { id: 'trails', title: 'Trilhas', text: '100 exercícios em ordem', color: 'var(--brand-orange)' },
+  { id: 'ear', title: 'Ear training', text: '60+ jogos de ouvido', color: 'var(--info-blue)' },
+  { id: 'theory', title: 'Teoria', text: '21 tópicos e partitura', color: 'var(--ok-green)' },
   { id: 'harmony', title: 'Harmonia', text: 'Círculo das quintas', color: '#a855f7' },
 ];
 
@@ -47,7 +47,7 @@ export function Home({ onGo }: { onGo(screen: HomeTarget): void }) {
   const [dbSessions, setDbSessions] = useState<DbSession[]>([]);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [theoryDone, setTheoryDone] = useState(0);
-  const [inst, setInst] = useState<Inst>(() => readStore<{ instrument?: Inst }>('bf-exercise', {}).instrument ?? 'bass');
+  const [inst, setInst] = useState<Inst>(() => (practiceInstrumentOf(String(readStore<{ instrument?: string }>('bf-exercise', {}).instrument ?? 'bass')) ?? 'bass') as Inst);
   const [tool, setTool] = useState<'tuner' | 'metro' | null>(null);
 
   useEffect(() => {

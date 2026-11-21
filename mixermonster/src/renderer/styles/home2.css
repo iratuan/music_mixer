@@ -1,2 +1,2 @@
-.hm-quests li.done .hm-check { background: #16a34a; border-color: #16a34a; }
-.hm-quests li.done .hm-bar span { background: #16a34a; }
+.hm-quests li.done .hm-check { background: var(--ok-green); border-color: var(--ok-green); }
+.hm-quests li.done .hm-bar span { background: var(--ok-green); }

@@ -88,6 +88,19 @@ describe('biblioteca de músicas', () => {
     await expect(stat(dir)).rejects.toThrow();
   });
 
+  it('remove apaga também a pasta organizada com o nome da música (não só songs/<id>)', async () => {
+    const rec = await lib.add('Linha de baixo livre', SRC);
+    await lib.organize(rec.id); // o app renomeia a pasta para o nome da música
+    const dir = lib.songDir(rec.id);
+    expect(path.basename(dir)).toBe('Linha de baixo livre');
+    const { mkdir, writeFile } = await import('node:fs/promises');
+    await mkdir(path.join(dir, 'faixas'), { recursive: true });
+    await writeFile(path.join(dir, 'faixas', 'Baixo.flac'), 'x', 'utf8');
+    await lib.remove(rec.id);
+    expect(await lib.list()).toEqual([]);
+    await expect(stat(dir)).rejects.toThrow();
+  });
+
   it('índice corrompido é recusado, não sobrescrito em silêncio', async () => {
     const { writeFile } = await import('node:fs/promises');
     await writeFile(path.join(root, 'index.json'), '{"version":99,"songs":[]}', 'utf8');

@@ -1,30 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BASS_ROLES,
-  BASS_TUNINGS,
   CIRCLE,
-  bassRoleNotes,
   bassRolePattern,
   type BassRole,
-  analyzeMap,
   cadenceChords,
   chordIntervals,
   chordSymbol,
   circleSlotOf,
-  guitarVoicing,
   harmonicField,
   keyUsesFlats,
   mapFromBars,
-  mapText,
   parseChordText,
   pcName,
-  positionsOf,
   replaceChord,
-  simplifyChord,
   signatureText,
-  splitMeasure,
-  transposeMap,
-  type BassTuning,
   type Cadence,
   type Chord,
   type HarmonicMapData,
@@ -33,18 +23,11 @@ import {
 } from '@domain';
 import { CircleOfFifthsWheel } from '@baixaria/ui-core';
 import { CadencePlayerPanel } from '../practice/CadencePlayerPanel.js';
-import { GuitarChord } from '@baixaria/ui-core';
-import { HarmonicGrid, type MapDensity, type MapView } from '@baixaria/ui-core';
-import { HarmonicMapToolbar } from '@baixaria/ui-core';
+import type { MapDensity, MapView } from '@baixaria/ui-core';
 import { Icon } from '@baixaria/ui-core';
-import { keyboardRange, PianoKeys } from '@baixaria/ui-core';
-import { VoiceLeadingInspector } from '@baixaria/ui-core';
-import { BassNeck, type NeckNote } from '@baixaria/ui-core';
 import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, stopAll, type ProgressionHandle, type Rhythm, type Timbre } from '@baixaria/audio-synth';
 import { harmonicStore } from '@baixaria/ui-core';
 import { readStore, writeStore } from '@baixaria/ui-core';
-import { errorText } from '@baixaria/ui-core';
-import { platform, type SaveResult } from '../../platform/bridge.js';
 import { getAudioContext } from '@baixaria/audio-synth';
 
 /**
@@ -125,13 +108,11 @@ export function Harmony({ onPracticeScale }: Props) {
   const handle = useRef<ProgressionHandle | null>(null);
   const [cadence, setCadence] = useState<{ id: string; step: number } | null>(null);
   const [active, setActive] = useState<Chord | null>(null);
-  const [mapPos, setMapPos] = useState<{ measure: number; beat: number }>({ measure: -1, beat: -1 });
   /** Tempo do acorde que está soando (−1 parado): acende a nota do baixo no braço. */
-  const [beatNow, setBeatNow] = useState(-1);
   /** Caixa da cifra em texto: escondida até pedir para editar. */
-  const [showText, setShowText] = useState(() => readStore('bf-harmony-text-open', false));
+  const [showText] = useState(() => readStore('bf-harmony-text-open', false));
   useEffect(() => writeStore('bf-harmony-text-open', showText), [showText]);
-  const [dockOpen, setDockOpen] = useState(() => readStore('bf-harmony-dock', true));
+  const [dockOpen] = useState(() => readStore('bf-harmony-dock', true));
   useEffect(() => writeStore('bf-harmony-dock', dockOpen), [dockOpen]);
   const stop = useCallback(() => {
     handle.current?.stop();
@@ -139,8 +120,6 @@ export function Harmony({ onPracticeScale }: Props) {
     stopAll();
     setCadence(null);
     setActive(null);
-    setMapPos({ measure: -1, beat: -1 });
-    setBeatNow(-1);
     harmonicStore.set({ active: null });
   }, []);
   useEffect(() => () => stop(), [stop]);
@@ -165,7 +144,6 @@ export function Harmony({ onPracticeScale }: Props) {
         drums: !!opts.drums,
         chordLevel: chordsOn ? 1 : 0,
         ...(bassLine ? { bass: bassLine } : {}),
-        onBeat: (_i: number, b: number) => setBeatNow(b),
         onStep: (i) => {
           setCadence({ id: c.id, step: i });
           setActive(chords[i]!.chord);
@@ -179,10 +157,6 @@ export function Harmony({ onPracticeScale }: Props) {
   /* ------------------------------ ciclo ------------------------------ */
   const [selMeasure, setSelMeasure] = useState<number | null>(null);
   const [map, setMap] = useState<HarmonicMapData | null>(() => readStore<HarmonicMapData | null>('bf-harmony-map', null));
-  const [instrument, setInstrument] = useState<'bass' | 'guitar' | 'piano'>('bass');
-  const [bassStrings, setBassStrings] = useState<number>(4);
-  const [chordLevel, setChordLevel] = useState<'simple' | 'full'>('simple');
-  const [neckLabel, setNeckLabel] = useState<'note' | 'fret' | 'finger'>('note');
   useEffect(() => writeStore('bf-harmony-map', map), [map]);
 
   function pick(ring: Ring, index: number) {
@@ -231,25 +205,8 @@ export function Harmony({ onPracticeScale }: Props) {
   const cadenceChordsDefault = (): Cadence => ({ id: 'authentic', name: 'I – IV – V – I', style: 'Cadência autêntica', steps: [0, 3, 4, 0] });
 
   /* ------------------------------ mapa harmônico ------------------------------ */
-  const [semis, setSemis] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const shown = useMemo(() => (map ? transposeMap(map, semis) : null), [map, semis]);
-  const insight = useMemo(() => (shown ? analyzeMap(shown, flats) : []), [shown, flats]);
 
-  function buildFromText() {
-    const bars = parseChordText(opts.text);
-    if (!bars.length) {
-      setError('Não achei acordes. Escreva como "| C | Am | Dm7 / G7 / |".');
-      return;
-    }
-    setError(null);
-    setSemis(0);
-    setSelMeasure(null);
-    const m = mapFromBars('Mapa harmônico', bars, { bpm: opts.bpm });
-    setMap(m);
-    setOpts((o) => ({ ...o, tonic: m.key.tonic, mode: m.key.mode }));
-  }
   // O mapa acompanha a cifra enquanto você escreve (sem precisar apertar "Gerar mapa").
   const typed = useRef(false);
   useEffect(() => {
@@ -264,73 +221,6 @@ export function Harmony({ onPracticeScale }: Props) {
     return () => window.clearTimeout(id);
   }, [opts.text, opts.bpm]);
 
-  function mapFromCadence(c: Cadence) {
-    const chords = cadenceChords(c, tonality, opts.tetrads);
-    const bars = [...chords, ...chords].map((f) => ({ chords: [{ chord: f.chord, beat: 0, beats: 4 }] }));
-    setSemis(0);
-    setSelMeasure(null);
-    setMap(mapFromBars(`${c.style} em ${chordSymbol({ root: tonality.tonic, quality: tonality.mode === 'minor' ? 'm' : '' }, flats)}`, bars, { key: tonality, bpm: opts.bpm }));
-  }
-
-  function playMap() {
-    if (!shown) return;
-    stop();
-    const steps = shown.measures.flatMap((m) => m.chords.map((c) => ({ chord: c.chord, beats: c.beats, measure: m.index, beat: c.beat })));
-    handle.current = playProgression(steps, opts.bpm, {
-      timbre: opts.timbre,
-      loop: opts.loop,
-      chordLevel: chordsOn ? 1 : 0,
-      drums: !!opts.drums,
-      rhythm: opts.rhythm ?? 'block',
-      ...(bassLine ? { bass: bassLine } : {}),
-      onBeat: (_i: number, b: number) => setBeatNow(b),
-      onStep: (i) => {
-        const s = steps[i]!;
-        setMapPos({ measure: s.measure, beat: s.beat });
-        setActive(s.chord);
-        harmonicStore.set({ active: s.chord });
-      },
-      onEnd: () => stop(),
-    });
-  }
-
-  async function exportMap(kind: 'pdf' | 'txt' | 'json') {
-    if (!shown) return;
-    setError(null);
-    try {
-      const name = `${shown.title}${semis ? ` (${semis > 0 ? '+' : ''}${semis})` : ''}`;
-      const bridge = platform();
-      let result: SaveResult;
-      if (kind === 'json') result = await bridge.saveFile(name, new TextEncoder().encode(JSON.stringify({ ...shown, analysis: insight }, null, 2)), 'json');
-      else if (kind === 'txt') result = await bridge.saveFile(name, new TextEncoder().encode('﻿' + mapText(shown, { degrees: opts.view !== 'chords', flats })), 'txt');
-      else {
-        if (!bridge.exportMapPdf) throw new Error('PDF indisponível nesta plataforma: exporte em texto ou JSON');
-        result = await bridge.exportMapPdf(name, {
-          title: shown.title,
-          key: `${chordSymbol({ root: shown.key.tonic, quality: '' }, flats)} ${shown.key.mode === 'minor' ? 'menor' : 'maior'}`,
-          bpm: shown.bpm,
-          transpose: semis,
-          sections: shown.sections.map((s) => ({
-            name: s.name,
-            from: s.from,
-            to: s.to,
-            ...(s.letter ? { letter: s.letter } : {}),
-            ...(s.repeatOf ? { repeatOf: s.repeatOf } : {}),
-            bars: shown.measures.slice(s.from, s.to + 1).map((m) => ({
-              n: m.index + 1,
-              chords: m.chords.map((c, k) => (opts.view === 'degrees' ? insight[m.index]![k]!.roman : opts.view === 'hybrid' ? `${chordSymbol(c.chord, flats)} ${insight[m.index]![k]!.roman}` : chordSymbol(c.chord, flats))),
-              bass: opts.density === 'study' ? m.chords.map((c, k) => `${insight[m.index]![k]!.targets.root}${insight[m.index]![k]!.approach ? `→${insight[m.index]![k]!.approach!.note}` : ''}`) : [],
-            })),
-          })),
-        });
-      }
-      if (result === 'canceled') return;
-      setNotice(`Mapa exportado em ${kind === 'json' ? 'JSON' : kind === 'pdf' ? 'PDF' : 'texto'}.`);
-    } catch (e) {
-      setError(errorText(e, 'falha ao exportar o mapa'));
-    }
-  }
-
   const keyName = `${chordSymbol({ root: tonality.tonic, quality: tonality.mode === 'minor' ? 'm' : '' }, flats)}${tonality.mode === 'minor' ? ' menor' : ' maior'}`;
   const sigSlot = CIRCLE.find((s) => s.major.root === (tonality.mode === 'major' ? tonality.tonic : (tonality.tonic + 3) % 12))!;
   const scaleMidis = (tonality.mode === 'major' ? [0, 2, 4, 5, 7, 9, 11, 12] : [0, 2, 3, 5, 7, 8, 10, 12]).map((x) => 48 + tonality.tonic + x);
@@ -342,22 +232,6 @@ export function Harmony({ onPracticeScale }: Props) {
       },
     [active, opts.tetrads, tonality.mode, tonality.tonic],
   );
-  const levelChord = useMemo(() => (chordLevel === 'simple' ? simplifyChord(currentChord, 'simple') : currentChord), [chordLevel, currentChord]);
-  const bassTuning = BASS_TUNINGS.find((t) => t.strings.length === bassStrings) ?? BASS_TUNINGS[0]!;
-  const bassPattern = bassRoleNotes(levelChord, bassRole, bassTuning);
-  const beatPattern = bassRolePattern(levelChord, bassRole, 4);
-  const currentBassMidi = beatNow >= 0 ? (beatPattern[beatNow % beatPattern.length] ?? null) : null;
-  const bassDisplay: NeckNote[] = bassPattern.map((n) => ({
-    pos: n.pos,
-    midi: n.midi,
-    state: beatNow < 0 ? (n.order === 1 ? 'now' : 'next') : n.midi === currentBassMidi ? 'now' : 'later',
-    finger: n.pos.fret === 0 ? 0 : ((n.pos.fret - 1) % 4) + 1,
-  }));
-  const tones = chordTones(levelChord);
-  const orderedPianoMidis = tones.map((tone) => tone.midi).sort((a, b) => a - b);
-  const pianoMarks = orderedPianoMidis.map((midi, index) => ({ midi, state: 'now' as const, role: 'base' as const, order: index + 1 }));
-  const pianoRange = keyboardRange(orderedPianoMidis);
-  const guitarVoicingDisplay = guitarVoicing(levelChord, { mode: 'caged', level: chordLevel, near: 3 });
 
   return (
     <section className="screen harmony">
@@ -384,9 +258,9 @@ export function Harmony({ onPracticeScale }: Props) {
           </button>
         )}
       </header>
-      {(error || notice) && (
-        <p className={error ? 'alert' : 'ok-line'} role={error ? 'alert' : 'status'}>
-          <Icon name={error ? 'alert' : 'check'} size={16} /> {error ?? notice}
+      {error && (
+        <p className="alert" role="alert">
+          <Icon name="alert" size={16} /> {error}
         </p>
       )}
       <div className="harmony-top">
@@ -487,14 +361,9 @@ export function Harmony({ onPracticeScale }: Props) {
     handle.current = playProgression(
       chords.map((f) => ({ chord: f.chord, beats: 2 })),
       opts.bpm,
-      { timbre: opts.timbre, chordLevel: chordsOn ? 1 : 0, drums: !!opts.drums, rhythm: opts.rhythm ?? 'block', ...(bassLine ? { bass: bassLine } : {}), onBeat: (_i: number, b: number) => setBeatNow(b), onStep: (i) => (setActive(chords[i]!.chord), harmonicStore.set({ active: chords[i]!.chord })), onEnd: () => stop() },
+      { timbre: opts.timbre, chordLevel: chordsOn ? 1 : 0, drums: !!opts.drums, rhythm: opts.rhythm ?? 'block', ...(bassLine ? { bass: bassLine } : {}), onStep: (i) => (setActive(chords[i]!.chord), harmonicStore.set({ active: chords[i]!.chord })), onEnd: () => stop() },
     );
   }
 }
 
 /** Edição feita na visão transposta volta para o tom do mapa guardado. */
-function transposeChordBack(c: Chord, semis: number): Chord {
-  if (!semis) return c;
-  const t = (x: number) => (((x - semis) % 12) + 12) % 12;
-  return { ...c, root: t(c.root), ...(c.bass !== undefined ? { bass: t(c.bass) } : {}) };
-}

@@ -17,11 +17,15 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@baixaria/music-theory": ["packages/music-theory/src/index.ts"],
-      "@baixaria/audio-synth": ["packages/audio-synth/src/index.ts"],
-      "@baixaria/ui-core": ["packages/ui-core/src/index.ts"],
-      "@baixaria/exchange-contract": ["packages/exchange-contract/src/index.ts"]
+      "@baixaria/music-theory": ["../packages/music-theory/src/index.ts"],
+      "@baixaria/audio-synth": ["../packages/audio-synth/src/index.ts"],
+      "@baixaria/ui-core": ["../packages/ui-core/src/index.ts"],
+      "@baixaria/exchange-contract": ["../packages/exchange-contract/src/index.ts"],
+      "react": ["node_modules/@types/react/index.d.ts"],
+      "react/*": ["node_modules/@types/react/*.d.ts"],
+      "react-dom": ["node_modules/@types/react-dom/index.d.ts"],
+      "react-dom/*": ["node_modules/@types/react-dom/*.d.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "tests/**/*.ts", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../packages/*/src/**/*.ts", "../packages/*/src/**/*.tsx", "tests/**/*.ts", "vite.config.ts", "vitest.config.ts"]
 }

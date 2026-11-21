@@ -281,7 +281,7 @@ const slug = (x: string) =>
     .replace(/^-|-$/g, '');
 
 export const TRAILS: readonly Routine[] = TRAIL_SCALES.flatMap((sc) =>
-  TRAIL_STEPS.map((st, k) =>
+  TRAIL_STEPS.map((st) =>
     r(`trilha-${slug(sc.category)}-${slug(sc.mode)}-${st.key}`, `${sc.name}: ${st.title}`, sc.level, 'Mapa do braço', st.goal, st.target, {
       category: sc.category,
       mode: sc.mode,

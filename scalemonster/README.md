@@ -53,9 +53,9 @@ Rodam dentro de `scalemonster/`:
 | `node tooling/validate-pack.mjs <arquivo>` | Valida um `.mcraft-pack` de música ou exercício. Protocolo em `docs/06-protocolo-exercicios.md`. |
 | `npm run desktop:start` | Abre o shell Electron a partir do build. |
 | `npm run desktop:pack` | Pasta pronta do shell desktop. |
-| `npm run desktop:dist` | Instalador Windows do shell desktop (`shells/desktop/release/`). |
+| `npm run desktop:dist` | Instalador `ScaleMonster-Setup-<versão>.exe` e portable `ScaleMonster-Portable-<versão>.exe` em `shells/desktop/release/`. |
 | `npm run android:sync` | Copia o build web para o projeto Android. |
-| `npm run android:apk` | APK de depuração. Precisa de JDK 21 e Android SDK (`ANDROID_HOME`). |
+| `npm run android:apk` | APK de depuração. Roda em celulares e tablets Android 7.0 ou mais novos (minSdk 24, alvo 36), de qualquer processador. Precisa de JDK 21 e Android SDK (`ANDROID_HOME`). |
 | `npm run android:release` | AAB de release. Assina só se `android/gradle.properties` tiver `SCALEMONSTER_KEYSTORE` e as senhas. |
 
 **Assinatura de release:** o `build.gradle` assina o release só quando `gradle.properties` tem `SCALEMONSTER_KEYSTORE`, `SCALEMONSTER_KEY_ALIAS` e as senhas. As chaves (`*.jks`, `*.keystore`) não são versionadas. Sem elas, `assembleRelease` gera um APK não assinado.
@@ -74,7 +74,7 @@ src/
   domain/               regras musicais e pedagógicas (sem plataforma)
   styles/               folhas globais, carregadas na ordem de main.tsx
   assets/               logos, fundo do palco e vídeos do desafio
-packages/             cópias de music-theory, audio-synth, ui-core e exchange-contract
+packages/ (na raiz do repositório): music-theory, audio-synth, ui-core e exchange-contract, compartilhados
 shells/desktop/       shell Electron que embrulha o build web
 android/              projeto nativo Capacitor (Gradle)
 tests/                testes de dados e do domínio

@@ -29,7 +29,7 @@ try {
   await app.evaluate(({ dialog }, file) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
   }, audio);
-  await win.getByRole('button', { name: /Escolher arquivo de música/ }).click();
+  await win.getByRole('button', { name: /Escolher arquivos? de música/ }).click();
   await win.getByRole('group', { name: 'Faixas a separar' }).waitFor({ timeout: 30000 });
   await win.getByRole('radio', { name: 'Principal e backing' }).click();
   const card = win.getByRole('group', { name: 'Modelo de voz' });

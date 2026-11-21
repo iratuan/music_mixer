@@ -105,16 +105,54 @@ describe('julgamento e detecção de altura', () => {
     j.expect('a', 33, 1.0);
     expect(j.feed(midiToHz(33), 0.1, 0.0, 0.01)).toBeNull(); // sem ataque
     expect(j.feed(midiToHz(33), 0.12, 0.2, 0.01)).toBeNull(); // ataque, 1º quadro
-    expect(j.feed(midiToHz(33), 0.14, 0.2, 0.01)).toEqual({ verdict: 'hit', id: 'a' });
+    expect(j.feed(midiToHz(33), 0.14, 0.2, 0.01)).toMatchObject({ verdict: 'hit', id: 'a' });
 
     j.expect('b', 33, 2.0);
     j.feed(-1, 1.0, 0.01, 0.01);
     j.feed(midiToHz(45), 1.02, 0.3, 0.01);
     j.feed(midiToHz(45), 1.04, 0.3, 0.01);
-    expect(j.feed(midiToHz(45), 1.06, 0.3, 0.01)).toEqual({ verdict: 'octave', id: 'b' });
+    expect(j.feed(midiToHz(45), 1.06, 0.3, 0.01)).toMatchObject({ verdict: 'octave', id: 'b' });
 
     j.expect('c', 33, 3.0);
     expect(j.feed(midiToHz(35), 3.1, 0.3, 0.01)).toEqual({ verdict: 'miss', id: 'c' });
+  });
+});
+
+describe('julgamento: desvio em cents', () => {
+  it('nota acima e abaixo da certa é aceita e informa o desvio', () => {
+    const j = new NoteJudge<string>();
+    j.expect('sharp', 33, 5.0);
+    j.feed(-1, 0.5, 0.01, 0.01);
+    const up = midiToHz(33) * 2 ** (30 / 1200);
+    j.feed(up, 1.02, 0.3, 0.01);
+    expect(j.feed(up, 1.04, 0.3, 0.01)).toMatchObject({ verdict: 'hit', id: 'sharp' });
+    const r = j.feed(up, 1.06, 0.3, 0.01);
+    expect(r).toBeNull();
+    j.expect('flat', 33, 5.0);
+    const down = midiToHz(33) * 2 ** (-25 / 1200);
+    j.feed(-1, 2.0, 0.01, 0.01);
+    j.feed(down, 2.02, 0.6, 0.01);
+    const hit = j.feed(down, 2.04, 0.6, 0.01);
+    expect(hit).toMatchObject({ verdict: 'hit', id: 'flat' });
+    expect(Math.abs((hit?.cents ?? 0) + 25)).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('tolerância por nível', () => {
+  it('avançado exige mais precisão que iniciante', async () => {
+    const { toleranceFor, NoteJudge: J } = await import('../../src/domain/index.js');
+    expect(toleranceFor('Iniciante')).toBeGreaterThan(toleranceFor('Intermediário'));
+    expect(toleranceFor('Intermediário')).toBeGreaterThan(toleranceFor('Avançado'));
+    const up40 = midiToHz(33) * 2 ** (40 / 1200);
+    const run = (tol: number) => {
+      const j = new J(tol);
+      j.expect('n', 33, 5.0);
+      j.feed(-1, 0.5, 0.01, 0.01);
+      j.feed(up40, 1.0, 0.6, 0.01);
+      return j.feed(up40, 1.02, 0.6, 0.01);
+    };
+    expect(run(toleranceFor('Iniciante'))).toMatchObject({ verdict: 'hit' });
+    expect(run(toleranceFor('Avançado'))?.verdict).not.toBe('hit');
   });
 });
 

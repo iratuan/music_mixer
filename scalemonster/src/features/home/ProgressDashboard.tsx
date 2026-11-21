@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { HISTORY_FORMAT, dailySeries, levelFor, medals, mergeSessions, personalBests, sessionXp, streakDays, type PracticeSession } from '@domain';
 import { writeStore } from '@baixaria/ui-core';
-import { Icon } from '@baixaria/ui-core';
 import { platform } from '../../platform/bridge.js';
 
 /**

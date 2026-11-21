@@ -2,10 +2,10 @@
   --btn-solid: #1e2028;
   --btn-solid-hover: #2e323e;
   --btn-border: #323644;
-  --btn-primary: #ff6b2c;
+  --btn-primary: var(--brand-orange);
   --btn-primary-hover: #ff8147;
-  --btn-ok: #16a34a;
-  --btn-stop: #dc2626;
+  --btn-ok: var(--ok-green);
+  --btn-stop: var(--danger-red);
 }
 [data-theme='light'],
 [data-theme='paper'] {
@@ -38,7 +38,7 @@ button:disabled {
 }
 button.primary {
   background: var(--btn-primary) !important;
-  color: #fff;
+  color: var(--on-color);
   border-color: var(--btn-primary);
   box-shadow: none;
 }
@@ -62,14 +62,14 @@ button.ghost:hover:not(:disabled) {
 button.danger,
 .arcade-stop {
   background: var(--btn-stop) !important;
-  color: #fff;
+  color: var(--on-color);
   border-color: var(--btn-stop);
 }
 .seg button.on,
 .seg button[aria-pressed='true'],
 button.on:not(.primary) {
   background: var(--btn-primary);
-  color: #fff;
+  color: var(--on-color);
   border-color: var(--btn-primary);
 }
 .link-btn,
@@ -112,8 +112,8 @@ button.link {
 .shell {
   transition: none;
 }
-.th-item.on span { color: #fff; }
-button.done, button.done:disabled { background: var(--btn-ok); border-color: var(--btn-ok); color: #fff; }
+.th-item.on span { color: var(--on-color); }
+button.done, button.done:disabled { background: var(--btn-ok); border-color: var(--btn-ok); color: var(--on-color); }
 @media (max-width: 900px) { .th-layout { grid-template-columns: 1fr; } .th-index { position: static; max-height: none; } }
 
 .brand-logo { width: 100%; height: auto; max-height: 150px; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
@@ -123,7 +123,7 @@ button.done, button.done:disabled { background: var(--btn-ok); border-color: var
 button.cad-chip.now,
 button.cad-chip.now:hover:not(:disabled) {
   background: var(--c, var(--btn-primary)) !important;
-  border-color: #fff !important;
+  border-color: var(--on-color) !important;
   box-shadow: 0 0 0 2px var(--c, var(--btn-primary)), 0 6px 18px rgba(0, 0, 0, 0.4);
   transform: translateY(-2px) scale(1.06);
 }
@@ -132,8 +132,8 @@ button.cad-chip.now span {
   color: #0b0c10 !important;
   font-weight: 800;
 }
-.th-options button.ok, .th-options button.ok:disabled { background: var(--btn-ok); border-color: var(--btn-ok); color: #fff; }
-.field-card.on { background: var(--c, var(--btn-primary)) !important; border-color: #fff !important; }
+.th-options button.ok, .th-options button.ok:disabled { background: var(--btn-ok); border-color: var(--btn-ok); color: var(--on-color); }
+.field-card.on { background: var(--c, var(--btn-primary)) !important; border-color: var(--on-color) !important; }
 
 .seg button.on,
 .seg button[aria-pressed='true'],
@@ -142,6 +142,6 @@ button.chip-btn.on,
 button.on:not(.primary) {
   background: var(--btn-primary) !important;
   border-color: var(--btn-primary) !important;
-  color: #fff !important;
+  color: var(--on-color) !important;
 }
-button.th-item.on span { color: #fff !important; }
+button.th-item.on span { color: var(--on-color) !important; }

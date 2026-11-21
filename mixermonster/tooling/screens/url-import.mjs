@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const outDir = join(root, 'docs', 'screens');
+const outDir = join(tmpdir(), 'baixaria-fina-e2e-url', 'screens');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const tmp = join(tmpdir(), 'baixaria-fina-e2e-url');
 const userData = join(tmp, 'userData');
@@ -30,7 +30,7 @@ const app = await electron.launch({
     NODE_ENV: 'production',
     BF_USER_DATA: userData,
     BF_AUDIO_SINK: 'none',
-    BF_YTDLP: join(root, 'apps', 'mixer', 'tooling', 'screens', 'fake-ytdlp.mjs'),
+    BF_YTDLP: join(root, 'tooling', 'screens', 'fake-ytdlp.mjs'),
     BF_FAKE_AUDIO: fixture,
     BF_FAKE_LOG: log,
   },
@@ -39,8 +39,14 @@ const check = (cond, msg) => {
   if (!cond) throw new Error(`verificação falhou: ${msg}`);
   console.log(`ok: ${msg}`);
 };
-const songsDir = join(userData, 'library', 'songs');
-const songFolders = () => (existsSync(songsDir) ? readdirSync(songsDir) : []);
+// A pasta da música: o índice aponta para ela (o app organiza a pasta com o nome da música: campo folder).
+const libDir = join(userData, 'library');
+// Downloads em andamento e cancelados ficam em songs/ até entrar no índice.
+const partialDirs = () => (existsSync(join(libDir, 'songs')) ? readdirSync(join(libDir, 'songs')) : []);
+const songFolders = () => {
+  const idx = existsSync(join(libDir, 'index.json')) ? JSON.parse(readFileSync(join(libDir, 'index.json'), 'utf8')) : { songs: [] };
+  return idx.songs.map((s) => (s.folder ? join(libDir, s.folder) : join(libDir, 'songs', s.id))).filter((p) => existsSync(p));
+};
 const URL_OK = 'https://videos.exemplo.org/watch?v=livre1';
 
 try {
@@ -88,11 +94,11 @@ try {
   await win.getByRole('button', { name: 'Baixar', exact: true }).click();
   await win.getByRole('progressbar', { name: /Baixando/ }).waitFor();
   await win.waitForTimeout(1500);
-  check(songFolders().length === 1, 'download grava na pasta da música');
+  check(partialDirs().length === 1, 'download grava na pasta da música');
   await win.getByRole('button', { name: 'Cancelar' }).click();
   await win.getByLabel('Link do vídeo').waitFor({ timeout: 15000 });
   await win.waitForTimeout(500);
-  check(songFolders().length === 0, 'cancelar encerra e apaga os arquivos parciais');
+  check(partialDirs().length === 0, 'cancelar encerra e apaga os arquivos parciais');
 
   // 4. Prévia, formato, faixas e estado inicial (baixo mudo)
   await input.fill(URL_OK);
@@ -150,11 +156,16 @@ try {
     };
   });
   await win.getByRole('button', { name: 'Abrir origem' }).click();
-  await win.waitForTimeout(500);
-  const opened = await app.evaluate(() => ({ asked: globalThis.__asked, url: globalThis.__opened }));
+  // Confere até 5 s: o diálogo e a abertura do link são assíncronos.
+  let opened = { asked: 0, url: null };
+  for (let i = 0; i < 20; i++) {
+    opened = await app.evaluate(() => ({ asked: globalThis.__asked, url: globalThis.__opened }));
+    if (opened.asked === 1 && opened.url === URL_OK) break;
+    await win.waitForTimeout(250);
+  }
   check(opened.asked === 1 && opened.url === URL_OK, 'abrir origem pede confirmação e abre o link no navegador');
   // Espera a análise terminar (o cartão ganha o tom) antes da foto.
-  await win.locator('.lib-meta', { hasText: 'BPM' }).waitFor({ timeout: 300000 });
+  await win.locator('.lib-meta', { hasText: 'BPM' }).waitFor({ timeout: 900000 });
   await win.screenshot({ path: join(outDir, '12-biblioteca-origem.png') });
 
   // 8. Mesmo vídeo de novo: não duplica
@@ -172,7 +183,9 @@ try {
   await win.getByRole('button', { name: 'Remover' }).click();
   await win.getByRole('button', { name: 'Confirmar remoção' }).click();
   await win.getByRole('heading', { name: 'Biblioteca', level: 1 }).waitFor();
-  check(!existsSync(join(songsDir, folder)), 'remover apaga o áudio baixado');
+  // A pasta sai depois que a biblioteca volta a aparecer (apagar é assíncrono): espera até 10 s.
+  for (let i = 0; i < 40 && existsSync(folder); i++) await win.waitForTimeout(250);
+  check(!existsSync(folder), 'remover apaga o áudio baixado');
   console.log('roteiro do link de vídeo: tudo ok');
 } finally {
   await app.close();

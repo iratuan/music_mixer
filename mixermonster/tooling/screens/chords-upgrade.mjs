@@ -12,15 +12,24 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+import { libraryRoot } from './library-root.mjs';
 const [src, id, shot] = process.argv.slice(2);
+const LIB = libraryRoot(src);
 const userData = mkdtempSync(join(tmpdir(), 'bf-chords-'));
-const index = JSON.parse(readFileSync(join(src, 'library', 'index.json'), 'utf8'));
+const index = JSON.parse(readFileSync(join(LIB, 'index.json'), 'utf8'));
 index.songs = index.songs.filter((s) => s.id === id);
 mkdirSync(join(userData, 'library', 'songs', id), { recursive: true });
 writeFileSync(join(userData, 'library', 'index.json'), JSON.stringify(index, null, 2));
-copyFileSync(join(src, 'library', 'songs', id, 'analise.json'), join(userData, 'library', 'songs', id, 'analise.json'));
+copyFileSync(join(LIB, 'songs', id, 'analise.json'), join(userData, 'library', 'songs', id, 'analise.json'));
+// Versão 1 na cópia: o app mostra o aviso de acordes e sobe para a 2.
+{
+  const p = join(userData, 'library', 'songs', id, 'analise.json');
+  const old = JSON.parse(readFileSync(p, 'utf8'));
+  old.version = 1;
+  writeFileSync(p, JSON.stringify(old));
+}
 // As faixas do Demucs (lidas pela análise) entram por junção: nada é copiado nem alterado.
-symlinkSync(join(src, 'library', 'songs', id, 'demucs'), join(userData, 'library', 'songs', id, 'demucs'), 'junction');
+symlinkSync(join(LIB, 'songs', id, 'demucs'), join(userData, 'library', 'songs', id, 'demucs'), 'junction');
 const check = (cond, msg) => {
   if (!cond) throw new Error(`verificação falhou: ${msg}`);
   console.log(`ok: ${msg}`);
@@ -32,7 +41,7 @@ try {
   await win.setViewportSize({ width: 1280, height: 820 });
   await win.locator('.lib-card').first().click();
   await win.locator('.lane').first().waitFor({ timeout: 120000 });
-  const note = win.getByText(/Acordes mais detalhados disponíveis/);
+  const note = win.getByText(/Análise nova disponível: acordes mais detalhados/);
   await note.waitFor();
   check(true, 'aviso de análise antiga');
   const t0 = Date.now();
@@ -46,7 +55,7 @@ try {
   const chords = a.bars.flatMap((b) => b.chords.map((c) => c.chord).filter(Boolean));
   const inv = chords.filter((c) => c.bass !== undefined).length;
   const ext = chords.filter((c) => ['maj7', 'sus2', 'sus4', 'dim', 'm7b5'].includes(c.quality)).length;
-  check(a.version === 2, `análise versão 2 (${chords.length} acordes; ${inv} com inversão; ${ext} estendidos)`);
+  check(a.version === 3, `análise versão 3 (${chords.length} acordes; ${inv} com inversão; ${ext} estendidos)`);
   const titles = await win.locator('.rbar').evaluateAll((els) => els.map((e) => e.getAttribute('title') ?? ''));
   check(inv === 0 || titles.some((t) => /\/[A-G]/.test(t)), 'régua mostra inversões (C/E)');
   if (shot) await win.screenshot({ path: shot });

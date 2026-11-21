@@ -4,6 +4,11 @@
  * dentro da janela da nota. Oitava errada (mesma nota, outra oitava) conta como "oitava".
  */
 export const TOLERANCE_CENTS = 60;
+
+/** Tolerância de afinação por nível da trilha: iniciante perdoa mais; avançado pede precisão. */
+export function toleranceFor(level: 'Iniciante' | 'Intermediário' | 'Avançado' | undefined): number {
+  return level === 'Avançado' ? 25 : level === 'Intermediário' ? 40 : TOLERANCE_CENTS;
+}
 export const STABLE_FRAMES = 2;
 export const ATTACK_RATIO = 1.25;
 
@@ -20,6 +25,13 @@ export const midiToHz = (m: number): number => 440 * 2 ** ((m - 69) / 12);
 
 export type Verdict = 'hit' | 'octave' | 'miss';
 
+/** Resultado do julgamento. cents: desvio médio da altura tocada (+ = acima, − = abaixo) nos quadros estáveis. */
+export interface JudgeResult<T> {
+  verdict: Verdict;
+  id: T;
+  cents?: number;
+}
+
 interface Target<T> {
   id: T;
   hz: number;
@@ -27,21 +39,25 @@ interface Target<T> {
   attacked: boolean;
   stable: number;
   octaveStable: number;
+  /** Soma dos desvios (cents) nos quadros em que a nota ficou estável. */
+  centsSum: number;
+  centsN: number;
 }
 
 export class NoteJudge<T> {
   private target: Target<T> | null = null;
   private prevRms = 0;
+  constructor(private readonly tolerance = TOLERANCE_CENTS) {}
 
   /** Registra a próxima nota. Se a anterior ainda não foi resolvida, ela volta como erro. */
-  expect(id: T, midi: number, deadline: number): { verdict: Verdict; id: T } | null {
+  expect(id: T, midi: number, deadline: number): JudgeResult<T> | null {
     const dropped = this.target ? { verdict: 'miss' as const, id: this.target.id } : null;
-    this.target = { id, hz: midiToHz(midi), deadline, attacked: false, stable: 0, octaveStable: 0 };
+    this.target = { id, hz: midiToHz(midi), deadline, attacked: false, stable: 0, octaveStable: 0, centsSum: 0, centsN: 0 };
     return dropped;
   }
 
   /** Avalia um quadro (Hz detectado ou ≤ 0, energia, ruído de fundo, instante em segundos). */
-  feed(detectedHz: number, now: number, rms: number, noiseFloor: number): { verdict: Verdict; id: T } | null {
+  feed(detectedHz: number, now: number, rms: number, noiseFloor: number): JudgeResult<T> | null {
     const attack = rms > noiseFloor && rms > this.prevRms * ATTACK_RATIO;
     this.prevRms = rms;
     const t = this.target;
@@ -49,17 +65,22 @@ export class NoteJudge<T> {
     if (attack) t.attacked = true;
     if (t.attacked && detectedHz > 0) {
       const c = centsBetween(detectedHz, t.hz);
-      const exact = Math.abs(c) <= TOLERANCE_CENTS;
-      const oct = !exact && [1200, -1200, 2400, -2400].some((o) => Math.abs(c - o) <= TOLERANCE_CENTS);
+      const exact = Math.abs(c) <= this.tolerance;
+      const oct = !exact && [1200, -1200, 2400, -2400].some((o) => Math.abs(c - o) <= this.tolerance);
       t.stable = exact ? t.stable + 1 : 0;
       t.octaveStable = oct ? t.octaveStable + 1 : 0;
+      if (exact) {
+        t.centsSum += c;
+        t.centsN++;
+      }
       if (t.stable >= STABLE_FRAMES) {
         this.target = null;
-        return { verdict: 'hit', id: t.id };
+        return { verdict: 'hit', id: t.id, cents: Math.round(t.centsSum / t.centsN) };
       }
       if (t.octaveStable >= STABLE_FRAMES + 1) {
         this.target = null;
-        return { verdict: 'octave', id: t.id };
+        const o = [1200, -1200, 2400, -2400].reduce((best, x) => (Math.abs(c - x) < Math.abs(c - best) ? x : best), 0);
+        return { verdict: 'octave', id: t.id, cents: Math.round(c - o) };
       }
     } else {
       t.stable = 0;

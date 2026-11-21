@@ -6,6 +6,7 @@
 }
 .song-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
   padding: 14px var(--s-5) 12px;
@@ -13,7 +14,8 @@
   background: var(--surface);
 }
 .song-id {
-  min-width: 0;
+  flex: 0 1 280px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -249,10 +251,10 @@ button.mix-mark.on {
 .lane-ctrls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex-wrap: nowrap;
-  padding: 8px 0;
+  padding: 2px 0;
 }
 .knob svg {
   overflow: visible;
@@ -680,6 +682,26 @@ button.tkey.on {
 }
 .knob.disabled {
   opacity: 0.4;
+}
+/* Cada knob ocupa uma coluna fixa, com o valor centralizado embaixo (volume e pan não se encostam). */
+.lane-ctrls .knob {
+  width: 56px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.lane-ctrls .knob-dial {
+  margin: 0 auto;
+}
+.knob-readout {
+  font: 600 10px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.lane.silent .knob-readout {
+  opacity: 0.5;
 }
 .knob-tip {
   position: absolute;
@@ -1490,3 +1512,4 @@ button.mix-mark:not(.on):hover {
 .pkey.white.later .pkey-name,
 .pkey.white.done .pkey-name {
   fill: var(--key-black);
+}

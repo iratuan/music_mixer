@@ -16,6 +16,7 @@ import './styles/ear.css';
 import './styles/home2.css';
 import './styles/responsive.css';
 import { App } from './App.js';
+import { ErrorBoundary } from './shared/ErrorBoundary.js';
 import { installPlatform, type PlatformBridge } from './platform/bridge.js';
 import { androidBridge, installAndroidBack, isAndroid, openAndroidData } from './platform/android.js';
 import { desktopApi, desktopBridge, openDesktopData } from './platform/desktop.js';
@@ -41,7 +42,9 @@ boot()
     installPlatform(bridge, data);
     root.render(
       <StrictMode>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </StrictMode>,
     );
   })

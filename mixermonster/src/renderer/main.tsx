@@ -15,9 +15,12 @@ import './styles/solid.css';
 import './styles/ear.css';
 import './styles/home2.css';
 import { App } from './App.js';
+import { ErrorBoundary } from './shared/ErrorBoundary.js';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

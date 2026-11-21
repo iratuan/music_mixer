@@ -128,7 +128,7 @@ const GUITAR_REGIONS: ReadonlyArray<{ id: number; label: string }> = [
 /** Abaixo disso a faixa fica compacta (knobs menores, sem legenda); abaixo de TINY_LANE_H, uma linha só. */
 const FULL_LANE_H = 58;
 const TINY_LANE_H = 40;
-const TRACK_H = 72;
+const TRACK_H = 88;
 const RULER_H = 62;
 const METRO_H = 52;
 const MIN_PPS = 4;
@@ -2035,6 +2035,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                         step={0.01}
                         defaultValue={0.8}
                         size={knobSize}
+                        showValue
                         label={`Volume de ${info.label}`}
                         format={fmtGain}
                         onChange={(v) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), vol: v } }))}
@@ -2047,6 +2048,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                         defaultValue={0}
                         bipolar
                         size={knobSize}
+                        showValue
                         label={`Pan de ${info.label}`}
                         format={fmtPan}
                         onChange={(v) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), pan: v } }))}

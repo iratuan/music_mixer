@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { errorText } from '@baixaria/ui-core';
+import { practiceInstrumentOf } from '@baixaria/music-theory';
 import {
   INSTRUMENT_INFO,
   tuningsFor,
@@ -44,6 +45,7 @@ import {
   sessionXp,
   exerciseIdForKey,
   practiceXp,
+  toleranceFor,
   type PracticeSession,
 } from '@domain';
 import { ProgressDashboard } from '../home/ProgressDashboard.js';
@@ -168,7 +170,12 @@ const DEFAULTS: Settings = {
 function load(): Settings {
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Settings>;
+      // Violão salvo antes da unificação vira guitarra.
+      const inst = saved.instrument ? practiceInstrumentOf(String(saved.instrument)) : null;
+      return { ...DEFAULTS, ...saved, instrument: inst ?? DEFAULTS.instrument };
+    }
   } catch {
     /* sem preferência */
   }
@@ -263,6 +270,8 @@ export function Exercises() {
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [verdicts, setVerdicts] = useState<Record<number, Verdict>>({});
+  /** Afinação de cada nota julgada (cents): mostra sustenido ou bemol na bolinha. */
+  const [pitch, setPitch] = useState<Record<number, number>>({});
   const [score, setScore] = useState({ hit: 0, octave: 0, miss: 0 });
   const [inputError, setInputError] = useState<string | null>(null);
   const [level, setLevel] = useState(0);
@@ -403,6 +412,7 @@ export function Exercises() {
     }
     setResult(null);
     setVerdicts({});
+    setPitch({});
     setScore({ hit: 0, octave: 0, miss: 0 });
     setLoops(0);
     setInputError(null);
@@ -412,6 +422,7 @@ export function Exercises() {
       engine.onJudged = (n) => {
         const v = n.state as Verdict;
         setVerdicts((x) => ({ ...x, [n.id]: v }));
+        if (n.cents !== undefined) setPitch((x) => ({ ...x, [n.id]: n.cents! }));
         setScore((sc) => ({ ...sc, [v]: sc[v] + 1 }));
       };
     }
@@ -421,7 +432,7 @@ export function Exercises() {
     historyKey.current = { label: `${pcName(s.root, flats)} ${s.category} · ${s.mode} · ${EXERCISES.find((x) => x.id === s.exercise)?.name ?? ''}`, key: `${instrument}|${s.root}|${s.category}|${s.mode}|${s.exercise}`, instrument };
     if (engine && s.inputMode === 'audio') {
       try {
-        input.current = await startInput(deviceId, ({ id, verdict }) => engine.verdict(id, verdict, ctx.currentTime), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz }); // atraso ajustado no exercício da música
+        input.current = await startInput(deviceId, ({ id, verdict, cents }) => engine.verdict(id, verdict, ctx.currentTime, cents), readStore('bf-input-latency', { ms: 30 }).ms / 1000, { fmin: INSTRUMENT_INFO[instrument].fminHz, fmax: INSTRUMENT_INFO[instrument].fmaxHz, tolerance: toleranceFor(routine?.level) }); // atraso ajustado no exercício da música
       } catch (e) {
         setInputError(errorText(e, 'não foi possível abrir a entrada de áudio'));
         return;
@@ -867,7 +878,7 @@ export function Exercises() {
         <div className="field wide">
           <span>Instrumento</span>
           <div className="seg small" role="group" aria-label="Instrumento">
-            {(['bass', 'guitar', 'acoustic'] as const).map((k) => (
+            {(['bass', 'guitar'] as const).map((k) => (
               <button
                 key={k}
                 aria-pressed={instrument === k}
@@ -971,6 +982,11 @@ export function Exercises() {
                   return (
                     <span key={k} className={`ex-pill ${k === step ? 'now' : ''} ${verdicts[loops * seqLen + k] ?? ''}`}>
                       {pcName(n.midi, flats)}
+                      {(() => {
+                        const c = pitch[loops * seqLen + k];
+                        if (c === undefined || Math.abs(c) < 15) return null;
+                        return <sup className="ex-pitch" title={`${c > 0 ? '+' : ''}${c} cents: ${c > 0 ? 'acima' : 'abaixo'} da altura certa`} aria-label={c > 0 ? 'acima' : 'abaixo'}>{c > 0 ? '♯' : '♭'}</sup>;
+                      })()}
                     </span>
                   );
                 })}
@@ -1095,7 +1111,7 @@ export function Exercises() {
             ) : s.inputMode === 'midi' ? (
               'Toque as notas no instrumento MIDI. Segure as notas com cauda até o fim.'
             ) : (
-              `Toque ${instrument === 'guitar' ? 'na guitarra' : instrument === 'acoustic' ? 'no violão' : 'no baixo'} quando a gema chegar à linha. Gema de miolo branco é ligado (sem novo ataque); deixe soar as notas com cauda.`
+              `Toque ${instrument === 'guitar' ? 'na guitarra ou no violão' : 'no baixo'} quando a gema chegar à linha. Gema de miolo branco é ligado (sem novo ataque); deixe soar as notas com cauda.`
             )}
           </p>
         </aside>

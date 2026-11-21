@@ -364,8 +364,12 @@ export function ArcadeStageCanvas({ feed, lanes, stringNames, goal = 80, fov = 1
               const v = 140 + Math.random() * 320;
               sparks.push({ x, y: strikeY, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.45 + Math.random() * 0.5, color: Math.random() < 0.5 ? '#ffe28a' : LANE_COLORS[lane]!, size: 1.5 + Math.random() * 2.5 });
             }
+            // Direção do tempo: adiantada ou atrasada, com os milissegundos (não só a classe).
+            const ms = e.offsetMs ?? 0;
+            const when = Math.abs(ms) < 20 ? '' : ` · ${ms < 0 ? 'adiantada' : 'atrasada'} ${Math.abs(ms)} ms`;
             if (e.grade === 'perfect') pops.push({ text: 'PERFECT!', color: '#ffe28a', life: 1 });
-            else if (e.grade === 'great') pops.push({ text: 'GREAT!', color: '#7fe0ff', life: 1 });
+            else if (e.grade === 'great') pops.push({ text: `GREAT!${when}`, color: '#7fe0ff', life: 1 });
+            else if (e.grade === 'good') pops.push({ text: `GOOD${when}`, color: '#c8f7a1', life: 1 });
             if (pops.length > 3) pops.shift();
           } else if (e.kind === 'miss' || e.kind === 'overstrum') {
             if (e.lane >= 0) missFlash[Math.min(L - 1, e.lane)] = 1;

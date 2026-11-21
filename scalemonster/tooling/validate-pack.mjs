@@ -16,7 +16,7 @@ if (!file) {
 }
 
 // Empacota o contrato (TypeScript) e carrega o resultado como módulo, sem dependências extras.
-const contract = fileURLToPath(new URL('../packages/exchange-contract/src/index.ts', import.meta.url));
+const contract = fileURLToPath(new URL('../../packages/exchange-contract/src/index.ts', import.meta.url));
 const out = await build({ entryPoints: [contract], bundle: true, format: 'esm', platform: 'neutral', write: false, logLevel: 'silent' });
 const lib = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
 
