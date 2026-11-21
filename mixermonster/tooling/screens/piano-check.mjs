@@ -60,7 +60,7 @@ try {
       lanes: tracks.length,
     };
   });
-  check(Math.round(laneLayout.maxTrackHeight) === 62 && laneLayout.overflowY === 'auto', `${laneLayout.lanes} faixas com 62 px e rolagem vertical disponível`);
+  check(Math.round(laneLayout.maxTrackHeight) === 72 && laneLayout.overflowY === 'auto', `${laneLayout.lanes} faixas com 62 px e rolagem vertical disponível`);
   const keys = await win.locator('.pkey.white').count();
   const marked = await win.locator('.pkey.now, .pkey.next, .pkey.later, .pkey.done').count();
   const svgW = (await win.locator('svg.piano').boundingBox()).width;

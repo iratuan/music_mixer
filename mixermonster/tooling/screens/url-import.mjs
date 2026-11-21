@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const outDir = join(root, 'docs', 'screens');
+const outDir = join(tmpdir(), 'baixaria-fina-e2e-url', 'screens');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const tmp = join(tmpdir(), 'baixaria-fina-e2e-url');
 const userData = join(tmp, 'userData');
@@ -30,7 +30,7 @@ const app = await electron.launch({
     NODE_ENV: 'production',
     BF_USER_DATA: userData,
     BF_AUDIO_SINK: 'none',
-    BF_YTDLP: join(root, 'apps', 'mixer', 'tooling', 'screens', 'fake-ytdlp.mjs'),
+    BF_YTDLP: join(root, 'tooling', 'screens', 'fake-ytdlp.mjs'),
     BF_FAKE_AUDIO: fixture,
     BF_FAKE_LOG: log,
   },

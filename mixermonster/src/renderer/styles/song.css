@@ -681,6 +681,15 @@ button.tkey.on {
 .knob.disabled {
   opacity: 0.4;
 }
+.knob-readout {
+  font: 600 10px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.lane.silent .knob-readout {
+  opacity: 0.5;
+}
 .knob-tip {
   position: absolute;
   left: 50%;

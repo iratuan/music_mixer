@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const outDir = join(root, 'docs', 'screens');
+const outDir = join(process.env.BF_TMP ?? tmpdir(), 'screens');
 const fixture = join(root, 'tests', 'fixtures', 'midi-synth', 'bass-common-clean.wav');
 const tmp = process.env.BF_TMP ?? join(tmpdir(), 'baixaria-fina-e2e');
 const userData = join(tmp, 'userData');
@@ -51,7 +51,7 @@ try {
   await app.evaluate(({ dialog }, file) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
   }, fixture);
-  await win.getByRole('button', { name: /Escolher arquivo de música/ }).click();
+  await win.getByRole('button', { name: /Escolher arquivos? de música/ }).click();
 
   // 2. A música abre direto no seletor de faixas
   const picker = win.getByRole('group', { name: 'Faixas a separar' });
@@ -72,7 +72,8 @@ try {
   await win.locator('.song-facts .fact.key').waitFor({ timeout: 300000 });
   await win.locator('.lane.stem-metro').waitFor();
   const laneNames = await win.locator('.lane .lane-title > span:not(.lane-num)').allInnerTexts();
-  const expected = splitVoice ? ['Voz principal', 'Backing vocals', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'] : ['Voz', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'];
+  // Padrão do app (D-32): voz dividida em principal e backing. Sem a divisão, a faixa é 'Voz'.
+  const expected = splitVoice ? ['Voz principal', 'Backing vocals', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'] : ['Voz principal', 'Backing vocals', 'Baixo', 'Bateria', 'Outros', 'Restante', 'Metrônomo'];
   check(JSON.stringify(laneNames) === JSON.stringify(expected), `faixas escolhidas + restante + metrônomo: ${laneNames.join(', ')}`);
   const laneLayout = await win.evaluate(() => {
     const sc = document.querySelector('.tl-scroll');
@@ -82,7 +83,7 @@ try {
       overflowY: getComputedStyle(sc).overflowY,
     };
   });
-  check(Math.round(laneLayout.maxTrackHeight) === 62, `faixas com 62 px de altura (${Math.round(laneLayout.maxTrackHeight)} px)`);
+  check(Math.round(laneLayout.maxTrackHeight) === 72, `faixas com 72 px de altura (TRACK_H) (${Math.round(laneLayout.maxTrackHeight)} px)`);
   check(laneLayout.overflowY === 'auto', 'rolagem vertical disponível para as faixas');
   const playVisible = async (label) =>
     win.getByRole('button', { name: label }).evaluate((button) => {

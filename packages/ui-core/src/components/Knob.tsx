@@ -22,6 +22,8 @@ interface Props {
   disabled?: boolean;
   /** Legenda curta embaixo (ex.: VOL, PAN). */
   caption?: string | undefined;
+  /** Mostra o valor sempre, embaixo do knob (não só ao arrastar). */
+  showValue?: boolean;
 }
 
 const START = -135;
@@ -40,7 +42,7 @@ function arc(cx: number, cy: number, r: number, from: number, to: number): strin
   return `M${x1.toFixed(2)} ${y1.toFixed(2)}A${r} ${r} 0 ${b - a > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
-export function Knob({ value, min, max, defaultValue, onChange, label, format, size = 30, step, bipolar = false, disabled = false, caption }: Props) {
+export function Knob({ value, min, max, defaultValue, onChange, label, format, size = 30, step, bipolar = false, disabled = false, caption, showValue = false }: Props) {
   const drag = useRef<{ y: number; v: number } | null>(null);
   const [active, setActive] = useState(false);
   const range = max - min;
@@ -128,6 +130,7 @@ export function Knob({ value, min, max, defaultValue, onChange, label, format, s
         </svg>
         {active && <span className="knob-tip">{text}</span>}
       </div>
+      {showValue && <span className="knob-readout" aria-hidden="true">{text}</span>}
       {caption && <span className="knob-caption">{caption}</span>}
     </div>
   );
