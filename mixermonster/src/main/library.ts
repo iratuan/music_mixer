@@ -450,10 +450,13 @@ export class Library {
     const index = await this.load();
     const songs = index.songs.filter((s) => s.id !== id);
     if (songs.length === index.songs.length) throw new Error('música não encontrada');
+    // A pasta é lida ANTES de salvar: salvar o índice sem a música refaz o mapa de pastas e a pasta
+    // organizada (com o nome da música) deixaria de ser encontrada, ficando o áudio no disco.
+    const dir = this.songDir(id);
     await this.save({ version: LIBRARY_VERSION, songs });
     // Apaga a pasta de dados do app (faixas, análise, caches e, se a música veio de um link, o áudio
     // baixado). Um arquivo importado do computador fica fora dela e não é tocado.
-    await rm(this.songDir(id), { recursive: true, force: true });
+    await rm(dir, { recursive: true, force: true });
   }
 
   /** Análise da música (andamento, compassos, acordes, tom), gerada pelo bf_tools.py. */
