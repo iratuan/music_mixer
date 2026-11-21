@@ -62,7 +62,7 @@ src/
     shared/          componentes comuns: Splash, StemPicker, Waveform
     lib/             áudio (Web Audio) e utilitários de faixas
     styles/          folhas globais, carregadas na ordem de main.tsx
-packages/            cópias de music-theory, audio-synth, ui-core e exchange-contract
+packages/ (na raiz do repositório): music-theory, audio-synth, ui-core e exchange-contract, compartilhados
 tests/               testes do processo principal, da biblioteca e fixtures
 tooling/             ferramentas nativas, roteiros de verificação e licenças
 build/               ícone do instalador

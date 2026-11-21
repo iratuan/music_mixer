@@ -1,6 +1,6 @@
 # Protocolo de exercícios (`.mcraft-pack`, kind "exercise")
 
-Este documento define como um exercício de baixo é **gerado**, como é **validado** e como o ScaleMonster o **lê**. A fonte de verdade do contrato é o código em `packages/exchange-contract/src/index.ts` (cópia idêntica em `mixermonster/` e `scalemonster/`). Se este texto e o código divergirem, vale o código, e este texto deve ser corrigido.
+Este documento define como um exercício de baixo é **gerado**, como é **validado** e como o ScaleMonster o **lê**. A fonte de verdade do contrato é o código em `packages/exchange-contract/src/index.ts` (pasta `packages/` na raiz do repositório, compartilhada pelos dois produtos). Se este texto e o código divergirem, vale o código, e este texto deve ser corrigido.
 
 ## 1. Visão geral
 
@@ -154,6 +154,6 @@ Salve como `.mcraft-pack` e rode `node tooling/validate-pack.mjs arquivo.mcraft-
 
 ## 9. Testes
 
-- `packages/exchange-contract/tests/exercise.test.ts` (nas duas pastas): validação, geração, envelope e recusas.
-- `tests/fixtures/exchange/` (nas duas pastas): exemplo de música, exemplo de exercício gerado e exercício inválido de propósito.
+- `packages/exchange-contract/tests/exercise.test.ts` (em `packages/`): validação, geração, envelope e recusas.
+- `tests/fixtures/exchange/` (em `packages/`): exemplo de música, exemplo de exercício gerado e exercício inválido de propósito.
 - `tests/exerciseLibrary.test.ts` (ScaleMonster): conversão para o treino e limite da biblioteca.

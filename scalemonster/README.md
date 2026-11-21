@@ -74,7 +74,7 @@ src/
   domain/               regras musicais e pedagógicas (sem plataforma)
   styles/               folhas globais, carregadas na ordem de main.tsx
   assets/               logos, fundo do palco e vídeos do desafio
-packages/             cópias de music-theory, audio-synth, ui-core e exchange-contract
+packages/ (na raiz do repositório): music-theory, audio-synth, ui-core e exchange-contract, compartilhados
 shells/desktop/       shell Electron que embrulha o build web
 android/              projeto nativo Capacitor (Gradle)
 tests/                testes de dados e do domínio

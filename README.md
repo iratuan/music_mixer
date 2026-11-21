@@ -42,7 +42,7 @@
 | Dados | `%APPDATA%/baixaria-fina` | `%APPDATA%/scalemonster` (desktop); banco próprio no Android |
 | Precisa de internet | Não, exceto para baixar por link ou o modelo de voz | Não (100% offline) |
 
-Os dois produtos **não dependem um do outro para funcionar**. O único ponto de contato é o arquivo `.mcraft-pack`: o MixerMonster exporta a linha do baixo de uma música e o ScaleMonster a importa (contrato em [`mixermonster/packages/exchange-contract`](mixermonster/packages/exchange-contract/README.md), cópia idêntica em `scalemonster/packages/`).
+Os dois produtos **não dependem um do outro para funcionar**. O único ponto de contato é o arquivo `.mcraft-pack`: o MixerMonster exporta a linha do baixo de uma música e o ScaleMonster a importa (contrato em [`packages/exchange-contract`](packages/exchange-contract/README.md), na pasta `packages/` compartilhada).
 
 Resumo do que cada um faz:
 
@@ -53,19 +53,17 @@ Resumo do que cada um faz:
 
 ## Estrutura do repositório
 
-O repositório tem duas subpastas independentes. Cada uma é um projeto completo, com o próprio `package.json`, `node_modules`, build e instalador. Não há workspace compartilhado: cada uma leva a sua cópia dos pacotes que usa.
+O repositório tem duas subpastas de produto, cada uma com o próprio `package.json`, `node_modules`, build e instalador. Os pacotes técnicos compartilhados ficam em uma única pasta na raiz, `packages/`, e cada produto os importa por alias (tsconfig, Vite e Vitest).
 
 ```text
 mixermonster/      MixerMonster (Electron + React), codebase independente
   src/             main/ (processo principal), preload/, renderer/ (features/, shared/, lib/, styles/)
-  packages/        cópias de music-theory, audio-synth, ui-core e exchange-contract
   tooling/         Python, ffmpeg, Rubber Band, yt-dlp, modelos e roteiros de verificação
   tests/           testes e fixtures
   build/           ícone do instalador
   electron-builder.json, package.json, vite.config.ts, vitest.config.ts, tsconfig.json
 scalemonster/      ScaleMonster (web, shell Electron e Android com Capacitor), codebase independente
   src/             features/ (telas por área), shared/, platform/, data/, lib/, domain/, styles/
-  packages/        cópias de music-theory, audio-synth, ui-core e exchange-contract
   shells/desktop/  shell Electron que embrulha o build web
   android/         projeto nativo Capacitor (Gradle)
   tooling/         verificações e ferramentas (responsive-check, gradle, geração de ícones)
@@ -74,9 +72,9 @@ docs/              decisões, notas de versão, próximos passos e capturas
 attachments/       imagens de referência
 ```
 
-**Regra de dependência:** os pacotes (`packages/` em cada produto) não conhecem Electron, Capacitor, React nem banco. Os produtos não importam código um do outro. A única ligação é o arquivo `.mcraft-pack`.
+**Regra de dependência:** os pacotes (`packages/` na raiz) não conhecem Electron, Capacitor, React nem banco. Os produtos não importam código um do outro. A única ligação é o arquivo `.mcraft-pack`.
 
-**Mantendo as cópias:** uma mudança em um pacote compartilhado precisa ser copiada para as duas pastas `packages/` (`mixermonster/packages` e `scalemonster/packages`). O contrato `.mcraft-pack` é a fonte de verdade da troca entre os produtos.
+**Pacote compartilhado:** `packages/` na raiz é a única fonte de music-theory, audio-synth, ui-core e exchange-contract. Uma mudança ali vale para os dois produtos. Os testes de cada produto cobrem esses pacotes.
 
 ---
 
@@ -150,7 +148,7 @@ Para separar, analisar e transpor de verdade no MixerMonster, antes é preciso p
 - **Fronteiras de segurança (Electron):** `contextIsolation`, `sandbox`, CSP, protocolo próprio e canais IPC com lista de permissões. O renderer recebe só o que a interface precisa.
 - **Persistência do ScaleMonster:** um `DatabaseAdapter` com sql.js. No navegador o banco fica no IndexedDB; no desktop e no Android, em arquivo, com gravação atômica e backups.
 - **Telas do ScaleMonster:** organizadas por área em `src/features/`. Estilos globais ficam em `src/styles/`, na ordem definida em `main.tsx`.
-- **Áudio:** síntese e metrônomo em `packages/audio-synth` (de cada produto); captura de microfone e juiz de notas no ScaleMonster; player multipista no MixerMonster.
+- **Áudio:** síntese e metrônomo em `packages/audio-synth` (na raiz); captura de microfone e juiz de notas no ScaleMonster; player multipista no MixerMonster.
 
 Decisões técnicas estão em [`docs/decisoes.md`](docs/decisoes.md).
 
@@ -165,7 +163,7 @@ Decisões técnicas estão em [`docs/decisoes.md`](docs/decisoes.md).
 | [`docs/05-two-separate-codebases.md`](docs/05-two-separate-codebases.md) | Separação em dois produtos (monorepo). |
 | [`mixermonster/README.md`](mixermonster/README.md) | MixerMonster: status, instalador, ferramentas. |
 | [`scalemonster/README.md`](scalemonster/README.md) | ScaleMonster: status, plataformas, comandos. |
-| [`*/packages/`](mixermonster/packages/) | Pacotes compartilhados (cópias em cada produto). |
+| [`packages/`](packages/) | Pacotes técnicos compartilhados pelos dois produtos. |
 
 ---
 
