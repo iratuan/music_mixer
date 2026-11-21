@@ -132,3 +132,5 @@ button.audio, button.audio:disabled { color: var(--on-color) !important; }
 .ear-step.next .ear-node { background: var(--accent); color: var(--accent-ink); }
 .ear-step.on { background: var(--accent-soft); }
 .ear-step.next small { color: var(--accent); font-weight: 700; }
+/* Conteúdo do passo alinhado à esquerda: o número fica sempre na mesma coluna. */
+.ear-step { justify-content: flex-start; text-align: left; }
