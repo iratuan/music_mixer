@@ -110,3 +110,25 @@ button.audio, button.audio:disabled { color: var(--on-color) !important; }
 @media (prefers-reduced-motion: reduce) {
   .ear-feedback, .ear-meter > i { animation: none; transition: none; }
 }
+
+/* Trilha de progresso do treino de ouvido: passos numerados, ✓ no concluído, destaque no próximo. */
+.ear-mix { margin: var(--s-2) 0; }
+.ear-path { list-style: none; margin: var(--s-3) 0 0; padding: 0; display: grid; gap: var(--s-2); position: relative; }
+.ear-path li { position: relative; }
+.ear-step {
+  width: 100%; display: flex; align-items: center; gap: var(--s-3); text-align: left;
+  padding: var(--s-3) var(--s-4); min-height: 56px; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+}
+.ear-step small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.ear-step-text { display: flex; flex-direction: column; min-width: 0; }
+.ear-node {
+  flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; background: var(--surface-3); color: var(--muted);
+}
+.ear-step.done .ear-node { background: var(--ok-green); color: var(--on-color); }
+.ear-step.done { border-color: color-mix(in srgb, var(--ok-green) 50%, var(--line)); }
+.ear-step.next { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+.ear-step.next .ear-node { background: var(--accent); color: var(--accent-ink); }
+.ear-step.on { background: var(--accent-soft); }
+.ear-step.next small { color: var(--accent); font-weight: 700; }

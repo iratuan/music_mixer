@@ -144,7 +144,7 @@ describe('tolerância por nível', () => {
     expect(toleranceFor('Iniciante')).toBeGreaterThan(toleranceFor('Intermediário'));
     expect(toleranceFor('Intermediário')).toBeGreaterThan(toleranceFor('Avançado'));
     const up40 = midiToHz(33) * 2 ** (40 / 1200);
-    const run = (tol) => {
+    const run = (tol: number) => {
       const j = new J(tol);
       j.expect('n', 33, 5.0);
       j.feed(-1, 0.5, 0.01, 0.01);

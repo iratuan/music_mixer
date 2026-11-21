@@ -29,6 +29,12 @@ interface Game {
 }
 const FRESH: Game = { lives: 3, correct: 0, total: 0, streak: 0, best: 0, xp: 0 };
 
+/** Trilha: um passo fica concluído com 5 respostas e 70% de acerto. */
+const PATH_MIN_ANSWERS = 5;
+const PATH_MIN_RATE = 0.7;
+type PathStats = Record<string, { c: number; t: number }>;
+const pathDone = (st: { c: number; t: number } | undefined) => !!st && st.t >= PATH_MIN_ANSWERS && st.c / st.t >= PATH_MIN_RATE;
+
 export function EarTraining() {
   const [view, setView] = useState<'lobby' | 'play' | 'end'>('lobby');
   const [cat, setCat] = useState<EarCategory>(() => readStore<EarCategory>('bf-ear-cat', 'intervals'));
@@ -46,6 +52,7 @@ export function EarTraining() {
   const [path, setPath] = useState<{ from: number; to: number } | null>(null);
   const [result, setResult] = useState<{ ok: boolean; text: string; badges: string[]; quests: string[] } | null>(null);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [pathStats, setPathStats] = useState<PathStats>(() => readStore<PathStats>('bf-ear-path', {}));
   const handle = useRef<PlayHandle | null>(null);
   const startedAt = useRef(0);
   const gameRef = useRef(game);
@@ -55,6 +62,8 @@ export function EarTraining() {
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const types = earTypesOf(cat);
+  const pathSteps = [...types].sort((a, b) => a.level - b.level);
+  const nextIdx = pathSteps.findIndex((t) => !pathDone(pathStats[t.id]));
 
   useEffect(() => () => handle.current?.cancel(), []);
 
@@ -128,6 +137,12 @@ export function EarTraining() {
     const xp = ok ? earXp(streak) : 0;
     const ng: Game = { lives: ok || mode !== 'survival' ? g.lives : g.lives - 1, correct: g.correct + (ok ? 1 : 0), total: g.total + 1, streak, best: Math.max(g.best, streak), xp: g.xp + xp };
     setGame(ng);
+    setPathStats((prev) => {
+      const cur = prev[c.typeId] ?? { c: 0, t: 0 };
+      const next = { ...prev, [c.typeId]: { c: cur.c + (ok ? 1 : 0), t: cur.t + 1 } };
+      writeStore('bf-ear-path', next);
+      return next;
+    });
     setPhase('done');
     setResult({ ok, text: c.explain, badges: [], quests: [] });
     try {
@@ -244,16 +259,36 @@ export function EarTraining() {
         </div>
         <section className="card ear-setup">
           <h3>{EAR_CATEGORIES.find((c) => c.id === cat)!.title}</h3>
-          <div className="ear-types">
-            <button className={typeId === 'mix' ? 'on' : ''} aria-pressed={typeId === 'mix'} onClick={() => setTypeId('mix')}>
-              Misto (todas)
-            </button>
-            {types.map((t) => (
-              <button key={t.id} className={typeId === t.id ? 'on' : ''} aria-pressed={typeId === t.id} onClick={() => setTypeId(t.id)}>
-                {t.title}
-              </button>
-            ))}
-          </div>
+          <button className={typeId === 'mix' ? 'on ear-mix' : 'ear-mix'} aria-pressed={typeId === 'mix'} onClick={() => setTypeId('mix')}>
+            Misto (todas as etapas)
+          </button>
+          <ol className="ear-path" aria-label="Trilha de progresso">
+            {pathSteps.map((t, i) => {
+              const st = pathStats[t.id];
+              const isDone = pathDone(st);
+              const isNext = !isDone && i === nextIdx;
+              const rate = st && st.t ? Math.round((st.c / st.t) * 100) : null;
+              return (
+                <li key={t.id}>
+                  <button
+                    className={`ear-step ${isDone ? 'done' : ''} ${isNext ? 'next' : ''} ${typeId === t.id ? 'on' : ''}`}
+                    aria-pressed={typeId === t.id}
+                    aria-current={isNext ? 'step' : undefined}
+                    onClick={() => setTypeId(t.id)}
+                  >
+                    <span className="ear-node" aria-hidden="true">{isDone ? '✓' : i + 1}</span>
+                    <span className="ear-step-text">
+                      <b>{t.title}</b>
+                      <small>
+                        {isDone ? 'Concluído' : isNext ? 'Continue aqui' : 'A fazer'}
+                        {rate !== null && ` · ${st!.c}/${st!.t} (${rate}%)`}
+                      </small>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
           <div className="ear-opts">
             <div>
               <span className="muted small">Modo</span>
