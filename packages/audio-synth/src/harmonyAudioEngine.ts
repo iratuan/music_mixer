@@ -1,6 +1,14 @@
-import { chordMidis, midiHz, type Chord } from '@baixaria/music-theory';
+import { chordIntervals, chordMidis, midiHz, pc, type Chord } from '@baixaria/music-theory';
 import { getAudioContext } from './context.js';
 import { driveStage, masterBus, pluckAt } from './voices.js';
+
+/**
+ * Notas do acorde na região média (Dó 3 a Si 4) para acompanhamento sem embolar o subgrave do baixo.
+ */
+export function chordVoicingMidis(chord: Chord, octaveBase = 48): number[] {
+  const root = octaveBase + pc(chord.root);
+  return chordIntervals(chord.quality).map((i) => root + i);
+}
 
 /**
  * Motor de áudio da harmonia (ciclo das quintas e mapa harmônico): acordes polifônicos com
@@ -40,8 +48,8 @@ export const RHYTHMS: ReadonlyArray<{ readonly id: Rhythm; readonly label: strin
   { id: 'waltz', label: 'Valsa (1 – 2 3)', hits: [[0, 1], [1, 0.7], [2, 0.7], [3, 0.7]] },
 ];
 
-/** Bateria simples (bumbo, caixa e chimbal) sintetizada, para acompanhar a progressão. */
-function drumHit(kind: 'kick' | 'snare' | 'hat', at: number, out: AudioNode, level = 1): void {
+/** Bateria (bumbo, caixa, aro e chimbal) sintetizada, para acompanhar a progressão. */
+function drumHit(kind: 'kick' | 'snare' | 'hat' | 'rim', at: number, out: AudioNode, level = 1): void {
   const ctx = getAudioContext();
   const g = ctx.createGain();
   g.connect(out);
@@ -54,6 +62,33 @@ function drumHit(kind: 'kick' | 'snare' | 'hat', at: number, out: AudioNode, lev
     o.connect(g);
     o.start(at);
     o.stop(at + 0.32);
+    return;
+  }
+  if (kind === 'rim') {
+    const osc = ctx.createOscillator();
+    osc.frequency.setValueAtTime(450, at);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.4 * level, at);
+    og.gain.exponentialRampToValueAtTime(0.001, at + 0.04);
+    osc.connect(og).connect(out);
+    osc.start(at);
+    osc.stop(at + 0.05);
+
+    const len = Math.floor(ctx.sampleRate * 0.03);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 2400;
+    f.Q.value = 4;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.5 * level, at);
+    ng.gain.exponentialRampToValueAtTime(0.001, at + 0.025);
+    src.connect(f).connect(ng).connect(out);
+    src.start(at);
     return;
   }
   const len = Math.floor(ctx.sampleRate * (kind === 'snare' ? 0.18 : 0.05));
@@ -78,6 +113,58 @@ function drumHit(kind: 'kick' | 'snare' | 'hat', at: number, out: AudioNode, lev
     body.connect(bg).connect(out);
     body.start(at);
     body.stop(at + 0.12);
+  }
+}
+
+/** Agenda a levada de bateria musical para a progressão, adaptada ao ritmo selecionado. */
+function scheduleDrums(rhythm: Rhythm, next: number, beats: number, beat: number, out: AudioNode): void {
+  const waltz = rhythm === 'waltz';
+  const barLen = waltz ? 3 : 4;
+  for (let b = 0; b < beats; b++) {
+    const at = next + b * beat;
+    const barPos = b % barLen;
+    if (waltz) {
+      if (barPos === 0) {
+        drumHit('kick', at, out, 0.9);
+        drumHit('hat', at, out, 0.8);
+      } else {
+        drumHit('rim', at, out, 0.5);
+        drumHit('hat', at, out, 0.6);
+      }
+    } else if (rhythm === 'bossa') {
+      if (barPos === 0) drumHit('kick', at, out, 0.75);
+      if (barPos === 2) drumHit('kick', at + beat * 0.5, out, 0.6);
+      if (barPos === 1 || barPos === 3) drumHit('rim', at, out, 0.65);
+      drumHit('hat', at, out, 0.5);
+      drumHit('hat', at + beat * 0.5, out, 0.35);
+    } else if (rhythm === 'reggae') {
+      if (barPos === 2) {
+        drumHit('kick', at, out, 0.9);
+        drumHit('snare', at, out, 0.85);
+      }
+      drumHit('hat', at, out, 0.35);
+      drumHit('hat', at + beat * 0.5, out, 0.8);
+    } else if (rhythm === 'ballad') {
+      if (barPos === 0) drumHit('kick', at, out, 0.8);
+      if (barPos === 2) drumHit('snare', at, out, 0.5);
+      drumHit('hat', at, out, 0.5);
+      drumHit('hat', at + beat * 0.5, out, 0.3);
+    } else if (rhythm === 'funk') {
+      if (barPos === 0) drumHit('kick', at, out, 0.95);
+      if (barPos === 2) drumHit('kick', at + beat * 0.5, out, 0.75);
+      if (barPos === 1 || barPos === 3) drumHit('snare', at, out, 0.85);
+      drumHit('hat', at, out, 0.7);
+      drumHit('hat', at + beat * 0.25, out, 0.3);
+      drumHit('hat', at + beat * 0.5, out, 0.5);
+      drumHit('hat', at + beat * 0.75, out, 0.3);
+    } else {
+      // Pop / Block
+      if (barPos === 0) drumHit('kick', at, out, 0.9);
+      if (barPos === 2) drumHit('kick', at, out, 0.7);
+      if (barPos === 1 || barPos === 3) drumHit('snare', at, out, 0.8);
+      drumHit('hat', at, out, 0.7);
+      drumHit('hat', at + beat * 0.5, out, 0.45);
+    }
   }
 }
 
@@ -478,28 +565,33 @@ export function playProgression(
       if ((opts.chordLevel ?? 1) > 0) {
         // A levada se repete a cada 4 tempos e é cortada no fim do acorde.
         const hits = (RHYTHMS.find((r) => r.id === (opts.rhythm ?? 'block')) ?? RHYTHMS[0]!).hits;
+        // Se o baixo estiver tocando, usamos voicing na região média para não embolar o subgrave; se estiver sem baixo, incluímos a fundamental no teclado.
+        const voicing = opts.bass ? chordVoicingMidis(s.chord) : chordMidis(s.chord);
         for (let bar = 0; bar < s.beats; bar += 4) {
           for (const [off, len] of hits) {
             const startB = bar + off;
             if (startB >= s.beats) continue;
             const durB = Math.min(len, s.beats - startB);
-            playChord(s.chord, opts.timbre ?? 'epiano', next + startB * beat, durB * beat * 0.95);
+            // Acordes de acompanhamento soam como harmonia polifônica limpa, nunca arpejados
+            playMidis(voicing, opts.timbre ?? 'epiano', next + startB * beat, durB * beat * 0.95);
           }
         }
       }
       if (opts.drums) {
-        for (let b = 0; b < Math.max(1, Math.round(s.beats)); b++) {
-          const at = next + b * beat;
-          const waltz = opts.rhythm === 'waltz';
-          if (b % (waltz ? 3 : 2) === 0) drumHit('kick', at, bassBus, b === 0 ? 1 : 0.8);
-          if (!waltz && b % 2 === 1) drumHit('snare', at, bassBus);
-          drumHit('hat', at, bassBus, 0.9);
-          drumHit('hat', at + beat / 2, bassBus, 0.55);
-        }
+        scheduleDrums(opts.rhythm ?? 'block', next, Math.max(1, Math.round(s.beats)), beat, bassBus);
       }
       if (opts.bass) {
-        opts.bass(s.chord, s.beats).forEach((m, k) => {
-          if (m !== null) pluckAt(next + k * beat, m, 0.5, bassBus, beat * 0.9);
+        const pattern = opts.bass(s.chord, s.beats);
+        pattern.forEach((m, k) => {
+          if (m !== null) {
+            // Sustentação natural: calcula quantos tempos até a próxima nota para o baixo não soar picotado
+            let noteBeats = 1;
+            while (k + noteBeats < s.beats && pattern[k + noteBeats] === null) {
+              noteBeats++;
+            }
+            const dur = noteBeats * beat * 0.95;
+            pluckAt(next + k * beat, m, 0.55, bassBus, dur);
+          }
         });
       }
       marks.push({ at: next, i });

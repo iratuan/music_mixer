@@ -6,11 +6,11 @@ import { fingerLine, type BassTuning, type FretPos } from '../instrument/bass.js
 import { type Chord } from './harmony.js';
 import { chordIntervals } from './circleOfFifths.js';
 
-export type BassRole = 'groove' | 'root' | 'triad' | 'arpeggio';
+export type BassRole = 'root' | 'groove' | 'triad' | 'arpeggio';
 
 export const BASS_ROLES: ReadonlyArray<{ readonly id: BassRole; readonly label: string; readonly hint: string }> = [
-  { id: 'groove', label: 'Cozinha', hint: 'Levada da base: fundamental, fundamental, quinta, fundamental. Sem arpejo; para improvisar em cima' },
-  { id: 'root', label: 'Tônica', hint: 'Só a fundamental do acorde, nos tempos 1 e 3' },
+  { id: 'root', label: 'Tônica', hint: 'Fundamental sustentada nos tempos 1 e 3: base sólida para improvisar em cima sem arpejos' },
+  { id: 'groove', label: 'Cozinha', hint: 'Levada da base: fundamental, fundamental, quinta, fundamental' },
   { id: 'triad', label: 'Tríade', hint: 'Fundamental, terça e quinta: 1-3-5-3' },
   { id: 'arpeggio', label: 'Arpejo', hint: 'Todas as notas do acorde subindo (com a sétima, se houver) e a oitava' },
 ];

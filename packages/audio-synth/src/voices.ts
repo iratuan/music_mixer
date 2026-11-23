@@ -121,7 +121,7 @@ export function pluckAt(at: number, midi: number, volume: number, out: AudioNode
   const ctx = getAudioContext();
   const v = BASS_TIMBRES[bassTimbre];
   const hz = midiToHz(midi);
-  const end = at + Math.max(0.08, Math.min(dur, 3));
+  const end = at + Math.max(0.08, Math.min(dur, 8));
   const stopAt = end + 0.12;
   const rr = 1 + (Math.random() - 0.5) * 0.12; // brilho
   const cents = (Math.random() - 0.5) * 6;

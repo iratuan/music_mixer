@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { CADENCES, PROGRESSION_GENRES, cadenceChords, cadenceGenre, chordNoteNames, chordSymbol, harmonicField, keyUsesFlats, type Cadence, type Chord, type Key, type ProgressionGenre } from '@domain';
+import { CADENCES, PROGRESSION_GENRES, cadenceChords, cadenceGenre, chordNoteNames, chordSymbol, harmonicField, keyUsesFlats, type BassRole, type Cadence, type Chord, type Key, type ProgressionGenre } from '@domain';
 import { Icon } from '@baixaria/ui-core';
 import { RHYTHMS, TIMBRES, TIMBRE_GROUPS, previewTimbre, type Rhythm, type Timbre } from '@baixaria/audio-synth';
 import { readStore, writeStore } from '@baixaria/ui-core';
@@ -26,6 +26,12 @@ interface Props {
   onRhythm(v: Rhythm): void;
   drums: boolean;
   onDrums(v: boolean): void;
+  chords: boolean;
+  onChords(v: boolean): void;
+  bassOn: boolean;
+  onBassOn(v: boolean): void;
+  bassRole: BassRole;
+  onBassRole(v: BassRole): void;
   chordBeats: number;
   onChordBeats(v: number): void;
   /** Progressão tocando agora e o passo atual. */
@@ -143,11 +149,33 @@ export function CadencePlayerPanel(p: Props) {
             </button>
           </div>
         </div>
+        <div className="cad-ctl">
+          <span className="cad-ctl-label">Baixo</span>
+          <div className="cad-inline">
+            <label className="check" title="Ligar ou desligar o contrabaixo">
+              <input type="checkbox" checked={p.bassOn} onChange={() => p.onBassOn(!p.bassOn)} />
+              {p.bassOn ? 'Ativo' : 'Mudo'}
+            </label>
+            {p.bassOn && (
+              <div className="seg tiny" role="group" aria-label="Papel do baixo">
+                <button aria-pressed={p.bassRole === 'root'} className={p.bassRole === 'root' ? 'on' : ''} onClick={() => p.onBassRole('root')} title="Fundamental sustentada nos tempos 1 e 3 (ideal para improvisação)">
+                  Tônica
+                </button>
+                <button aria-pressed={p.bassRole === 'groove'} className={p.bassRole === 'groove' ? 'on' : ''} onClick={() => p.onBassRole('groove')} title="Levada com fundamental e quinta">
+                  Cozinha
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="cad-ctl cad-toggles">
-          <label className="check">
+          <label className="check" title="Tocar os acordes da harmonia">
+            <input type="checkbox" checked={p.chords} onChange={() => p.onChords(!p.chords)} /> Harmonia
+          </label>
+          <label className="check" title="Tocar a bateria">
             <input type="checkbox" checked={p.drums} onChange={() => p.onDrums(!p.drums)} /> Bateria
           </label>
-          <label className="check">
+          <label className="check" title="Repetir a progressão continuamente">
             <input type="checkbox" checked={p.loop} onChange={() => p.onLoop(!p.loop)} /> Loop
           </label>
           <button className={playing ? 'primary small-btn' : 'ghost small-btn'} onClick={p.onStop} title="Parar tudo (Espaço também)">

@@ -75,18 +75,17 @@ function chordTones(chord: Chord): { midi: number; interval: number }[] {
 }
 
 export function Harmony({ onPracticeScale }: Props) {
-  const HARMONY_DEFAULTS = { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: false, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'groove' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: true, chords: false, chordBeats: 4, v: 2 };
+  const HARMONY_DEFAULTS = { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: true, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'root' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: true, chords: true, chordBeats: 4, v: 3 };
   const [opts, setOpts] = useState<typeof HARMONY_DEFAULTS>(() => {
     const saved = readStore<Partial<typeof HARMONY_DEFAULTS>>('bf-harmony', {});
-    // Versão 2: a base toca a cozinha (levada + bateria) e os acordes só tocam se ligados.
-    // Preferências antigas (v1) passam para a cozinha, sem arpejo do baixo.
-    return saved.v === 2 ? { ...HARMONY_DEFAULTS, ...saved } : { ...HARMONY_DEFAULTS, ...saved, v: 2, bassRole: 'groove', drums: true, chords: false };
+    // Versão 3: backing track com harmonia ativa, tônica sustentada (sem arpejo) e loop ligado por padrão
+    return saved.v === 3 ? { ...HARMONY_DEFAULTS, ...saved } : { ...HARMONY_DEFAULTS, ...saved, v: 3, bassRole: 'root', drums: true, chords: true, loop: true };
   });
   useEffect(() => writeStore('bf-harmony', opts), [opts]);
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) => setOpts((o) => ({ ...o, [k]: v }));
-  const bassRole: BassRole = opts.bassRole ?? 'groove';
-  /** Acordes tocando junto com a cozinha (desligado por padrão: a base é baixo + bateria). */
-  const chordsOn = opts.chords ?? false;
+  const bassRole: BassRole = opts.bassRole ?? 'root';
+  /** Acordes tocando junto com a base (ligado por padrão para música de background). */
+  const chordsOn = opts.chords ?? true;
   const bassOn = opts.bassOn ?? true;
   const playStyle: PlayStyle = opts.style ?? 'chord';
   useEffect(() => {
@@ -337,6 +336,12 @@ export function Harmony({ onPracticeScale }: Props) {
           onDrums={(v) => set('drums', v)}
           chordBeats={opts.chordBeats ?? 4}
           onChordBeats={(v) => set('chordBeats', v)}
+          chords={chordsOn}
+          onChords={(v) => set('chords', v)}
+          bassOn={bassOn}
+          onBassOn={(v) => set('bassOn', v)}
+          bassRole={bassRole}
+          onBassRole={(v) => set('bassRole', v)}
           playing={cadence}
           onPlayChord={hear}
           onPlayCadence={playCadence}
