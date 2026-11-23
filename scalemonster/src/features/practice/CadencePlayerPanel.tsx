@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { CADENCES, PROGRESSION_GENRES, cadenceChords, cadenceGenre, chordNoteNames, chordSymbol, harmonicField, keyUsesFlats, type BassRole, type Cadence, type Chord, type Key, type ProgressionGenre } from '@domain';
-import { Icon } from '@baixaria/ui-core';
+import { Icon, Knob } from '@baixaria/ui-core';
 import { RHYTHMS, TIMBRES, TIMBRE_GROUPS, previewTimbre, type Rhythm, type Timbre } from '@baixaria/audio-synth';
 import { readStore, writeStore } from '@baixaria/ui-core';
 
@@ -91,12 +91,12 @@ export function CadencePlayerPanel(p: Props) {
       <div className="cad-controls card" role="toolbar" aria-label="Som do acompanhamento">
         <div className="cad-ctl">
           <span className="cad-ctl-label">Acordes</span>
-          <div className="seg tiny" role="group" aria-label="Tríades ou tétrades">
-            <button aria-pressed={!tetrads} onClick={() => p.onTetrads(false)}>
-              Tríades
+          <div className="cad-inline push-pull-group" role="group" aria-label="Tríades ou tétrades">
+            <button type="button" className={`push-pull-btn ${!tetrads ? 'pushed' : ''}`} onClick={() => p.onTetrads(false)} aria-pressed={!tetrads}>
+              <span className="led-indicator" /> Tríades
             </button>
-            <button aria-pressed={tetrads} onClick={() => p.onTetrads(true)}>
-              Tétrades
+            <button type="button" className={`push-pull-btn ${tetrads ? 'pushed' : ''}`} onClick={() => p.onTetrads(true)} aria-pressed={tetrads}>
+              <span className="led-indicator" /> Tétrades
             </button>
           </div>
         </div>
@@ -141,21 +141,38 @@ export function CadencePlayerPanel(p: Props) {
         </div>
         <div className="cad-ctl cad-bpm">
           <span className="cad-ctl-label">Andamento</span>
-          <div className="cad-inline">
-            <input type="range" min={40} max={200} value={p.bpm} onChange={(e) => p.onBpm(Number(e.target.value))} aria-label="Andamento" />
-            <b className="bpm-num">{p.bpm}</b>
-            <button className="ghost small-btn" onClick={tap} title="Bata no ritmo (2 ou mais toques) para definir o andamento">
-              Bater
-            </button>
+          <div className="cad-inline bpm-knob-row">
+            <Knob
+              value={p.bpm}
+              defaultValue={90}
+              min={40}
+              max={200}
+              step={1}
+              size={44}
+              label="BPM"
+              onChange={(v) => p.onBpm(v)}
+              format={(v) => `${v}`}
+            />
+            <div className="bpm-info">
+              <b className="bpm-num">{p.bpm}</b>
+              <button className="ghost small-btn tap-btn" onClick={tap} title="Bata no ritmo (2 ou mais toques) para definir o andamento">
+                Bater
+              </button>
+            </div>
           </div>
         </div>
         <div className="cad-ctl">
           <span className="cad-ctl-label">Baixo</span>
           <div className="cad-inline">
-            <label className="check" title="Ligar ou desligar o contrabaixo">
-              <input type="checkbox" checked={p.bassOn} onChange={() => p.onBassOn(!p.bassOn)} />
-              {p.bassOn ? 'Ativo' : 'Mudo'}
-            </label>
+            <button
+              type="button"
+              className={`push-pull-btn ${p.bassOn ? 'pushed' : ''}`}
+              onClick={() => p.onBassOn(!p.bassOn)}
+              title="Ligar ou desligar o contrabaixo"
+              aria-pressed={p.bassOn}
+            >
+              <span className="led-indicator" /> {p.bassOn ? 'Ativo' : 'Mudo'}
+            </button>
             {p.bassOn && (
               <div className="seg tiny" role="group" aria-label="Papel do baixo">
                 <button aria-pressed={p.bassRole === 'root'} className={p.bassRole === 'root' ? 'on' : ''} onClick={() => p.onBassRole('root')} title="Fundamental sustentada nos tempos 1 e 3 (ideal para improvisação)">
@@ -169,15 +186,33 @@ export function CadencePlayerPanel(p: Props) {
           </div>
         </div>
         <div className="cad-ctl cad-toggles">
-          <label className="check" title="Tocar os acordes da harmonia">
-            <input type="checkbox" checked={p.chords} onChange={() => p.onChords(!p.chords)} /> Harmonia
-          </label>
-          <label className="check" title="Tocar a bateria">
-            <input type="checkbox" checked={p.drums} onChange={() => p.onDrums(!p.drums)} /> Bateria
-          </label>
-          <label className="check" title="Repetir a progressão continuamente">
-            <input type="checkbox" checked={p.loop} onChange={() => p.onLoop(!p.loop)} /> Loop
-          </label>
+          <button
+            type="button"
+            className={`push-pull-btn ${p.chords ? 'pushed' : ''}`}
+            onClick={() => p.onChords(!p.chords)}
+            title="Tocar os acordes da harmonia"
+            aria-pressed={p.chords}
+          >
+            <span className="led-indicator" /> Harmonia
+          </button>
+          <button
+            type="button"
+            className={`push-pull-btn ${p.drums ? 'pushed' : ''}`}
+            onClick={() => p.onDrums(!p.drums)}
+            title="Tocar a bateria"
+            aria-pressed={p.drums}
+          >
+            <span className="led-indicator" /> Bateria
+          </button>
+          <button
+            type="button"
+            className={`push-pull-btn ${p.loop ? 'pushed' : ''}`}
+            onClick={() => p.onLoop(!p.loop)}
+            title="Repetir a progressão continuamente"
+            aria-pressed={p.loop}
+          >
+            <span className="led-indicator" /> Loop
+          </button>
           <button className={playing ? 'primary small-btn' : 'ghost small-btn'} onClick={p.onStop} title="Parar tudo (Espaço também)">
             <Icon name="stop" size={13} /> Parar
           </button>

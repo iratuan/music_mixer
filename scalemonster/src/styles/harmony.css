@@ -29,40 +29,77 @@
 }
 .cof-slice {
   cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .cof-slice path {
-  stroke: var(--surface);
-  stroke-width: 2;
-  transition: fill var(--dur), filter var(--dur);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1.6px;
+  stroke-linejoin: round;
+  transition: fill 0.16s ease, stroke 0.16s ease, filter 0.16s ease;
 }
 .cof-slice.ring-major path {
-  fill: var(--surface-3);
+  fill: var(--surface-base, #16161b);
 }
 .cof-slice.ring-minor path {
-  fill: var(--surface-2);
+  fill: color-mix(in srgb, var(--surface-base, #121215) 85%, var(--bg-canvas, #0a0a0c));
 }
 .cof-slice.ring-dim path {
-  fill: color-mix(in srgb, var(--surface-2) 55%, var(--bg));
+  fill: color-mix(in srgb, var(--surface-base, #121215) 60%, var(--bg-canvas, #0a0a0c));
 }
 .cof-slice:hover path {
-  fill: color-mix(in srgb, var(--accent) 22%, var(--surface-3));
+  fill: color-mix(in srgb, var(--accent-primary, #6366f1) 22%, var(--surface-elevated, #22222b));
+  stroke: color-mix(in srgb, var(--accent-primary, #6366f1) 60%, transparent);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent-primary, #6366f1) 35%, transparent));
 }
 .cof-slice.related path {
-  fill: color-mix(in srgb, var(--accent-2) 28%, var(--surface-2));
+  fill: color-mix(in srgb, #3b82f6 24%, var(--surface-base, #121215));
+  stroke: color-mix(in srgb, #3b82f6 45%, transparent);
+}
+.cof-slice.related:hover path {
+  fill: color-mix(in srgb, #3b82f6 36%, var(--surface-elevated, #18181c));
+  stroke: #60a5fa;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.45));
 }
 .cof-slice.selected path {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.45));
+  fill: var(--accent-primary, #6366f1);
+  stroke: #c7d2fe;
+  stroke-width: 2.2px;
+  filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.75)) drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
 .cof-slice.selected text {
-  fill: var(--accent-ink);
+  fill: #ffffff;
+  font-weight: 800;
 }
-.cof-slice.active path {
-  fill: var(--stem-accomp);
-  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45));
+.cof-slice.active path,
+.cof-slice.triggered path,
+.cof-slice:active path {
+  fill: #3b82f6 !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.8px !important;
+  filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.95)) drop-shadow(0 0 6px #ffffff) !important;
+  animation: cof-pad-hit 0.5s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
-.cof-slice.active text {
-  fill: var(--bg);
+.cof-slice.active text,
+.cof-slice.triggered text,
+.cof-slice:active text {
+  fill: #ffffff !important;
+  font-weight: 900 !important;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+}
+
+@keyframes cof-pad-hit {
+  0% {
+    fill: #93c5fd;
+    stroke: #ffffff;
+    filter: drop-shadow(0 0 20px #3b82f6) drop-shadow(0 0 10px #ffffff);
+  }
+  100% {
+    fill: #3b82f6;
+    stroke: #ffffff;
+    filter: drop-shadow(0 0 14px rgba(59, 130, 246, 0.85));
+  }
 }
 .cof-slice text {
   font-family: var(--font-display);
@@ -604,11 +641,77 @@ button.cad-chip:hover {
   width: 120px;
   accent-color: var(--accent);
 }
+.bpm-knob-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.bpm-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bpm-num {
+  font-variant-numeric: tabular-nums;
+  font: 750 var(--fs-md) / 1 var(--font-display);
+  color: var(--text-primary, #ffffff);
+}
+.tap-btn {
+  padding: 2px 7px;
+  font-size: var(--fs-2xs);
+}
+/* Push-Pull Hardware Latch Buttons */
+.push-pull-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  min-height: 32px;
+  border-radius: var(--r-sm, 6px);
+  background: var(--surface-base, #16161b);
+  border: 1px solid var(--border-medium, #27272a);
+  color: var(--text-secondary, #a1a1aa);
+  font: 700 11.5px/1 var(--font);
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 0 #09090b, 0 3px 6px rgba(0, 0, 0, 0.45);
+  transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+.push-pull-btn:hover {
+  background: var(--surface-elevated, #1f2026);
+  color: var(--text-primary, #ffffff);
+}
+.push-pull-btn .led-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3f3f46;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
+  transition: all 0.15s ease;
+  flex: none;
+}
+.push-pull-btn.pushed {
+  background: var(--surface-elevated, #1c1d24);
+  border-color: var(--accent-primary, #6366f1);
+  color: #ffffff;
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 8px color-mix(in srgb, var(--accent-primary, #6366f1) 35%, transparent);
+}
+.push-pull-btn.pushed .led-indicator {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981, 0 0 10px #10b981;
+}
+.push-pull-group {
+  display: inline-flex;
+  gap: 4px;
+}
 .cad-toggles {
   flex-direction: row;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
   margin-left: auto;
+  flex-wrap: wrap;
 }
 .bpm-num {
   font-variant-numeric: tabular-nums;

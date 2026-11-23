@@ -123,10 +123,16 @@ export function Harmony({ onPracticeScale }: Props) {
   }, []);
   useEffect(() => () => stop(), [stop]);
 
+  const hearTimer = useRef<number | null>(null);
   const hear = (c: Chord) => {
     setActive(c);
     harmonicStore.set({ active: c });
     playChord(c, opts.timbre);
+    if (hearTimer.current) window.clearTimeout(hearTimer.current);
+    hearTimer.current = window.setTimeout(() => {
+      setActive(null);
+      harmonicStore.set({ active: null });
+    }, 650);
   };
 
   function playCadence(c: Cadence) {
