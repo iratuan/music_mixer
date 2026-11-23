@@ -646,6 +646,108 @@ button.tkey.on {
     font-size: 34px;
   }
 }
+
+/* Console Mute / Solo Hardware Push-Buttons */
+.ms-pair {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  background: var(--surface-base, #121215);
+  padding: 2px;
+  border-radius: var(--r-sm, 6px);
+  border: 1px solid var(--border-subtle, #27272a);
+}
+.ms {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 800 11px/1 var(--font-display, var(--font));
+  border-radius: 4px;
+  border: 1px solid var(--border-medium, #27272a);
+  background: var(--surface-elevated, #1c1d22);
+  color: var(--text-secondary, #71717a);
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 1px 0 #09090b, 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0;
+}
+.ms:hover {
+  background: var(--surface-hover, #272730);
+  color: var(--text-primary, #ffffff);
+}
+.ms.mute.on {
+  background: #dc2626 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px rgba(239, 68, 68, 0.55) !important;
+}
+.ms.solo.on {
+  background: #d97706 !important;
+  border-color: #f59e0b !important;
+  color: #ffffff !important;
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.55) !important;
+}
+
+/* Braço do contrabaixo (2D fretboard com leitura nítida e protegida) */
+.bass-neck {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.neck-wood {
+  fill: var(--board, #171513);
+}
+.neck-fret {
+  stroke: var(--fret, #888892);
+  stroke-width: 2;
+}
+.neck-nut {
+  stroke: var(--text, #f4f4f7);
+  stroke-width: 5;
+}
+.neck-inlay {
+  fill: var(--inlay, #dcdce6);
+}
+.neck-string {
+  stroke: var(--string, #c4c4cc);
+}
+.neck-open,
+.neck-num {
+  font: 600 var(--fs-xs) var(--font-mono);
+  fill: var(--faint, #71717a);
+}
+.neck-note circle {
+  fill: var(--surface-3, #27272a);
+  stroke: var(--line-strong, #3f3f46);
+  stroke-width: 1.5;
+}
+.neck-note text {
+  font: 700 var(--fs-xs) var(--font);
+  fill: var(--text, #f4f4f7);
+}
+.neck-note.done {
+  opacity: 0.35;
+}
+.neck-note.next circle {
+  fill: var(--surface-base, #121215);
+  stroke: var(--accent-2, #38bdf8);
+  stroke-width: 2.5;
+}
+.neck-note.now circle {
+  fill: var(--accent-primary, #6366f1);
+  stroke: #ffffff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px var(--accent-primary, #6366f1));
+}
+.neck-note.now text {
+  fill: #ffffff;
+}
+
 /* Knob: o SVG sem estas regras pinta os arcos de preto e some com a trilha e o ponteiro. */
 .knob-dial {
   position: relative;

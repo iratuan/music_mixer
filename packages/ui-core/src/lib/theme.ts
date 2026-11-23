@@ -4,8 +4,8 @@
  */
 export type ThemeName = 'dark' | 'light' | 'wood' | 'paper';
 export const THEMES: ReadonlyArray<{ id: ThemeName; label: string }> = [
-  { id: 'dark', label: 'Escuro' },
-  { id: 'light', label: 'Claro' },
+  { id: 'dark', label: 'Dark-Pro (Escuro)' },
+  { id: 'light', label: 'Studio Light (Claro)' },
   { id: 'wood', label: 'Madeira' },
   { id: 'paper', label: 'Papel' },
 ];
