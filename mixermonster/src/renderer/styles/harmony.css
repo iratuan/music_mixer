@@ -5,12 +5,14 @@
 }
 .cof-slice.selected path {
   fill: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.45));
 }
 .cof-slice.selected text {
   fill: var(--accent-ink);
 }
 .cof-slice.active path {
   fill: var(--stem-accomp);
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45));
 }
 .cof-slice.active text {
   fill: var(--bg);
@@ -64,14 +66,20 @@
   padding: var(--s-3) var(--s-4);
 }
 .field-card.on {
-  background: color-mix(in srgb, var(--c) 28%, var(--surface-2));
+  background: color-mix(in srgb, var(--c) 25%, var(--surface));
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--c) 35%, transparent);
+  border-color: var(--c);
 }
 .cad-row.on {
   background: var(--accent-soft);
 }
 .cad-chip.now {
-  background: var(--stem-accomp);
-  color: var(--bg);
+  background: var(--c, var(--accent));
+  border-color: var(--c, var(--accent));
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 12px color-mix(in srgb, var(--c, var(--accent)) 50%, transparent);
+  color: #ffffff;
 }
 .hm-measure.cur {
   background: color-mix(in srgb, var(--sec) 26%, transparent);

@@ -1,15 +1,16 @@
 /*
- * Tokens do Baixaria Fina. Tudo que é cor, espaço, raio e tipo vem daqui.
- * Os temas trocam só as cores (atributo data-theme no <html>). Paletas Claro, Madeira e Papel
- * adaptadas do ScaleMonster (mesmo autor); Escuro é a identidade coral + teal do Baixaria.
+ * Tokens do Baixaria Fina / Dark-Pro Ecosystem. Tudo que é cor, espaço, raio e tipo vem daqui.
+ * Os temas trocam as cores (atributo data-theme no <html>).
+ * Escuro (padrão): Dark-Pro Ecosystem (#0A0A0C canvas, #121215/#18181C superfícies, #27272A bordas, #6366F1 acento índigo, #10B981 sucesso, #EF4444 alerta).
+ * Claro: Studio Light Pro (#F4F4F7 canvas, #FFFFFF/#F9F9FB superfícies, #E4E4E7 bordas, #4F46E5 acento índigo, #059669 sucesso, #DC2626 alerta).
  */
 :root {
   /* Paleta de apoio: cores de marca e de estado usadas pelos dois produtos. Mudar aqui muda tudo. */
-  --brand-orange: #ff6b2c;
-  --ok-green: #16a34a;
+  --brand-orange: #ff5733;
+  --ok-green: #10b981;
   --warn-amber: #f59e0b;
-  --danger-red: #dc2626;
-  --info-blue: #2563eb;
+  --danger-red: #ef4444;
+  --info-blue: #3b82f6;
 
   --s-1: 4px;
   --s-2: 8px;
@@ -19,120 +20,160 @@
   --s-6: 24px;
   --s-8: 32px;
 
+  --r-xs: 4px;
   --r-sm: 6px;
   --r-md: 10px;
   --r-lg: 14px;
+  --r-xl: 16px;
   --r-pill: 999px;
 
-  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
-  --font-display: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+  --font: 'Inter', 'Plus Jakarta Sans', 'Segoe UI Variable Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', ui-monospace, Consolas, monospace;
   --fs-2xs: 10.5px;
   --fs-xs: 11.5px;
   --fs-sm: 13px;
-  --fs-md: 14.5px;
+  --fs-md: 14px;
   --fs-lg: 18px;
-  --fs-xl: 26px;
-  --fs-hero: 44px;
+  --fs-xl: 24px;
+  --fs-hero: 40px;
 
   /* Texto sobre preenchimento de cor forte (tecla acesa, etiqueta da mão). */
   --on-color: #ffffff;
   --hand-left: #c97a12;
   --key-white: #f7f6f2;
-  --key-black: #1b1c20;
-  --key-line: #b9b6ae;
-  --key-dim: #8d8a83;
-  --lcd-bg: #0f1115;
-  --lcd-ink: #eef0f3;
-  --lcd-dim: #737a86;
-  --lcd-line: rgba(255, 255, 255, 0.08);
+  --key-black: #121215;
+  --key-line: #3f3f46;
+  --key-dim: #71717a;
+  --lcd-bg: #0a0a0c;
+  --lcd-ink: #f3f4f6;
+  --lcd-dim: #9ca3af;
+  --lcd-line: #27272a;
 
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --dur: 160ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 180ms;
 }
 
-/* Escuro (padrão): grafite, coral e teal */
+/* Escuro (padrão): Dark-Pro Ecosystem */
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b0c0f;
-  --surface: #14161b;
-  --surface-2: #1b1e25;
-  --surface-3: #252932;
-  --text: #f2f3f5;
-  --muted: #9aa0ab;
-  --faint: #6d737e;
-  --line: rgba(255, 255, 255, 0.07);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --accent: #ff5a3c;
-  --accent-ink: #1a0603;
-  --accent-soft: rgba(255, 90, 60, 0.16);
-  --accent-2: #4fd1c5;
-  --good: #3ddc97;
-  --warn: #ffb547;
-  --bad: #ff6b6b;
-  --focus: #ffd166;
-  --scrim: rgba(0, 0, 0, 0.55);
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --wave-bg: #101217;
-  --board: #1a140f;
-  --fret: rgba(235, 225, 205, 0.45);
-  --string: #c9ced8;
-  --inlay: rgba(235, 225, 205, 0.35);
+  --bg: #0a0a0c;
+  --bg-canvas: #0a0a0c;
+  --surface: #121215;
+  --surface-base: #121215;
+  --surface-2: #18181c;
+  --surface-elevated: #18181c;
+  --surface-3: #222228;
+  --surface-hover: #222228;
+  --surface-active: #27272f;
+  --text: #f3f4f6;
+  --text-primary: #f3f4f6;
+  --muted: #9ca3af;
+  --text-secondary: #9ca3af;
+  --faint: #4b5563;
+  --text-muted: #4b5563;
+  --line: #27272a;
+  --border-subtle: #27272a;
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-focus: #6366f1;
 
-  --stem-vocals: #ff7ab6;
-  --stem-lead: #ff7ab6;
-  --stem-backing: #c79bff;
-  --stem-guitar: #ffb547;
-  --stem-piano: #7cc4ff;
-  --stem-bass: #ff5a3c;
-  --stem-drums: #4fd1c5;
-  --stem-other: #a7b0be;
-  --stem-rest: #7d8592;
-  --stem-metro: #ffd166;
-  --stem-accomp: #b8e986;
-  --mute: #7cc4ff;
+  --accent: #6366f1;
+  --accent-primary: #6366f1;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-2: #3b82f6;
+  --good: #10b981;
+  --status-success: #10b981;
+  --warn: #f59e0b;
+  --status-warning: #f59e0b;
+  --bad: #ef4444;
+  --status-alert: #ef4444;
+  --focus: #6366f1;
+  --scrim: rgba(0, 0, 0, 0.7);
+  --shadow: none;
+  --glow-accent: 0 0 12px rgba(99, 102, 241, 0.28);
+  --glow-success: 0 0 10px rgba(16, 185, 129, 0.25);
+  --glow-alert: 0 0 12px rgba(239, 68, 68, 0.30);
+  --wave-bg: #0e0e11;
+  --board: #111114;
+  --fret: #3f3f46;
+  --string: #d4d4d8;
+  --inlay: #52525b;
+
+  --stem-vocals: #a855f7;
+  --stem-lead: #a855f7;
+  --stem-backing: #c084fc;
+  --stem-guitar: #f59e0b;
+  --stem-piano: #3b82f6;
+  --stem-bass: #6366f1;
+  --stem-drums: #10b981;
+  --stem-other: #9ca3af;
+  --stem-rest: #6b7280;
+  --stem-metro: #f59e0b;
+  --stem-accomp: #34d399;
+  --mute: #60a5fa;
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #f3f3f6;
+  --bg: #f4f4f7;
+  --bg-canvas: #f4f4f7;
   --surface: #ffffff;
-  --surface-2: #ececf1;
-  --surface-3: #e0e0e7;
-  --text: #1c1c21;
-  --muted: #62626d;
-  --faint: #8a8a95;
-  --line: rgba(0, 0, 0, 0.07);
-  --line-strong: rgba(0, 0, 0, 0.14);
-  --accent: #e2442a;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(226, 68, 42, 0.12);
-  --accent-2: #0e8f84;
-  --good: #0e9f6e;
-  --warn: #b26a00;
-  --bad: #d92d20;
-  --focus: #1f6feb;
-  --scrim: rgba(20, 20, 30, 0.3);
-  --shadow: 0 8px 24px rgba(20, 20, 40, 0.1);
-  --wave-bg: #f7f7fa;
-  --board: #e9dcc6;
-  --fret: rgba(60, 45, 25, 0.45);
-  --string: #6f6a62;
-  --inlay: rgba(60, 45, 25, 0.25);
+  --surface-base: #ffffff;
+  --surface-2: #f9f9fb;
+  --surface-elevated: #f9f9fb;
+  --surface-3: #ececf2;
+  --surface-hover: #ececf2;
+  --surface-active: #e2e2ea;
+  --text: #18181b;
+  --text-primary: #18181b;
+  --muted: #52525b;
+  --text-secondary: #52525b;
+  --faint: #a1a1aa;
+  --text-muted: #a1a1aa;
+  --line: #e4e4e7;
+  --border-subtle: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --border-medium: #d4d4d8;
+  --border-focus: #4f46e5;
 
-  --stem-vocals: #d63384;
-  --stem-lead: #d63384;
-  --stem-backing: #7c4dff;
-  --stem-guitar: #c97a00;
-  --stem-piano: #1f78d1;
-  --stem-bass: #e2442a;
-  --stem-drums: #0e8f84;
-  --stem-other: #6c7480;
-  --stem-rest: #8a919c;
-  --stem-metro: #b58900;
-  --stem-accomp: #4d8c1f;
-  --mute: #1f78d1;
+  --accent: #4f46e5;
+  --accent-primary: #4f46e5;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(79, 70, 229, 0.12);
+  --accent-2: #2563eb;
+  --good: #059669;
+  --status-success: #059669;
+  --warn: #d97706;
+  --status-warning: #d97706;
+  --bad: #dc2626;
+  --status-alert: #dc2626;
+  --focus: #4f46e5;
+  --scrim: rgba(15, 23, 42, 0.35);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --glow-accent: 0 0 12px rgba(79, 70, 229, 0.16);
+  --glow-success: 0 0 10px rgba(5, 150, 105, 0.15);
+  --glow-alert: 0 0 12px rgba(220, 38, 38, 0.16);
+  --wave-bg: #ffffff;
+  --board: #e4e4e7;
+  --fret: #a1a1aa;
+  --string: #52525b;
+  --inlay: #71717a;
+
+  --stem-vocals: #9333ea;
+  --stem-lead: #9333ea;
+  --stem-backing: #7c3aed;
+  --stem-guitar: #d97706;
+  --stem-piano: #2563eb;
+  --stem-bass: #4f46e5;
+  --stem-drums: #059669;
+  --stem-other: #71717a;
+  --stem-rest: #a1a1aa;
+  --stem-metro: #d97706;
+  --stem-accomp: #059669;
+  --mute: #2563eb;
 }
 
 /* Madeira: jacarandá, trastes de osso, cordas de níquel (do ScaleMonster) */

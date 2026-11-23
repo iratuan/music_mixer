@@ -91,6 +91,7 @@ button.primary {
 }
 button.primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 88%, white);
+  box-shadow: var(--glow-accent);
 }
 button.ghost {
   background: transparent;

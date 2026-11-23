@@ -134,6 +134,24 @@ Para separar, analisar e transpor de verdade no MixerMonster, antes é preciso p
 
 ---
 
+## Design System: Dark-Pro Ecosystem & Controles Táteis
+
+Ambos os aplicativos contam com o design system unificado **Dark-Pro Ecosystem** (com modo alternativo **Studio Light Pro**), combinando superfícies escuras de alta densidade (`#0A0A0C` / `#121215`), bordas com chanfro sutil de 1px (`#27272A`), acentos luminosos em índigo/azul elétrico (`#6366F1` / `#3B82F6`) e controles táteis de hardware digital (knobs com graduação radial, switches de ponte com LEDs integrados e pads harmônicos estilo MPC/Launchpad com feedback tátil `inset-shadow`).
+
+<p align="center">
+  <img src="docs/screens/00-dark-pro-design-system.png" alt="Dark-Pro Design System Showcase" width="90%">
+</p>
+
+### Galeria de Telas
+
+| Módulo | Dark-Pro Mode | Studio Light Pro |
+|---|---|---|
+| **ScaleMonster: Ciclo das Quintas & Harmonia** | ![Harmony Dark](docs/screens/scalemonster-harmony-dark.png) | ![Harmony Light](docs/screens/scalemonster-harmony-light.png) |
+| **ScaleMonster: Trilha de Exercícios & Braço** | ![Exercises Dark](docs/screens/scalemonster-exercises-dark.png) | ![Exercises Light](docs/screens/scalemonster-exercises-light.png) |
+| **MixerMonster: Biblioteca de Músicas & Stems** | ![Mixer Library Dark](docs/screens/mixermonster-library-dark.png) | ![Mixer Library Light](docs/screens/mixermonster-library-light.png) |
+
+---
+
 ## Novidades desta versão
 
 - **Pacotes compartilhados na raiz:** `packages/` é a única fonte de música, áudio, interface e contrato `.mcraft-pack`. Os produtos só importam por alias.

@@ -47,6 +47,12 @@ export const CircleOfFifthsWheel = memo(function CircleOfFifthsWheel({ selected,
   return (
     <div className="cof-wrap">
       <svg className="cof" viewBox="-205 -205 410 410" role="group" aria-label="Ciclo das quintas">
+        <defs>
+          <radialGradient id="cof-hub-grad" cx="45%" cy="45%" r="55%">
+            <stop offset="0%" stopColor="var(--surface-elevated, #18181c)" />
+            <stop offset="100%" stopColor="var(--surface-base, #121215)" />
+          </radialGradient>
+        </defs>
         {rings.map(({ ring, r0, r1, name, size }) =>
           CIRCLE.map((slot, i) => {
             const f = fieldOf(ring, i);

@@ -174,6 +174,7 @@ export const CADENCES: readonly Cadence[] = [
   { id: 'pop-ballad80', name: 'vi – V – IV – V', style: 'Balada anos 80 (Toto / A-ha)', steps: [5, 4, 3, 4], mode: 'major' },
   { id: 'motown', name: 'I – ii – iii – IV', style: 'Motown walkup', steps: [0, 1, 2, 3], mode: 'major', tetrads: true },
   { id: 'folk', name: 'I – V – IV – I', style: 'Folk / Country clássico', steps: [0, 4, 3, 0], mode: 'major' },
+  { id: 'pop-anthem', name: 'I – vi – IV – I', style: 'Hino Pop / Britpop', steps: [0, 5, 3, 0], mode: 'major' },
   // Rock & Blues
   { id: 'blues12', name: 'I I I I – IV IV I I – V IV I V', style: 'Blues de 12 compassos', steps: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], mode: 'major' },
   { id: 'blues8', name: 'I – V – IV – IV – I – V – I – V', style: 'Blues de 8 compassos (Key to the Highway)', steps: [0, 4, 3, 3, 0, 4, 0, 4], mode: 'major' },
@@ -188,11 +189,14 @@ export const CADENCES: readonly Cadence[] = [
   { id: 'choro', name: 'I – IV – ii – V – I', style: 'Choro / Seresta', steps: [0, 3, 1, 4, 0], mode: 'major', tetrads: true },
   { id: 'choro-maxixe', name: 'I – V – I – IV – I – V – I', style: 'Choro clássico / Maxixe', steps: [0, 4, 0, 3, 0, 4, 0], mode: 'major' },
   { id: 'clube-esquina', name: 'Imaj7 – IVmaj7 – iii7 – vi7', style: 'Clube da Esquina / MPB mineira', steps: [0, 3, 2, 5], mode: 'major', tetrads: true },
+  { id: 'ijexa', name: 'I – ii – IV – I', style: 'Ijexá / Samba de Roda', steps: [0, 1, 3, 0], mode: 'major' },
   { id: 'baiao', name: 'i – VII – i – VII', style: 'Baião / Forró pé de serra', steps: [0, 6, 0, 6], mode: 'minor' },
+  { id: 'forro', name: 'i – iv – v – VII', style: 'Forró pé de serra menor', steps: [0, 3, 4, 6], mode: 'minor' },
   { id: 'maracatu', name: 'i – VI – i – VI', style: 'Maracatu / Afropop', steps: [0, 5, 0, 5], mode: 'minor' },
   // Jazz & Soul
   { id: 'jazz', name: 'ii – V – I', style: 'Jazz turnaround', steps: [1, 4, 0] },
   { id: 'jazz7', name: 'ii7 – V7 – Imaj7', style: 'Jazz com tétrades', steps: [1, 4, 0], tetrads: true },
+  { id: 'neosoul-251', name: 'ii7 – V7 – iii7 – vi7', style: 'Neo-Soul Turnaround (Badu)', steps: [1, 4, 2, 5], mode: 'major', tetrads: true },
   { id: 'jazz-circle4', name: 'iii7 – vi7 – ii7 – V7', style: 'Jazz turnaround cíclico (III-VI-II-V)', steps: [2, 5, 1, 4], mode: 'major', tetrads: true },
   { id: 'jazz-bird', name: 'Imaj7 – IVmaj7 – iii7 – vi7 – ii7 – V7', style: 'Bebop / Bird blues turnaround', steps: [0, 3, 2, 5, 1, 4], mode: 'major', tetrads: true },
   { id: 'jazz-rhythm', name: 'Imaj7 – vi7 – ii7 – V7 – iii7 – vi7 – ii7 – V7', style: 'Rhythm Changes (A)', steps: [0, 5, 1, 4, 2, 5, 1, 4], mode: 'major', tetrads: true },
@@ -215,18 +219,19 @@ export const CADENCES: readonly Cadence[] = [
   { id: 'lament', name: 'i – VI – iv – i', style: 'Lamento', steps: [0, 5, 3, 0], mode: 'minor' },
   { id: 'minor-iivi', name: 'iiø – V7 – i', style: 'Jazz menor', steps: [1, 4, 0], mode: 'minor', tetrads: true },
   { id: 'minor-pop', name: 'i – III – VII – VI', style: 'Pop menor', steps: [0, 2, 6, 5], mode: 'minor' },
+  { id: 'flamenco-rumba', name: 'i – iv – III – VII', style: 'Rumba Flamenca / Gipsy', steps: [0, 3, 2, 6], mode: 'minor' },
 ];
 
 /** Estilos para filtrar a lista de progressões. */
 export type ProgressionGenre = 'Pop' | 'Rock & Blues' | 'Jazz & Soul' | 'Brasil' | 'Clássica' | 'Menor';
 export const PROGRESSION_GENRES: readonly ProgressionGenre[] = ['Pop', 'Rock & Blues', 'Jazz & Soul', 'Brasil', 'Clássica', 'Menor'];
 const GENRE_OF: Record<string, ProgressionGenre> = {
-  pop: 'Pop', doowop: 'Pop', sadpop: 'Pop', royal: 'Pop', 'i-iii-iv': 'Pop', 'i-iv-vi-v': 'Pop', vamp: 'Pop', pop80: 'Pop', 'pop-ballad80': 'Pop', motown: 'Pop', folk: 'Pop',
+  pop: 'Pop', doowop: 'Pop', sadpop: 'Pop', royal: 'Pop', 'i-iii-iv': 'Pop', 'i-iv-vi-v': 'Pop', vamp: 'Pop', pop80: 'Pop', 'pop-ballad80': 'Pop', motown: 'Pop', folk: 'Pop', 'pop-anthem': 'Pop',
   blues12: 'Rock & Blues', blues8: 'Rock & Blues', rock145: 'Rock & Blues', 'southern-rock': 'Rock & Blues', grunge: 'Rock & Blues', authentic: 'Rock & Blues',
-  jazz: 'Jazz & Soul', jazz7: 'Jazz & Soul', 'jazz-circle4': 'Jazz & Soul', 'jazz-bird': 'Jazz & Soul', 'jazz-rhythm': 'Jazz & Soul', rhythm: 'Jazz & Soul', gospel: 'Jazz & Soul', neosoul: 'Jazz & Soul', 'neosoul-vamp': 'Jazz & Soul', 'soul-ascend': 'Jazz & Soul', fourths: 'Jazz & Soul', 'minor-iivi': 'Jazz & Soul', 'dorian-vamp': 'Jazz & Soul', 'minor-vamp': 'Jazz & Soul',
-  bossa: 'Brasil', 'bossa-steps': 'Brasil', samba: 'Brasil', mpb: 'Brasil', choro: 'Brasil', 'choro-maxixe': 'Brasil', 'clube-esquina': 'Brasil', baiao: 'Brasil', maracatu: 'Brasil',
+  jazz: 'Jazz & Soul', jazz7: 'Jazz & Soul', 'jazz-circle4': 'Jazz & Soul', 'jazz-bird': 'Jazz & Soul', 'jazz-rhythm': 'Jazz & Soul', rhythm: 'Jazz & Soul', gospel: 'Jazz & Soul', neosoul: 'Jazz & Soul', 'neosoul-vamp': 'Jazz & Soul', 'neosoul-251': 'Jazz & Soul', 'soul-ascend': 'Jazz & Soul', fourths: 'Jazz & Soul', 'minor-iivi': 'Jazz & Soul', 'dorian-vamp': 'Jazz & Soul', 'minor-vamp': 'Jazz & Soul',
+  bossa: 'Brasil', 'bossa-steps': 'Brasil', samba: 'Brasil', mpb: 'Brasil', choro: 'Brasil', 'choro-maxixe': 'Brasil', 'clube-esquina': 'Brasil', baiao: 'Brasil', forro: 'Brasil', maracatu: 'Brasil', ijexa: 'Brasil',
   canon: 'Clássica', plagal: 'Clássica', half: 'Clássica', fullcycle: 'Clássica', passacaglia: 'Clássica',
-  andalusian: 'Menor', epic: 'Menor', aeolian: 'Menor', 'minor-blues': 'Menor', 'minor-turnaround': 'Menor', 'minor-cycle': 'Menor', lament: 'Menor', 'minor-pop': 'Menor', 'dark-wave': 'Menor', synthwave: 'Menor',
+  andalusian: 'Menor', epic: 'Menor', aeolian: 'Menor', 'minor-blues': 'Menor', 'minor-turnaround': 'Menor', 'minor-cycle': 'Menor', lament: 'Menor', 'minor-pop': 'Menor', 'dark-wave': 'Menor', synthwave: 'Menor', 'flamenco-rumba': 'Menor',
 };
 /** Estilo da progressão (para os filtros). */
 export function cadenceGenre(c: Cadence): ProgressionGenre {

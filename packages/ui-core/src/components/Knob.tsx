@@ -59,6 +59,13 @@ export function Knob({ value, min, max, defaultValue, onChange, label, format, s
   const [px, py] = polar(c, c, rBody - 1.5, angle);
   const [qx, qy] = polar(c, c, rBody * 0.35, angle);
 
+  const ticks = size >= 28 ? [0, 0.25, 0.5, 0.75, 1].map((pct) => {
+    const a = START + pct * SWEEP;
+    const [x1, y1] = polar(c, c, rTrack + 1.2, a);
+    const [x2, y2] = polar(c, c, rTrack - 1.2, a);
+    return { x1, y1, x2, y2, key: pct };
+  }) : [];
+
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (disabled || e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -123,6 +130,9 @@ export function Knob({ value, min, max, defaultValue, onChange, label, format, s
         onKeyDown={onKeyDown}
       >
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+          {ticks.map((t) => (
+            <line key={t.key} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} className="knob-tick" />
+          ))}
           <path className="knob-track" d={arc(c, c, rTrack, START, START + SWEEP)} />
           <path className="knob-value" d={arc(c, c, rTrack, zeroAngle, angle)} />
           <circle className="knob-body" cx={c} cy={c} r={rBody} />
