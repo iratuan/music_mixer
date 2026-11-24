@@ -348,6 +348,7 @@
   display: inline-flex;
   gap: 4px;
 }
+.harmony .cad-list {
   max-height: 560px;
   overflow-y: auto;
 }

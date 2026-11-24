@@ -105,13 +105,15 @@ export function startAccompaniment(
   const sources = new Set<AudioScheduledSourceNode>();
   const pump = () => {
     const nowSong = fromSongSec + (ctx.currentTime - startAtCtx) * rate;
-    const until = Math.max(scheduledUntil, nowSong) + LOOKAHEAD * rate;
-    const notes = notesBetween(scheduledUntil, until).map((n) => (rate === 1 ? n : { ...n, dur: n.dur / rate }));
-    for (const s of playAccompNotes(ctx, parts, notes, toCtx, ctx.currentTime)) {
-      sources.add(s);
-      s.addEventListener('ended', () => sources.delete(s));
+    const target = nowSong + LOOKAHEAD * rate;
+    if (target > scheduledUntil) {
+      const notes = notesBetween(scheduledUntil, target).map((n) => (rate === 1 ? n : { ...n, dur: n.dur / rate }));
+      for (const s of playAccompNotes(ctx, parts, notes, toCtx, ctx.currentTime)) {
+        sources.add(s);
+        s.addEventListener('ended', () => sources.delete(s));
+      }
+      scheduledUntil = target;
     }
-    scheduledUntil = until;
   };
   pump();
   const timer = window.setInterval(pump, 60);
@@ -181,12 +183,14 @@ export function startMetronome(
 
   const pump = () => {
     const nowSong = fromSongSec + (ctx.currentTime - startAtCtx) * rate;
-    const until = Math.max(scheduledUntil, nowSong) + LOOKAHEAD * rate;
-    for (const c of clicksBetween(beats, firstDownbeat, scheduledUntil, until)) {
-      const at = toCtx(c.t);
-      if (at >= ctx.currentTime) click(at, c.accent);
+    const target = nowSong + LOOKAHEAD * rate;
+    if (target > scheduledUntil) {
+      for (const c of clicksBetween(beats, firstDownbeat, scheduledUntil, target)) {
+        const at = toCtx(c.t);
+        if (at >= ctx.currentTime) click(at, c.accent);
+      }
+      scheduledUntil = target;
     }
-    scheduledUntil = until;
   };
   pump();
   const timer = window.setInterval(pump, 50);
