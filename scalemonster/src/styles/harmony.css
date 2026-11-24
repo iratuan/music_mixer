@@ -152,12 +152,34 @@
   line-height: 1.2;
 }
 .hub-acts {
-  display: flex;
-  gap: 3px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
 }
-.hub-acts .small-btn {
-  padding: 3px 7px;
-  font-size: var(--fs-2xs);
+.hub-acts .small-btn,
+.hub-acts .hub-btn,
+.hub-acts button {
+  min-height: 22px !important;
+  height: 22px !important;
+  min-width: unset !important;
+  padding: 2px 7px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: var(--text-primary, #ffffff) !important;
+  box-shadow: none !important;
+}
+.hub-acts .small-btn:hover,
+.hub-acts .hub-btn:hover,
+.hub-acts button:hover {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #ffffff !important;
 }
 .cof-foot {
   display: flex;
@@ -592,11 +614,38 @@
   padding: var(--s-3);
   border-radius: var(--r-md);
   background: var(--surface-2);
+  width: 100%;
+}
+.chord-now .seg {
+  display: flex;
+  width: 100%;
+  gap: 2px;
+}
+.chord-now .seg button {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  justify-content: center;
+  padding: 6px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chord-now > button.small-btn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 34px;
+  font-weight: 600;
 }
 .chord-now-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--s-2);
+  width: 100%;
 }
 .chord-now-head b {
   font: 800 var(--fs-xl) / 1 var(--font-display);
@@ -618,13 +667,17 @@ button.cad-chip:hover {
 }
 
 .cad-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   align-items: flex-end;
   gap: var(--s-3) var(--s-4);
+  padding: var(--s-3) var(--s-4);
 }
 .cad-ctl {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 .cad-ctl-label {
   font: 650 var(--fs-2xs) / 1 var(--font);
@@ -636,6 +689,11 @@ button.cad-chip:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
+}
+.cad-inline select {
+  flex: 1;
+  min-width: 0;
 }
 .cad-bpm input[type='range'] {
   width: 120px;
@@ -666,7 +724,7 @@ button.cad-chip:hover {
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  min-height: 32px;
+  min-height: 34px;
   border-radius: var(--r-sm, 6px);
   background: var(--surface-base, #16161b);
   border: 1px solid var(--border-medium, #27272a);
@@ -703,15 +761,62 @@ button.cad-chip:hover {
   box-shadow: 0 0 6px #10b981, 0 0 10px #10b981;
 }
 .push-pull-group {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   gap: 4px;
 }
-.cad-toggles {
+.push-pull-group .push-pull-btn {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+}
+.cad-ctl-beats .seg {
+  display: flex;
+  width: 100%;
+}
+.cad-ctl-beats .seg button {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+  min-height: 34px;
+}
+.cad-ctl-bass .cad-inline {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+}
+.cad-ctl-bass .push-pull-btn {
+  flex: 0 0 auto;
+}
+.cad-ctl-bass .seg {
+  flex: 1 1 0;
+  display: flex;
+  width: 100%;
+}
+.cad-ctl-bass .seg button {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+  min-height: 34px;
+}
+.cad-ctl.cad-toggles {
+  grid-column: 1 / -1;
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--s-2);
-  margin-left: auto;
+  width: 100%;
+  margin-top: 4px;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
   flex-wrap: wrap;
+}
+.cad-toggles .push-pull-btn,
+.cad-toggles button.small-btn {
+  flex: 1 1 120px;
+  min-height: 36px;
+  justify-content: center;
+  text-align: center;
 }
 .bpm-num {
   font-variant-numeric: tabular-nums;
@@ -820,4 +925,55 @@ button.cad-chip:hover {
   height: 100%;
   background: var(--accent);
   transition: width 250ms var(--ease);
+}
+
+/* Responsividade moderna para botões e controles de harmonia em tablets e celulares */
+@media (max-width: 768px) {
+  .cad-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cad-toggles {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+    width: 100%;
+  }
+  .cad-toggles .push-pull-btn,
+  .cad-toggles button.small-btn {
+    width: 100%;
+    min-height: 38px;
+  }
+  .prog-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+  .prog-filters .coll-chip {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .cad-controls {
+    grid-template-columns: 1fr;
+  }
+  .cad-inline select {
+    width: 100%;
+  }
+  .bpm-knob-row {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .harmony-practice-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    min-height: 38px;
+  }
+  .field-grid {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important;
+  }
 }

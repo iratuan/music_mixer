@@ -159,6 +159,17 @@
   .nav-item {
     min-height: 44px !important;
   }
+  /* Botões compactos do centro do ciclo das quintas (Escala / Campo) não devem esticar no toque */
+  .hub-acts button,
+  .hub-acts .small-btn,
+  .hub-acts .hub-btn {
+    min-height: 22px !important;
+    min-width: unset !important;
+    height: 22px !important;
+    padding: 2px 7px !important;
+    font-size: 10.5px !important;
+    line-height: 1 !important;
+  }
   input[type='checkbox'],
   input[type='radio'] {
     width: 22px;

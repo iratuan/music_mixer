@@ -274,10 +274,10 @@ export function Harmony({ onPracticeScale }: Props) {
             <b className="hub-key">{keyName}</b>
             <span className="hub-sig">{signatureText(tonality.mode === 'major' ? sigSlot.signature : sigSlot.signature)}</span>
             <span className="hub-acts">
-              <button className="ghost small-btn" onClick={playScaleNow} title="Tocar a escala do tom (sobe e desce)">
+              <button className="ghost small-btn hub-btn" onClick={playScaleNow} title="Tocar a escala do tom (sobe e desce)">
                 Escala
               </button>
-              <button className="ghost small-btn" onClick={() => playField()}>
+              <button className="ghost small-btn hub-btn" onClick={() => playField()}>
                 Campo
               </button>
             </span>

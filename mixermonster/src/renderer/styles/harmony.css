@@ -89,9 +89,35 @@
   color: var(--muted);
   line-height: 1.2;
 }
-.hub-acts .small-btn {
-  padding: 3px 7px;
-  font-size: var(--fs-2xs);
+.hub-acts {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+.hub-acts .small-btn,
+.hub-acts .hub-btn,
+.hub-acts button {
+  min-height: 22px !important;
+  height: 22px !important;
+  min-width: unset !important;
+  padding: 2px 7px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: var(--text-primary, #ffffff) !important;
+  box-shadow: none !important;
+}
+.hub-acts .small-btn:hover,
+.hub-acts .hub-btn:hover,
+.hub-acts button:hover {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #ffffff !important;
 }
 .page-head.row.harmony-page-head {
   justify-content: space-between;

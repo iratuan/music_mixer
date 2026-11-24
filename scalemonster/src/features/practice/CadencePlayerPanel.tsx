@@ -89,7 +89,7 @@ export function CadencePlayerPanel(p: Props) {
   return (
     <div className="cadence-panel">
       <div className="cad-controls card" role="toolbar" aria-label="Som do acompanhamento">
-        <div className="cad-ctl">
+        <div className="cad-ctl cad-ctl-chords">
           <span className="cad-ctl-label">Acordes</span>
           <div className="cad-inline push-pull-group" role="group" aria-label="Tríades ou tétrades">
             <button type="button" className={`push-pull-btn ${!tetrads ? 'pushed' : ''}`} onClick={() => p.onTetrads(false)} aria-pressed={!tetrads}>
@@ -100,7 +100,7 @@ export function CadencePlayerPanel(p: Props) {
             </button>
           </div>
         </div>
-        <div className="cad-ctl">
+        <div className="cad-ctl cad-ctl-timbre">
           <span className="cad-ctl-label">Timbre</span>
           <div className="cad-inline">
             <select value={p.timbre} onChange={(e) => p.onTimbre(e.target.value as Timbre)} aria-label="Timbre">
@@ -119,7 +119,7 @@ export function CadencePlayerPanel(p: Props) {
             </button>
           </div>
         </div>
-        <div className="cad-ctl">
+        <div className="cad-ctl cad-ctl-rhythm">
           <span className="cad-ctl-label">Levada</span>
           <select value={p.rhythm} onChange={(e) => p.onRhythm(e.target.value as Rhythm)} aria-label="Levada">
             {RHYTHMS.map((r) => (
@@ -129,7 +129,7 @@ export function CadencePlayerPanel(p: Props) {
             ))}
           </select>
         </div>
-        <div className="cad-ctl">
+        <div className="cad-ctl cad-ctl-beats">
           <span className="cad-ctl-label">Tempos por acorde</span>
           <div className="seg tiny" role="group" aria-label="Tempos por acorde">
             {[2, 4, 8].map((n) => (
@@ -161,7 +161,7 @@ export function CadencePlayerPanel(p: Props) {
             </div>
           </div>
         </div>
-        <div className="cad-ctl">
+        <div className="cad-ctl cad-ctl-bass">
           <span className="cad-ctl-label">Baixo</span>
           <div className="cad-inline">
             <button
