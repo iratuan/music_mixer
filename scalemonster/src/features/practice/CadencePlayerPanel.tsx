@@ -28,6 +28,8 @@ interface Props {
   onDrums(v: boolean): void;
   chords: boolean;
   onChords(v: boolean): void;
+  chordLevel?: number;
+  onChordLevel?(v: number): void;
   bassOn: boolean;
   onBassOn(v: boolean): void;
   bassRole: BassRole;
@@ -140,6 +142,26 @@ export function CadencePlayerPanel(p: Props) {
           </div>
         </div>
         <div className="cad-row-bpm-bass">
+          <div className="cad-ctl cad-bpm">
+            <span className="cad-ctl-label">Volume Faixa</span>
+            <div className="cad-inline bpm-knob-row">
+              <Knob
+                value={p.chordLevel ?? 1}
+                defaultValue={1}
+                min={0}
+                max={1.5}
+                step={0.05}
+                size={44}
+                label="Volume da Base"
+                onChange={(v) => p.onChordLevel?.(v)}
+                format={(v) => `${Math.round(v * 100)}%`}
+              />
+              <div className="bpm-info">
+                <b className="bpm-num">{Math.round((p.chordLevel ?? 1) * 100)}%</b>
+                <span className="muted small">Base</span>
+              </div>
+            </div>
+          </div>
           <div className="cad-ctl cad-bpm">
             <span className="cad-ctl-label">Andamento</span>
             <div className="cad-inline bpm-knob-row">

@@ -25,7 +25,25 @@ import { CircleOfFifthsWheel } from '@baixaria/ui-core';
 import { CadencePlayerPanel } from '../practice/CadencePlayerPanel.js';
 import type { MapDensity, MapView } from '@baixaria/ui-core';
 import { Icon } from '@baixaria/ui-core';
-import { playChord, playMidis, setPlayStyle, type PlayStyle, playProgression, stopAll, type ProgressionHandle, type Rhythm, type Timbre } from '@baixaria/audio-synth';
+import {
+  playChord,
+  playMidis,
+  setPlayStyle,
+  type PlayStyle,
+  playProgression,
+  stopAll,
+  type ProgressionHandle,
+  type Rhythm,
+  type Timbre,
+  startLiveInstrumentMonitor,
+  stopLiveInstrumentMonitor,
+  startPracticeRecording,
+  type LiveMonitorHandle,
+  type PracticeRecorderHandle,
+} from '@baixaria/audio-synth';
+import { listInputs } from '../../lib/practice.js';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { harmonicStore } from '@baixaria/ui-core';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { getAudioContext } from '@baixaria/audio-synth';
@@ -75,11 +93,11 @@ function chordTones(chord: Chord): { midi: number; interval: number }[] {
 }
 
 export function Harmony({ onPracticeScale }: Props) {
-  const HARMONY_DEFAULTS = { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: true, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'root' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: true, chords: true, chordBeats: 4, v: 3 };
+  const HARMONY_DEFAULTS = { tonic: 0, mode: 'major' as 'major' | 'minor', tetrads: false, bpm: 90, timbre: 'epiano' as Timbre, loop: true, view: 'hybrid' as MapView, density: 'stage' as MapDensity, flats: false, text: SAMPLE, bassRole: 'root' as BassRole, bassOn: true, style: 'chord' as PlayStyle, rhythm: 'block' as Rhythm, drums: true, chords: true, chordBeats: 4, chordLevel: 1.0, v: 4 };
   const [opts, setOpts] = useState<typeof HARMONY_DEFAULTS>(() => {
     const saved = readStore<Partial<typeof HARMONY_DEFAULTS>>('bf-harmony', {});
-    // Versão 3: backing track com harmonia ativa, tônica sustentada (sem arpejo) e loop ligado por padrão
-    return saved.v === 3 ? { ...HARMONY_DEFAULTS, ...saved } : { ...HARMONY_DEFAULTS, ...saved, v: 3, bassRole: 'root', drums: true, chords: true, loop: true };
+    // Versão 4: backing track com controle de volume independente, monitoramento de instrumento e gravação
+    return saved.v === 4 ? { ...HARMONY_DEFAULTS, ...saved } : { ...HARMONY_DEFAULTS, ...saved, v: 4, chordLevel: saved.chordLevel ?? 1.0 };
   });
   useEffect(() => writeStore('bf-harmony', opts), [opts]);
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) => setOpts((o) => ({ ...o, [k]: v }));
@@ -135,6 +153,119 @@ export function Harmony({ onPracticeScale }: Props) {
     }, 650);
   };
 
+  /* ------------------------------ monitoramento e gravacao ------------------------------ */
+  const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(() => readStore<string | null>('bf-harmony-device', null));
+  const [micActive, setMicActive] = useState(false);
+  const [micGain, setMicGain] = useState(0.8);
+  const [vuLevel, setVuLevel] = useState(0);
+  const monitorHandle = useRef<LiveMonitorHandle | null>(null);
+  const recorderHandle = useRef<PracticeRecorderHandle | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<{ url: string; blob: Blob; durationSec: number } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    void listInputs().then((devs) => {
+      setInputs(devs);
+      if (!selectedDevice && devs.length > 0) {
+        setSelectedDevice(devs[0]!.deviceId);
+      }
+    });
+  }, [selectedDevice]);
+
+  const toggleMic = async () => {
+    if (micActive) {
+      monitorHandle.current?.stop();
+      monitorHandle.current = null;
+      setMicActive(false);
+      setVuLevel(0);
+    } else {
+      try {
+        const h = await startLiveInstrumentMonitor(selectedDevice, micGain, true);
+        monitorHandle.current = h;
+        setMicActive(true);
+        setStatusMessage('Instrumento conectado! Use fones para evitar microfonia.');
+      } catch (err) {
+        setError('Não foi possível acessar a entrada de áudio. Verifique as permissões de microfone.');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!micActive || !monitorHandle.current) return;
+    monitorHandle.current.setGain(micGain);
+    const interval = window.setInterval(() => {
+      if (monitorHandle.current) {
+        setVuLevel(monitorHandle.current.level());
+      }
+    }, 60);
+    return () => window.clearInterval(interval);
+  }, [micActive, micGain]);
+
+  useEffect(() => {
+    return () => {
+      stopLiveInstrumentMonitor();
+    };
+  }, []);
+
+  const startRecord = () => {
+    try {
+      setRecordedAudio(null);
+      recorderHandle.current = startPracticeRecording();
+      setRecording(true);
+      setStatusMessage('Gravando sessão de prática...');
+    } catch (e) {
+      setError('Gravação não suportada neste navegador.');
+    }
+  };
+
+  const stopRecord = async () => {
+    if (!recorderHandle.current) return;
+    const res = await recorderHandle.current.stop();
+    recorderHandle.current = null;
+    setRecording(false);
+    setRecordedAudio(res);
+    setStatusMessage(`Sessão gravada (${res.durationSec}s)! Você pode ouvir ou compartilhar.`);
+  };
+
+  const shareAudio = async () => {
+    if (!recordedAudio) return;
+    try {
+      // Tenta compartilhar nativamente via Capacitor no tablet/mobile
+      const reader = new FileReader();
+      reader.readAsDataURL(recordedAudio.blob);
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        const fileName = `pratica-harmonia-${Date.now()}.webm`;
+        try {
+          const saved = await Filesystem.writeFile({
+            path: fileName,
+            data: base64data,
+            directory: Directory.Cache,
+          });
+          await Share.share({
+            title: 'Minha Prática na Harmonia (ScaleMonster)',
+            text: `Gravação de improvisação e harmonia (${recordedAudio.durationSec} segundos).`,
+            url: saved.uri,
+            dialogTitle: 'Compartilhar prática de áudio',
+          });
+        } catch {
+          // Fallback para download no desktop / web
+          const a = document.createElement('a');
+          a.href = recordedAudio.url;
+          a.download = fileName;
+          a.click();
+        }
+      };
+    } catch (err) {
+      const a = document.createElement('a');
+      a.href = recordedAudio.url;
+      a.download = `pratica-harmonia-${Date.now()}.webm`;
+      a.click();
+    }
+  };
+
   function playCadence(c: Cadence) {
     stop();
     const chords = cadenceChords(c, tonality, opts.tetrads);
@@ -147,7 +278,7 @@ export function Harmony({ onPracticeScale }: Props) {
         loop: opts.loop,
         rhythm: opts.rhythm ?? 'block',
         drums: !!opts.drums,
-        chordLevel: chordsOn ? 1 : 0,
+        chordLevel: chordsOn ? (opts.chordLevel ?? 1) : 0,
         ...(bassLine ? { bass: bassLine } : {}),
         onStep: (i) => {
           setCadence({ id: c.id, step: i });
@@ -344,6 +475,8 @@ export function Harmony({ onPracticeScale }: Props) {
           onChordBeats={(v) => set('chordBeats', v)}
           chords={chordsOn}
           onChords={(v) => set('chords', v)}
+          chordLevel={opts.chordLevel ?? 1.0}
+          onChordLevel={(v) => set('chordLevel', v)}
           bassOn={bassOn}
           onBassOn={(v) => set('bassOn', v)}
           bassRole={bassRole}
@@ -353,6 +486,111 @@ export function Harmony({ onPracticeScale }: Props) {
           onPlayCadence={playCadence}
           onStop={stop}
         />
+      </div>
+
+      <div className="card harmony-jam-panel" role="region" aria-label="Prática e improvisação com instrumento ao vivo">
+        <div className="jam-head">
+          <div className="jam-title">
+            <Icon name="audio" size={18} />
+            <b>Prática com Instrumento e Gravação</b>
+            <span className="muted small">Conecte seu instrumento ou microfone, toque junto com a harmonia e grave sua sessão</span>
+          </div>
+          <div className="spacer" />
+          {statusMessage && <span className="jam-status-text">{statusMessage}</span>}
+        </div>
+
+        <div className="jam-controls">
+          <div className="jam-input-group">
+            <button
+              type="button"
+              className={`small-btn ${micActive ? 'primary on' : 'ghost'}`}
+              onClick={toggleMic}
+              title="Ativa ou desativa a captura e monitoramento do seu instrumento"
+            >
+              <Icon name="audio" size={14} /> {micActive ? 'Instrumento Conectado' : 'Conectar Instrumento / Mic'}
+            </button>
+
+            {inputs.length > 0 && (
+              <select
+                className="input-select tiny jam-device-select"
+                value={selectedDevice ?? ''}
+                onChange={(e) => {
+                  setSelectedDevice(e.target.value);
+                  writeStore('bf-harmony-device', e.target.value);
+                  if (micActive) {
+                    toggleMic();
+                  }
+                }}
+                disabled={micActive}
+                title="Selecione a entrada (interface USB, cabo P2/P3 ou microfone)"
+              >
+                {inputs.map((d) => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || `Entrada ${d.deviceId.slice(0, 8)}`}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {micActive && (
+              <div className="jam-vu-wrapper" title="Nível de entrada do instrumento">
+                <span className="jam-vu-label">Nível:</span>
+                <div className="jam-vu-meter">
+                  <div className="jam-vu-fill" style={{ width: `${Math.round(vuLevel * 100)}%` }} />
+                </div>
+                <label className="jam-gain-label">
+                  Ganho:
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.05"
+                    value={micGain}
+                    onChange={(e) => setMicGain(Number(e.target.value))}
+                    className="jam-gain-slider"
+                  />
+                  <span>{Math.round(micGain * 100)}%</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="jam-record-group">
+            {!recording ? (
+              <button
+                type="button"
+                className="small-btn danger-btn jam-rec-btn"
+                onClick={startRecord}
+                title="Grava a saída da harmonia combinada com o seu instrumento tocando junto"
+              >
+                <Icon name="record" size={14} /> Gravar Sessão
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="small-btn primary on jam-rec-btn recording-pulse"
+                onClick={stopRecord}
+                title="Finalizar gravação"
+              >
+                <Icon name="stop" size={14} /> Parar Gravação
+              </button>
+            )}
+
+            {recordedAudio && !recording && (
+              <div className="jam-playback-group">
+                <audio controls src={recordedAudio.url} className="jam-audio-player" />
+                <button
+                  type="button"
+                  className="small-btn primary jam-share-btn"
+                  onClick={shareAudio}
+                  title="Compartilhar pelo WhatsApp, Drive ou salvar arquivo"
+                >
+                  <Icon name="export" size={14} /> Compartilhar / Salvar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
     </section>

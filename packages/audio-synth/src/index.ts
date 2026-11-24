@@ -8,3 +8,4 @@ export * from './voices.js';
 export * from './synth.js';
 export * from './harmonyAudioEngine.js';
 export * from './cabinets.js';
+export * from './recorder.js';

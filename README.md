@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.4-2979ff" alt="Versão 0.5.0-beta.4">
+  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.5-2979ff" alt="Versão 0.5.0-beta.5">
   <img src="https://img.shields.io/badge/Electron-33-1f2430" alt="Electron 33">
   <img src="https://img.shields.io/badge/Capacitor-8-1f2430" alt="Capacitor 8">
   <img src="https://img.shields.io/badge/TypeScript-5-1f2430" alt="TypeScript 5">
@@ -148,17 +148,22 @@ Ambos os aplicativos contam com o design system unificado **Dark-Pro Ecosystem**
 |---|---|---|
 | **ScaleMonster: Ciclo das Quintas & Harmonia** | ![Harmony Dark](docs/screens/scalemonster-harmony-dark.png) | ![Harmony Light](docs/screens/scalemonster-harmony-light.png) |
 | **ScaleMonster: Trilha de Exercícios & Braço** | ![Exercises Dark](docs/screens/scalemonster-exercises-dark.png) | ![Exercises Light](docs/screens/scalemonster-exercises-light.png) |
+| **ScaleMonster: Teoria & Teclado de Piano** | ![Theory Dark](docs/screens/scalemonster-theory-dark.png) | ![Theory Light](docs/screens/scalemonster-theory-light.png) |
 | **MixerMonster: Biblioteca de Músicas & Stems** | ![Mixer Library Dark](docs/screens/mixermonster-library-dark.png) | ![Mixer Library Light](docs/screens/mixermonster-library-light.png) |
+| **MixerMonster: Mesa de Mixagem de Stems** | ![Mixer Dark](docs/screens/mixermonster-mixer-dark.png) | ![Mixer Light](docs/screens/mixermonster-mixer-light.png) |
+| **Tablet Android: ScaleMonster com Jam e Teclado** | ![Tablet View](docs/screens/tablet_v050_beta5.png) | — |
 
 ---
 
-## Novidades desta versão
+## Novidades desta versão (v0.5.0-beta.5)
 
-- **Pacotes compartilhados na raiz:** `packages/` é a única fonte de música, áudio, interface e contrato `.mcraft-pack`. Os produtos só importam por alias.
-- **Design system:** cores de marca e de estado centralizadas em `packages/ui-core/src/tokens.css`.
-- **MixerMonster:** valor de volume e pan sempre visível, faixas legíveis em 960 px, remover uma música apaga também a pasta com o áudio baixado.
-- **ScaleMonster:** treino de ouvido com trilha de progresso por intervalo, teclas 1 a 9 para responder e medidor de acertos; juiz de notas com desvio em cents, tolerância por nível (iniciante, intermediário, avançado) e direção do tempo no palco.
-- **Instaladores:** NSIS e portable nos dois produtos, na versão 0.5.0-beta.3.
+- **Simulação de Gabinete por Impulse Response (Tank-B IRs):** convolver com respostas ao impulso clássicas de caixas de contrabaixo (`Ampeg SVT`, `Ampeg B15`, `Hartke XL410`, `Sunn 200s`, `TC Electronic 410`) integrado tanto na faixa de baixo do MixerMonster quanto nos timbres de acompanhamento e baixo do ScaleMonster.
+- **Teclado / Piano nos Exercícios de Escalas:** suporte completo a teclados e pianos nos exercícios e trilhas teóricas (`PianoKeys.tsx`), mapeando notas em tempo real nas oitavas C3 a C6, com timbres dedicados de piano acústico, Rhodes e órgão.
+- **Jam Session & Gravação em Harmonia (`Harmony.tsx`):**
+  - Controle independente de volume do acompanhamento (`chordLevel`, 0% a 150%) com knob tátil de precisão ao lado do andamento (BPM).
+  - Monitoramento de microfone/instrumento ao vivo com baixa latência, seletor de interface/dispositivo de entrada e medidor de nível VU estéreo.
+  - Gravação de sessão de prática em tempo real mixando instrumento e playback no barramento master, com player de áudio integrado e exportação/compartilhamento nativo (`@capacitor/share` / `@capacitor/filesystem`).
+- **Instaladores Desktop e APK Android:** gerados para Windows x64 (`MixerMonster-Setup-0.5.0-beta.5.exe`, `ScaleMonster-Setup-0.5.0-beta.5.exe` e versões portáteis) e APK instalado e validado diretamente no tablet ancorado via ADB.
 
 ## Testes e verificação
 

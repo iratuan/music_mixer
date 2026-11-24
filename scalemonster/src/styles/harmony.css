@@ -992,3 +992,130 @@ button.cad-chip:hover {
     grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important;
   }
 }
+
+/* Jam & Live Practice Session Controls */
+.harmony-jam-panel {
+  margin-top: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: color-mix(in srgb, var(--surface-base, #16161b) 92%, #000);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.jam-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.jam-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #9da2af);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.jam-status-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted, #727584);
+}
+
+.jam-status-badge.live {
+  background: rgba(72, 187, 120, 0.18);
+  color: #48bb78;
+  border: 1px solid rgba(72, 187, 120, 0.35);
+}
+
+.jam-status-badge.recording {
+  background: rgba(245, 101, 101, 0.2);
+  color: #f56565;
+  border: 1px solid rgba(245, 101, 101, 0.4);
+  animation: pulse-recording 1.2s infinite;
+}
+
+@keyframes pulse-recording {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.jam-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.jam-field {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 0.8rem;
+  color: var(--text-secondary, #9da2af);
+}
+
+.jam-field select {
+  max-width: 200px;
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  background: var(--surface-overlay, #202028);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.jam-vu-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted, #727584);
+}
+
+.jam-vu-meter {
+  width: 60px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+}
+
+.jam-vu-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #48bb78 0%, #ecc94b 75%, #f56565 100%);
+  transition: width 0.08s ease-out;
+}
+
+.jam-rec-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.jam-playback-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  padding-top: var(--s-2);
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.jam-audio-player {
+  height: 32px;
+  outline: none;
+}
+
