@@ -105,6 +105,19 @@ async function run() {
   await page.screenshot({ path: path.join(OUT_DIR, 'scalemonster-theory-light.png'), fullPage: false });
   console.log('Capturado: scalemonster-theory-light.png');
 
+  // 4. Trilhas de Aprendizado Pro (Jornada Pedagógica)
+  console.log('Capturando tela de Trilhas de Aprendizado...');
+  await page.goto(`${url}/?screen=trails`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+  await page.screenshot({ path: path.join(OUT_DIR, 'scalemonster-trails-dark.png'), fullPage: false });
+  console.log('Capturado: scalemonster-trails-dark.png');
+
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(OUT_DIR, 'scalemonster-trails-light.png'), fullPage: false });
+  console.log('Capturado: scalemonster-trails-light.png');
+
   await browser.close();
   server.close();
   console.log('Capturas do ScaleMonster concluídas!');

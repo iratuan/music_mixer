@@ -156,6 +156,7 @@ export function Harmony({ onPracticeScale }: Props) {
   /* ------------------------------ monitoramento e gravacao ------------------------------ */
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(() => readStore<string | null>('bf-harmony-device', null));
+  const [channelMode, setChannelMode] = useState<'mono' | 'left' | 'right' | 'stereo'>(() => readStore<'mono' | 'left' | 'right' | 'stereo'>('bf-harmony-channel', 'mono'));
   const [micActive, setMicActive] = useState(false);
   const [micGain, setMicGain] = useState(0.8);
   const [vuLevel, setVuLevel] = useState(0);
@@ -174,6 +175,22 @@ export function Harmony({ onPracticeScale }: Props) {
     });
   }, [selectedDevice]);
 
+  const handleDeviceChange = (deviceId: string) => {
+    setSelectedDevice(deviceId);
+    writeStore('bf-harmony-device', deviceId);
+    if (micActive) {
+      toggleMic();
+    }
+  };
+
+  const handleChannelChange = (mode: 'mono' | 'left' | 'right' | 'stereo') => {
+    setChannelMode(mode);
+    writeStore('bf-harmony-channel', mode);
+    if (monitorHandle.current) {
+      monitorHandle.current.setChannelMode(mode);
+    }
+  };
+
   const toggleMic = async () => {
     if (micActive) {
       monitorHandle.current?.stop();
@@ -182,7 +199,7 @@ export function Harmony({ onPracticeScale }: Props) {
       setVuLevel(0);
     } else {
       try {
-        const h = await startLiveInstrumentMonitor(selectedDevice, micGain, true);
+        const h = await startLiveInstrumentMonitor(selectedDevice, micGain, true, channelMode);
         monitorHandle.current = h;
         setMicActive(true);
         setStatusMessage('Instrumento conectado! Use fones para evitar microfonia.');
@@ -511,25 +528,33 @@ export function Harmony({ onPracticeScale }: Props) {
             </button>
 
             {inputs.length > 0 && (
-              <select
-                className="input-select tiny jam-device-select"
-                value={selectedDevice ?? ''}
-                onChange={(e) => {
-                  setSelectedDevice(e.target.value);
-                  writeStore('bf-harmony-device', e.target.value);
-                  if (micActive) {
-                    toggleMic();
-                  }
-                }}
-                disabled={micActive}
-                title="Selecione a entrada (interface USB, cabo P2/P3 ou microfone)"
-              >
-                {inputs.map((d) => (
-                  <option key={d.deviceId} value={d.deviceId}>
-                    {d.label || `Entrada ${d.deviceId.slice(0, 8)}`}
-                  </option>
-                ))}
-              </select>
+              <div className="jam-device-selectors" style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                <select
+                  className="input-select tiny jam-device-select"
+                  value={selectedDevice ?? ''}
+                  onChange={(e) => handleDeviceChange(e.target.value)}
+                  disabled={micActive}
+                  title="Selecione a entrada (interface de áudio USB, cabo de linha ou microfone)"
+                >
+                  {inputs.map((d) => (
+                    <option key={d.deviceId} value={d.deviceId}>
+                      {d.label ? (d.label.toLowerCase().includes('usb') || d.label.toLowerCase().includes('audio') || d.label.toLowerCase().includes('line') ? `🎛️ ${d.label}` : `🎙️ ${d.label}`) : `Entrada ${d.deviceId.slice(0, 8)}`}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="input-select tiny jam-channel-select"
+                  value={channelMode}
+                  onChange={(e) => handleChannelChange(e.target.value as any)}
+                  title="Seletor de canais para interface de áudio (Canal 1 / L ou Canal 2 / R)"
+                >
+                  <option value="mono">Mono</option>
+                  <option value="left">Canal 1 (L / Inst)</option>
+                  <option value="right">Canal 2 (R / Mic)</option>
+                  <option value="stereo">Estéreo (L + R)</option>
+                </select>
+              </div>
             )}
 
             {micActive && (

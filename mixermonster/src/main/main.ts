@@ -1,5 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell, type IpcMainInvokeEvent } from 'electron';
 import { randomBytes } from 'node:crypto';
+
+// Flags para ultra-baixa latência e buffers de áudio profissionais
+app.commandLine.appendSwitch('audio-buffer-size', '128');
+app.commandLine.appendSwitch('enable-exclusive-audio');
+app.commandLine.appendSwitch('disable-features', 'AudioServiceOutOfProcess');
+
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 

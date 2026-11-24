@@ -1,5 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain, protocol, session, type IpcMainInvokeEvent } from 'electron';
 import { createHash } from 'node:crypto';
+
+// Configurações de áudio de baixa latência para interfaces no Windows (WASAPI exclusivo e buffer otimizado)
+app.commandLine.appendSwitch('audio-buffer-size', '128');
+app.commandLine.appendSwitch('enable-exclusive-audio');
+app.commandLine.appendSwitch('disable-features', 'AudioServiceOutOfProcess');
+
 import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';

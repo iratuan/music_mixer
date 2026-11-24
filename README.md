@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.5-2979ff" alt="Versão 0.5.0-beta.5">
+  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.6-2979ff" alt="Versão 0.5.0-beta.6">
   <img src="https://img.shields.io/badge/Electron-33-1f2430" alt="Electron 33">
   <img src="https://img.shields.io/badge/Capacitor-8-1f2430" alt="Capacitor 8">
   <img src="https://img.shields.io/badge/TypeScript-5-1f2430" alt="TypeScript 5">
@@ -146,24 +146,33 @@ Ambos os aplicativos contam com o design system unificado **Dark-Pro Ecosystem**
 
 | Módulo | Dark-Pro Mode | Studio Light Pro |
 |---|---|---|
+| **ScaleMonster: Trilhas de Aprendizado Pro** | ![Trails Dark](docs/screens/scalemonster-trails-dark.png) | ![Trails Light](docs/screens/scalemonster-trails-light.png) |
 | **ScaleMonster: Ciclo das Quintas & Harmonia** | ![Harmony Dark](docs/screens/scalemonster-harmony-dark.png) | ![Harmony Light](docs/screens/scalemonster-harmony-light.png) |
 | **ScaleMonster: Trilha de Exercícios & Braço** | ![Exercises Dark](docs/screens/scalemonster-exercises-dark.png) | ![Exercises Light](docs/screens/scalemonster-exercises-light.png) |
 | **ScaleMonster: Teoria & Teclado de Piano** | ![Theory Dark](docs/screens/scalemonster-theory-dark.png) | ![Theory Light](docs/screens/scalemonster-theory-light.png) |
 | **MixerMonster: Biblioteca de Músicas & Stems** | ![Mixer Library Dark](docs/screens/mixermonster-library-dark.png) | ![Mixer Library Light](docs/screens/mixermonster-library-light.png) |
 | **MixerMonster: Mesa de Mixagem de Stems** | ![Mixer Dark](docs/screens/mixermonster-mixer-dark.png) | ![Mixer Light](docs/screens/mixermonster-mixer-light.png) |
-| **Tablet Android: ScaleMonster com Jam e Teclado** | ![Tablet View](docs/screens/tablet_v050_beta5.png) | — |
+| **Tablet Android: ScaleMonster com Jam e Teclado** | ![Tablet View](docs/screens/tablet_v050_beta6.png) | — |
 
 ---
 
-## Novidades desta versão (v0.5.0-beta.5)
+## Novidades desta versão (v0.5.0-beta.6)
 
+- **Suporte a Interfaces de Áudio USB & Baixa Latência (Desktop):**
+  - Flags de áudio de alta performance no Electron (`--audio-buffer-size=128`, `--enable-exclusive-audio` e `--disable-features=AudioServiceOutOfProcess`) garantindo áudio WASAPI exclusivo com buffer de ~3ms para interfaces USB (Focusrite Scarlett, Behringer U-Phoria, Steinberg, Zoom, etc.).
+  - **Roteamento Inteligente de Canais (L / R / Stereo / Mono):** permite selecionar Entrada 1 (L), Entrada 2 (R) ou Estéreo com duplicação automática para fones de ouvido e monitores sem deixar o som saindo em apenas um lado da orelha.
+  - Ícones e identificação clara de interfaces de som USB (`🎛️`) vs microfones convencionais (`🎙️`).
+- **Trilhas de Aprendizado Pro para o Músico Integral (`Trails.tsx`):**
+  - Redesenho completo no padrão Dark-Pro Ecosystem com seletor de instrumentos (🎸 Contrabaixo, 🎼 Guitarra & Violão, 🎹 Teclado & Piano).
+  - Visão geral do músico integral com barra de maestria, contadores de lições e exercícios desbloqueados.
+  - Trilhas organizadas por níveis progressivos (Fundamentos, Intermediário, Avançado e Maestria) com badges de categoria (Arpejos, Modos Gregos, Improvisação, Leitura e Harmonia Funcional).
 - **Simulação de Gabinete por Impulse Response (Tank-B IRs):** convolver com respostas ao impulso clássicas de caixas de contrabaixo (`Ampeg SVT`, `Ampeg B15`, `Hartke XL410`, `Sunn 200s`, `TC Electronic 410`) integrado tanto na faixa de baixo do MixerMonster quanto nos timbres de acompanhamento e baixo do ScaleMonster.
 - **Teclado / Piano nos Exercícios de Escalas:** suporte completo a teclados e pianos nos exercícios e trilhas teóricas (`PianoKeys.tsx`), mapeando notas em tempo real nas oitavas C3 a C6, com timbres dedicados de piano acústico, Rhodes e órgão.
 - **Jam Session & Gravação em Harmonia (`Harmony.tsx`):**
   - Controle independente de volume do acompanhamento (`chordLevel`, 0% a 150%) com knob tátil de precisão ao lado do andamento (BPM).
   - Monitoramento de microfone/instrumento ao vivo com baixa latência, seletor de interface/dispositivo de entrada e medidor de nível VU estéreo.
   - Gravação de sessão de prática em tempo real mixando instrumento e playback no barramento master, com player de áudio integrado e exportação/compartilhamento nativo (`@capacitor/share` / `@capacitor/filesystem`).
-- **Instaladores Desktop e APK Android:** gerados para Windows x64 (`MixerMonster-Setup-0.5.0-beta.5.exe`, `ScaleMonster-Setup-0.5.0-beta.5.exe` e versões portáteis) e APK instalado e validado diretamente no tablet ancorado via ADB.
+- **Instaladores Desktop e APK Android:** gerados para Windows x64 (`MixerMonster-Setup-0.5.0-beta.6.exe`, `MixerMonster-Portable-0.5.0-beta.6.exe`, `ScaleMonster-Setup-0.5.0-beta.6.exe` e `ScaleMonster-Portable-0.5.0-beta.6.exe`) e APK instalado e validado diretamente no tablet ancorado via ADB.
 
 ## Testes e verificação
 
