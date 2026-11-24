@@ -1,18 +1,34 @@
 import { midiHz as midiToHz } from '@baixaria/music-theory';
 import { getAudioContext } from './context.js';
+import { createCabinetStage, getGlobalCabinet, type CabinetId } from './cabinets.js';
 
 /**
  * Vozes sintetizadas: "pluck" de baixo/guitarra/violão (portada do ScaleMonster, agendada no relógio
  * do motor), estágio de distorção, barramento de saída com limitador e clique do metrônomo.
  */
 
-/** Timbres de baixo (modelados em osciladores e filtros; sem amostras externas). */
-export type BassTimbre = 'jazz' | 'precision' | 'stingray' | 'upright' | 'strat' | 'lespaul' | 'steel' | 'nylon' | 'crunch' | 'highgain' | 'bassdrive';
+/** Timbres de baixo, guitarra e teclado (modelados em osciladores e filtros; sem amostras externas). */
+export type BassTimbre =
+  | 'jazz'
+  | 'precision'
+  | 'stingray'
+  | 'upright'
+  | 'strat'
+  | 'lespaul'
+  | 'steel'
+  | 'nylon'
+  | 'crunch'
+  | 'highgain'
+  | 'bassdrive'
+  | 'piano'
+  | 'rhodes'
+  | 'organ';
 /** Timbres que cada instrumento oferece. */
-export const TIMBRES_OF: Record<'bass' | 'guitar', readonly BassTimbre[]> = {
+export const TIMBRES_OF: Record<'bass' | 'guitar' | 'keyboard', readonly BassTimbre[]> = {
   bass: ['jazz', 'precision', 'stingray', 'upright', 'bassdrive'],
   /* Primeiro o elétrico (padrão, como antes); o violão de aço e o nylon são timbres da mesma guitarra. */
   guitar: ['strat', 'lespaul', 'crunch', 'highgain', 'steel', 'nylon'],
+  keyboard: ['piano', 'rhodes', 'organ'],
 };
 interface BassVoice {
   readonly label: string;
@@ -44,6 +60,9 @@ export const BASS_TIMBRES: Record<BassTimbre, BassVoice> = {
   steel: { label: 'Violão de aço', saw: 0.55, sub: 0.1, tri: 0.2, open: 14, close: 5, decay: 0.5, sustain: 0.1, tick: 0.4, tickHz: 3800, slap: 0 },
   nylon: { label: 'Violão de nylon', saw: 0.2, sub: 0.25, tri: 0.5, open: 6, close: 2.5, decay: 0.45, sustain: 0.08, tick: 0.25, tickHz: 1800, slap: 0 },
   upright: { label: 'Contrabaixo acústico', saw: 0.15, sub: 0.75, tri: 0.55, open: 4.5, close: 1.6, decay: 0.35, sustain: 0.06, tick: 0.18, tickHz: 1400, slap: 0 },
+  piano: { label: 'Piano acústico', saw: 0.25, sub: 0.6, tri: 0.6, open: 12, close: 3, decay: 1.2, sustain: 0.25, tick: 0.3, tickHz: 2800, slap: 0 },
+  rhodes: { label: 'Piano elétrico (Rhodes)', saw: 0.1, sub: 0.8, tri: 0.7, open: 8, close: 2.5, decay: 0.9, sustain: 0.35, tick: 0.15, tickHz: 1800, slap: 0 },
+  organ: { label: 'Órgão de drawbars', saw: 0.5, sub: 0.6, tri: 0.4, open: 10, close: 8, decay: 2.0, sustain: 0.8, tick: 0.1, tickHz: 1200, slap: 0 },
 };
 let bassTimbre: BassTimbre = 'jazz';
 export function setBassTimbre(t: BassTimbre): void {
@@ -91,6 +110,22 @@ export function driveStage(ctx: BaseAudioContext, amount: number, into: AudioNod
 
 /** Saída geral dos exercícios: compressor suave + limitador, para nunca estourar. */
 let bus: DynamicsCompressorNode | null = null;
+let globalCabStage: ReturnType<typeof createCabinetStage> | null = null;
+
+/** Retorna o estágio de gabinete conectado ao barramento principal. */
+export function cabinetBus(): { input: AudioNode; setCabinet(id: CabinetId): Promise<void> } {
+  const ctx = getAudioContext();
+  const mb = masterBus();
+  if (!globalCabStage) {
+    globalCabStage = createCabinetStage(ctx, getGlobalCabinet());
+    globalCabStage.output.connect(mb);
+  }
+  return {
+    input: globalCabStage.input,
+    setCabinet: (id: CabinetId) => globalCabStage!.setCabinet(id),
+  };
+}
+
 export function masterBus(): AudioNode {
   const ctx = getAudioContext();
   if (!bus) {
@@ -152,7 +187,11 @@ export function pluckAt(at: number, midi: number, volume: number, out: AudioNode
   tri.connect(gain(v.tri)).connect(filter);
   if (v.drive) filter.connect(driveStage(ctx, v.drive, env));
   else filter.connect(env);
-  env.connect(out);
+
+  // Roteamento: se o destino for o masterBus() ou se um gabinete estiver ativo, passa pelo estágio de gabinete
+  const cab = cabinetBus();
+  const dest = out === masterBus() ? cab.input : out;
+  env.connect(dest);
   env.gain.setValueAtTime(0, at);
   env.gain.linearRampToValueAtTime(volume, at + 0.004);
   env.gain.setTargetAtTime(volume * 0.45, at + 0.004, v.decay * 0.15);
@@ -172,7 +211,7 @@ export function pluckAt(at: number, midi: number, volume: number, out: AudioNode
   band.frequency.value = v.tickHz * rr;
   band.Q.value = 0.9;
   const tickGain = gain(volume * (v.tick + v.slap));
-  tick.connect(band).connect(tickGain).connect(out);
+  tick.connect(band).connect(tickGain).connect(dest);
 
   saw.start(at);
   sub.start(at);

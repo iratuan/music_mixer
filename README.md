@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.3-2979ff" alt="Versão 0.5.0-beta.3">
+  <img src="https://img.shields.io/badge/vers%C3%A3o-0.5.0--beta.4-2979ff" alt="Versão 0.5.0-beta.4">
   <img src="https://img.shields.io/badge/Electron-33-1f2430" alt="Electron 33">
   <img src="https://img.shields.io/badge/Capacitor-8-1f2430" alt="Capacitor 8">
   <img src="https://img.shields.io/badge/TypeScript-5-1f2430" alt="TypeScript 5">
@@ -46,8 +46,8 @@ Os dois produtos **não dependem um do outro para funcionar**. O único ponto de
 
 Resumo do que cada um faz:
 
-- **MixerMonster:** importa um arquivo ou link, separa as faixas (Demucs), detecta andamento, compassos, acordes e seções, mostra a linha do baixo no braço, transpõe (Rubber Band) e exporta mixagem WAV, MIDI e mapa da música.
-- **ScaleMonster:** trilhas de escalas e exercícios no braço, ear training, teoria e harmonia, treino com palco e juiz de notas, e músicas importadas do MixerMonster.
+- **MixerMonster:** importa um arquivo ou link, separa as faixas (Demucs), detecta andamento, compassos, acordes e seções, mostra a linha do baixo no braço, transpõe (Rubber Band), possui simulação de gabinetes acústicos de baixo por Impulse Response (IR convolver no canal do baixo) e exporta mixagem WAV, MIDI e mapa da música.
+- **ScaleMonster:** trilhas de escalas e exercícios no braço (baixo, guitarra/violão e teclado/piano com visualizador de teclas em tempo real), ear training, teoria e harmonia, simulação de gabinetes por IR clássicos (Ampeg SVT, Ampeg B15, Hartke XL410, Sunn 200s, TC Electronic 410), treino com palco e juiz de notas, e músicas importadas do MixerMonster.
 
 ---
 

@@ -6,7 +6,9 @@ describe('guitarra e violão são um instrumento só', () => {
     expect(practiceInstrumentOf('acoustic')).toBe('guitar');
     expect(practiceInstrumentOf('guitar')).toBe('guitar');
     expect(practiceInstrumentOf('bass')).toBe('bass');
-    expect(practiceInstrumentOf('keyboard')).toBeNull();
+    expect(practiceInstrumentOf('keyboard')).toBe('keyboard');
+    expect(practiceInstrumentOf('piano')).toBe('keyboard');
+    expect(practiceInstrumentOf('ukulele')).toBeNull();
   });
 
   it('usa a afinação da guitarra (E A D G B E) e o nome unificado', () => {

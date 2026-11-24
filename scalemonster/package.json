@@ -1,6 +1,6 @@
 {
   "name": "scalemonster",
-  "version": "0.5.0-beta.3",
+  "version": "0.5.0-beta.4",
   "private": true,
   "description": "ScaleMonster: formação e prática musical (web, desktop e Android). Codebase independente, com instaladores próprios.",
   "type": "module",

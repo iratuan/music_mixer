@@ -67,7 +67,7 @@ import { VoiceLeadingInspector } from '@baixaria/ui-core';
 import type { MapDensity, MapView } from '@baixaria/ui-core';
 import { encodeWav, playChord as playHarmonyChord } from '@baixaria/audio-synth';
 import { harmonicStore } from '@baixaria/ui-core';
-import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, type AlignedHandle, type MetronomeHandle } from '../../lib/audio.js';
+import { decodeAudio, getAudioContext, playAligned, setMasterGain, startMetronome, CABINETS, type CabinetId, type AlignedHandle, type MetronomeHandle } from '../../lib/audio.js';
 import { MIDI_STEMS, matchPreset, presetsFor, sortStems, stemInfo } from '../../lib/stems.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { PACK_LIMITS, createPack, encodePack, type PackSong } from '@baixaria/exchange-contract';
@@ -97,6 +97,8 @@ interface LaneMix {
   vol: number;
   /** −1 esquerda … +1 direita. */
   pan?: number;
+  /** Simulação de gabinete IR para a faixa. */
+  cab?: CabinetId;
   /** Entra na exportação da mixagem (padrão: sim). */
   exp?: boolean;
 }
@@ -418,7 +420,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     const at = ctx.currentTime + 0.06;
     const start = Math.max(0, Math.min(from, duration - 0.05));
     aligned.current = playAligned(
-      lanes.map((l) => ({ buffer: l.buffer, gain: gainOf(l.key), pan: mix[l.key]?.pan ?? 0, offset: start / laneRate })),
+      lanes.map((l) => ({ buffer: l.buffer, gain: gainOf(l.key), pan: mix[l.key]?.pan ?? 0, cabinet: mix[l.key]?.cab ?? 'direct', offset: start / laneRate })),
       at,
     );
     if (analysis) {
@@ -528,6 +530,7 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
     lanes.forEach((l, i) => {
       aligned.current?.setGain(i, gainOf(l.key));
       aligned.current?.setPan(i, mix[l.key]?.pan ?? 0);
+      void aligned.current?.setCabinet?.(i, mix[l.key]?.cab ?? 'direct');
     });
   }, [mix, lanes, gainOf]);
   useEffect(() => {
@@ -2055,6 +2058,21 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                         onChange={(v) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), pan: v } }))}
                       />
                       <div className="lane-export">
+                        {l.key === 'bass' && (
+                          <select
+                            className="input-select tiny cab-select"
+                            value={m.cab ?? 'direct'}
+                            onChange={(e) => setMix((x) => ({ ...x, [l.key]: { ...(x[l.key] ?? m), cab: e.target.value as CabinetId } }))}
+                            aria-label={`Gabinete IR de ${info.label}`}
+                            title="Simulação de gabinete acústico por Impulse Response (Tank-B IRs)"
+                          >
+                            {CABINETS.map((c) => (
+                              <option key={c.id} value={c.id} title={c.description}>
+                                {c.id === 'direct' ? 'DI' : c.label.split(' ')[0]}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                         <button className="icon-btn ghost" onClick={() => void exportWav(l)} aria-label={`Exportar ${info.label} em WAV`} title="Exportar WAV">
                           <Icon name="export" size={15} />
                         </button>

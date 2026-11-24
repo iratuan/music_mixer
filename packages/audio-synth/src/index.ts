@@ -7,3 +7,4 @@ export * from './wav.js';
 export * from './voices.js';
 export * from './synth.js';
 export * from './harmonyAudioEngine.js';
+export * from './cabinets.js';

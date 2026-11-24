@@ -326,8 +326,17 @@ button.ms.solo.on {
 .lane-export {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   margin-left: auto;
+}
+.lane-export .cab-select {
+  padding: 2px 4px;
+  font-size: 11px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  border: 1px solid var(--line);
 }
 .lane-export button.icon-btn {
   padding: 5px;

@@ -1,16 +1,17 @@
 import { clicksBetween, type AccompNote, type AccompPart } from '@baixaria/music-theory';
-import { getAudioContext, playAccompNotes } from '@baixaria/audio-synth';
+import { getAudioContext, playAccompNotes, createCabinetStage, type CabinetId } from '@baixaria/audio-synth';
 
 /**
  * Camada de áudio do player (multipista, acompanhamento e metrônomo alinhados à música).
  * O relógio musical (AudioContext) vem de @baixaria/audio-synth; reexportado para os consumidores atuais.
  */
-export { decodeAudio, getAudioContext } from '@baixaria/audio-synth';
+export { decodeAudio, getAudioContext, CABINETS, type CabinetId } from '@baixaria/audio-synth';
 
 export interface AlignedHandle {
   setGain(index: number, gain: number): void;
   /** −1 (esquerda) … 0 (centro) … +1 (direita). */
   setPan(index: number, pan: number): void;
+  setCabinet?(index: number, id: CabinetId): Promise<void>;
   stop(): void;
 }
 
@@ -36,20 +37,25 @@ export function setMasterGain(level: number): void {
   if (masterNode) masterNode.gain.setTargetAtTime(masterLevel, masterNode.context.currentTime, 0.02);
 }
 
-/** Toca vários buffers no mesmo instante do relógio do motor, com ganho e pan ajustáveis por faixa. */
-export function playAligned(items: ReadonlyArray<{ buffer: AudioBuffer; gain: number; pan?: number; offset?: number }>, startTime?: number): AlignedHandle {
+/** Toca vários buffers no mesmo instante do relógio do motor, com ganho, pan e gabinete IR ajustáveis por faixa. */
+export function playAligned(
+  items: ReadonlyArray<{ buffer: AudioBuffer; gain: number; pan?: number; offset?: number; cabinet?: CabinetId }>,
+  startTime?: number,
+): AlignedHandle {
   const ctx = getAudioContext();
   const startAt = startTime ?? ctx.currentTime + 0.05;
-  const nodes = items.map(({ buffer, gain, pan = 0, offset = 0 }) => {
+  const nodes = items.map(({ buffer, gain, pan = 0, offset = 0, cabinet = 'direct' }) => {
     const src = ctx.createBufferSource();
     const g = ctx.createGain();
     const p = ctx.createStereoPanner();
+    const cab = createCabinetStage(ctx, cabinet);
     g.gain.value = gain;
     p.pan.value = pan;
     src.buffer = buffer;
-    src.connect(g).connect(p).connect(masterOut());
+    src.connect(g).connect(p).connect(cab.input);
+    cab.output.connect(masterOut());
     src.start(startAt, Math.min(offset, buffer.duration));
-    return { src, g, p };
+    return { src, g, p, cab };
   });
   return {
     setGain(index, gain) {
@@ -60,8 +66,12 @@ export function playAligned(items: ReadonlyArray<{ buffer: AudioBuffer; gain: nu
       const node = nodes[index];
       if (node) node.p.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), ctx.currentTime, 0.01);
     },
+    async setCabinet(index, id) {
+      const node = nodes[index];
+      if (node) await node.cab.setCabinet(id);
+    },
     stop() {
-      for (const { src, g, p } of nodes) {
+      for (const { src, g, p, cab } of nodes) {
         try {
           src.stop();
         } catch {
@@ -70,6 +80,8 @@ export function playAligned(items: ReadonlyArray<{ buffer: AudioBuffer; gain: nu
         src.disconnect();
         g.disconnect();
         p.disconnect();
+        cab.input.disconnect();
+        cab.output.disconnect();
       }
     },
   };

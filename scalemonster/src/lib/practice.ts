@@ -16,6 +16,14 @@ export {
   pluckAt,
   setBassTimbre,
   type BassTimbre,
+  CABINETS,
+  cabinetBus,
+  createCabinetStage,
+  getCabinetBuffer,
+  getGlobalCabinet,
+  setGlobalCabinet,
+  type CabinetDefinition,
+  type CabinetId,
 } from '@baixaria/audio-synth';
 
 /** Interfaces USB comuns de instrumento (Behringer UM2 aparece como "USB Audio CODEC"). */

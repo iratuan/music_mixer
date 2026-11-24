@@ -24,14 +24,15 @@ export const GUITAR_TUNINGS: readonly BassTuning[] = [
 
 /**
  * Instrumentos de prática. Guitarra e violão são o mesmo instrumento para teoria e braço (mesma
- * afinação e mesmo desenho de escalas); o que muda é o timbre, escolhido no som.
+ * afinação e mesmo desenho de escalas); o teclado utiliza a extensão e visualização em teclas de piano.
  */
-export type PracticeInstrument = 'bass' | 'guitar';
+export type PracticeInstrument = 'bass' | 'guitar' | 'keyboard';
 
 /** Ids antigos guardados no histórico: "acoustic" (violão) virou guitar. */
 export function practiceInstrumentOf(raw: string): PracticeInstrument | null {
   if (raw === 'bass') return 'bass';
   if (raw === 'guitar' || raw === 'acoustic') return 'guitar';
+  if (raw === 'keyboard' || raw === 'piano') return 'keyboard';
   return null;
 }
 
@@ -44,6 +45,7 @@ export function tuningsFor(instrument: PracticeInstrument): readonly BassTuning[
 export const INSTRUMENT_INFO: Record<PracticeInstrument, { label: string; strings: readonly number[]; defaultStrings: number; fminHz: number; fmaxHz: number }> = {
   bass: { label: 'Baixo', strings: [4, 5, 6], defaultStrings: 4, fminHz: 28, fmaxHz: 450 },
   guitar: { label: 'Guitarra e violão', strings: [6, 7], defaultStrings: 6, fminHz: 60, fmaxHz: 1400 },
+  keyboard: { label: 'Teclado / Piano', strings: [4], defaultStrings: 4, fminHz: 28, fmaxHz: 2100 },
 };
 
 export interface FretPos {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { errorText } from '@baixaria/ui-core';
+import { errorText, PianoKeys, type KeyMark, keyboardRange } from '@baixaria/ui-core';
 import { practiceInstrumentOf } from '@baixaria/music-theory';
 import {
   INSTRUMENT_INFO,
@@ -55,7 +55,7 @@ import { Icon } from '@baixaria/ui-core';
 import { Knob } from '@baixaria/ui-core';
 import { Neck, type MarkState, type NeckMark } from '@baixaria/ui-core';
 import { getAudioContext } from '@baixaria/audio-synth';
-import { INSTRUMENT_INPUT, clickAt, BASS_TIMBRES, TIMBRES_OF, listInputs, masterBus, openMidi, pluckAt, setBassTimbre, type BassTimbre, startInput, type InputEngine, type MidiInput } from '../../lib/practice.js';
+import { INSTRUMENT_INPUT, clickAt, BASS_TIMBRES, TIMBRES_OF, listInputs, masterBus, openMidi, pluckAt, setBassTimbre, type BassTimbre, CABINETS, getGlobalCabinet, setGlobalCabinet, cabinetBus, type CabinetId, startInput, type InputEngine, type MidiInput } from '../../lib/practice.js';
 import { recordSession } from '../../lib/db.js';
 import { readStore, writeStore } from '@baixaria/ui-core';
 import { SongExercise } from '../songs/SongExercise.js';
@@ -129,6 +129,8 @@ interface Settings {
   inputMode: InputMode;
   /** Som do baixo (guia das notas). */
   timbre: BassTimbre;
+  /** Simulação de gabinete acústico por Impulse Response (IR). */
+  cabinet: CabinetId;
   /** Desafio abre em tela cheia ao começar. */
   autoMax: boolean;
 }
@@ -164,6 +166,7 @@ const DEFAULTS: Settings = {
   inputMode: 'audio',
   autoMax: true,
   timbre: 'jazz',
+  cabinet: 'direct',
   instrument: 'bass',
 };
 
@@ -311,6 +314,11 @@ export function Exercises() {
   const [lastXp, setLastXp] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<PracticeSession[]>(() => readStore<PracticeSession[]>('bf-history', []));
   useEffect(() => setBassTimbre(TIMBRES_OF[s.instrument ?? 'bass'].includes(s.timbre) ? s.timbre : TIMBRES_OF[s.instrument ?? 'bass'][0]!), [s.timbre, s.instrument]);
+  useEffect(() => {
+    const cabId = s.cabinet ?? 'direct';
+    setGlobalCabinet(cabId);
+    void cabinetBus().setCabinet(cabId);
+  }, [s.cabinet]);
   /** Rotina do treino em andamento (para o recorde) e os números mais recentes, lidos ao parar. */
   const session = useRef<string | null>(null);
   const scoreRef = useRef(score);
@@ -670,6 +678,43 @@ export function Exercises() {
     return out;
   }, [ex, stage, s.label, s.root, flats, step, verdicts, loops]);
 
+  const keyMarks: KeyMark[] = useMemo(() => {
+    if (!ex) return [];
+    const seq = ex.sequence;
+    const view = stage ? seq.slice(stage.from, stage.to) : seq;
+    const scaleNotes = stage ? stage.scaleNotes : ex.scaleNotes;
+    const inSeq = new Set(view.map((n) => n.midi));
+    const out: KeyMark[] = [];
+
+    // Notas da escala em segundo plano (later)
+    for (const sn of scaleNotes) {
+      if (!inSeq.has(sn.midi)) {
+        out.push({ midi: sn.midi, state: 'later', role: 'extra' });
+      }
+    }
+    // Notas do padrão / sequência do exercício
+    const seenMidi = new Set<number>();
+    view.forEach((n) => {
+      if (seenMidi.has(n.midi)) return;
+      seenMidi.add(n.midi);
+      out.push({ midi: n.midi, state: n.pc === s.root ? 'now' : 'next', role: 'base' });
+    });
+
+    if (step >= 0 && seq.length > 0) {
+      const cur = seq[step]!;
+      const nxt = seq[(step + 1) % seq.length]!;
+      out.push({ midi: nxt.midi, state: 'next', role: 'base' });
+      out.push({ midi: cur.midi, state: 'now', role: 'base' });
+    }
+    return out;
+  }, [ex, stage, s.root, step]);
+
+  const keyRange = useMemo(() => {
+    if (!ex || ex.sequence.length === 0) return { low: 36, high: 72 };
+    const allMidis = ex.sequence.map((n) => n.midi);
+    return keyboardRange(allMidis);
+  }, [ex]);
+
   const total = score.hit + score.octave + score.miss;
   const pct = total ? Math.round(((score.hit + score.octave * 0.5) / total) * 100) : null;
   const seqLen = ex?.sequence.length ?? 0;
@@ -878,7 +923,7 @@ export function Exercises() {
         <div className="field wide">
           <span>Instrumento</span>
           <div className="seg small" role="group" aria-label="Instrumento">
-            {(['bass', 'guitar'] as const).map((k) => (
+            {(['bass', 'guitar', 'keyboard'] as const).map((k) => (
               <button
                 key={k}
                 aria-pressed={instrument === k}
@@ -892,26 +937,30 @@ export function Exercises() {
             ))}
           </div>
         </div>
-        <div className="field">
-          <span>Cordas</span>
-          <div className="seg small">
-            {INSTRUMENT_INFO[instrument].strings.map((n) => (
-              <button key={n} aria-pressed={s.strings === n} onClick={() => setS((x) => ({ ...x, strings: n, group: 'all' }))}>
-                {n}
-              </button>
-            ))}
+        {instrument !== 'keyboard' && (
+          <div className="field">
+            <span>Cordas</span>
+            <div className="seg small">
+              {INSTRUMENT_INFO[instrument].strings.map((n) => (
+                <button key={n} aria-pressed={s.strings === n} onClick={() => setS((x) => ({ ...x, strings: n, group: 'all' }))}>
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-        <label className="field">
-          <span>{touring && s.tour !== 'positions' ? 'Tamanho do grupo' : 'Grupo de cordas'}</span>
-          <select value={group.id} onChange={(e) => set('group', e.target.value)}>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.id === 'all' ? 'Todas as cordas' : `${g.strings.length} cordas: ${g.label}`}
-              </option>
-            ))}
-          </select>
-        </label>
+        )}
+        {instrument !== 'keyboard' && (
+          <label className="field">
+            <span>{touring && s.tour !== 'positions' ? 'Tamanho do grupo' : 'Grupo de cordas'}</span>
+            <select value={group.id} onChange={(e) => set('group', e.target.value)}>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.id === 'all' ? 'Todas as cordas' : `${g.strings.length} cordas: ${g.label}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       <div className="ex-stage card">
@@ -949,23 +998,35 @@ export function Exercises() {
           </div>
         </div>
         {ex && ex.sequence.length > 0 ? (
-          <Neck
-            className="ex-neck"
-            tuning={tuning}
-            fromFret={ex.fromFret}
-            toFret={ex.toFret}
-            marks={marks}
-            flats={flats}
-            rowH={stage ? 28 : 34}
-            logSpacing
-            onPlay={(_pos, midi) => {
-              const ctx = getAudioContext();
-              void ctx.resume();
-              // Clique no braço: a nota exata daquela corda e casa, no timbre escolhido.
-              pluckAt(ctx.currentTime + 0.01, midi, 0.5, masterBus(), 1.6);
-            }}
-            zone={stage ? Math.max(1, stage.window[0]) : null}
-          />
+          instrument === 'keyboard' ? (
+            <div className="ex-keyboard-wrap" style={{ padding: '12px 0' }}>
+              <PianoKeys
+                low={keyRange.low}
+                high={keyRange.high}
+                marks={keyMarks}
+                flats={flats}
+                label="note"
+              />
+            </div>
+          ) : (
+            <Neck
+              className="ex-neck"
+              tuning={tuning}
+              fromFret={ex.fromFret}
+              toFret={ex.toFret}
+              marks={marks}
+              flats={flats}
+              rowH={stage ? 28 : 34}
+              logSpacing
+              onPlay={(_pos, midi) => {
+                const ctx = getAudioContext();
+                void ctx.resume();
+                // Clique no braço: a nota exata daquela corda e casa, no timbre escolhido.
+                pluckAt(ctx.currentTime + 0.01, midi, 0.5, masterBus(), 1.6);
+              }}
+              zone={stage ? Math.max(1, stage.window[0]) : null}
+            />
+          )
         ) : (
           <p className="muted">Sem notas nesta combinação de região e grupo de cordas.</p>
         )}
@@ -1031,6 +1092,13 @@ export function Exercises() {
           {TIMBRES_OF[instrument].map((k) => (
             <option key={k} value={k}>
               {BASS_TIMBRES[k].label}
+            </option>
+          ))}
+        </select>
+        <select className="input-select" value={s.cabinet ?? 'direct'} onChange={(e) => set('cabinet', e.target.value as CabinetId)} aria-label="Gabinete de áudio (IR)" title="Simulação de gabinete acústico por Impulse Response (Tank-B IRs)">
+          {CABINETS.map((c) => (
+            <option key={c.id} value={c.id} title={c.description}>
+              {c.label}
             </option>
           ))}
         </select>
