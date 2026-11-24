@@ -61,8 +61,8 @@ export const CircleOfFifthsWheel = memo(function CircleOfFifthsWheel({ selected,
     <div className="cof-wrap">
       <svg className="cof" viewBox="-205 -205 410 410" role="group" aria-label="Ciclo das quintas">
         <defs>
-          <radialGradient id="cof-hub-grad" cx="45%" cy="45%" r="55%">
-            <stop offset="0%" stopColor="var(--surface-elevated, #18181c)" />
+          <radialGradient id="cof-hub-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="var(--surface-base, #121215)" />
             <stop offset="100%" stopColor="var(--surface-base, #121215)" />
           </radialGradient>
           <filter id="cof-pad-glow" x="-20%" y="-20%" width="140%" height="140%">

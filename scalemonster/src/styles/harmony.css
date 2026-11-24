@@ -124,10 +124,10 @@
   fill: var(--bg);
 }
 .cof-hub {
-  fill: url(#cof-hub-grad);
-  stroke: var(--line-strong);
-  stroke-width: 1.5;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  fill: var(--surface-base, #121215);
+  stroke: var(--line, rgba(255, 255, 255, 0.08));
+  stroke-width: 1;
+  filter: none;
 }
 .cof-center {
   position: absolute;
@@ -779,6 +779,21 @@ button.cad-chip:hover {
   justify-content: center;
   text-align: center;
   min-height: 34px;
+}
+.cad-row-bpm-bass {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  width: 100%;
+  flex-wrap: wrap;
+}
+.cad-row-bpm-bass .cad-bpm {
+  flex: 0 0 auto;
+}
+.cad-row-bpm-bass .cad-ctl-bass {
+  flex: 1 1 200px;
+  min-width: 0;
 }
 .cad-ctl-bass .cad-inline {
   display: flex;

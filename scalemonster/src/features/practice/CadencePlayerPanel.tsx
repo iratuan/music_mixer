@@ -139,50 +139,52 @@ export function CadencePlayerPanel(p: Props) {
             ))}
           </div>
         </div>
-        <div className="cad-ctl cad-bpm">
-          <span className="cad-ctl-label">Andamento</span>
-          <div className="cad-inline bpm-knob-row">
-            <Knob
-              value={p.bpm}
-              defaultValue={90}
-              min={40}
-              max={200}
-              step={1}
-              size={44}
-              label="BPM"
-              onChange={(v) => p.onBpm(v)}
-              format={(v) => `${v}`}
-            />
-            <div className="bpm-info">
-              <b className="bpm-num">{p.bpm}</b>
-              <button className="ghost small-btn tap-btn" onClick={tap} title="Bata no ritmo (2 ou mais toques) para definir o andamento">
-                Bater
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="cad-ctl cad-ctl-bass">
-          <span className="cad-ctl-label">Baixo</span>
-          <div className="cad-inline">
-            <button
-              type="button"
-              className={`push-pull-btn ${p.bassOn ? 'pushed' : ''}`}
-              onClick={() => p.onBassOn(!p.bassOn)}
-              title="Ligar ou desligar o contrabaixo"
-              aria-pressed={p.bassOn}
-            >
-              <span className="led-indicator" /> {p.bassOn ? 'Ativo' : 'Mudo'}
-            </button>
-            {p.bassOn && (
-              <div className="seg tiny" role="group" aria-label="Papel do baixo">
-                <button aria-pressed={p.bassRole === 'root'} className={p.bassRole === 'root' ? 'on' : ''} onClick={() => p.onBassRole('root')} title="Fundamental sustentada nos tempos 1 e 3 (ideal para improvisação)">
-                  Tônica
-                </button>
-                <button aria-pressed={p.bassRole === 'groove'} className={p.bassRole === 'groove' ? 'on' : ''} onClick={() => p.onBassRole('groove')} title="Levada com fundamental e quinta">
-                  Cozinha
+        <div className="cad-row-bpm-bass">
+          <div className="cad-ctl cad-bpm">
+            <span className="cad-ctl-label">Andamento</span>
+            <div className="cad-inline bpm-knob-row">
+              <Knob
+                value={p.bpm}
+                defaultValue={90}
+                min={40}
+                max={200}
+                step={1}
+                size={44}
+                label="BPM"
+                onChange={(v) => p.onBpm(v)}
+                format={(v) => `${v}`}
+              />
+              <div className="bpm-info">
+                <b className="bpm-num">{p.bpm}</b>
+                <button className="ghost small-btn tap-btn" onClick={tap} title="Bata no ritmo (2 ou mais toques) para definir o andamento">
+                  Bater
                 </button>
               </div>
-            )}
+            </div>
+          </div>
+          <div className="cad-ctl cad-ctl-bass">
+            <span className="cad-ctl-label">Baixo</span>
+            <div className="cad-inline">
+              <button
+                type="button"
+                className={`push-pull-btn ${p.bassOn ? 'pushed' : ''}`}
+                onClick={() => p.onBassOn(!p.bassOn)}
+                title="Ligar ou desligar o contrabaixo"
+                aria-pressed={p.bassOn}
+              >
+                <span className="led-indicator" /> {p.bassOn ? 'Ativo' : 'Mudo'}
+              </button>
+              {p.bassOn && (
+                <div className="seg tiny" role="group" aria-label="Papel do baixo">
+                  <button aria-pressed={p.bassRole === 'root'} className={p.bassRole === 'root' ? 'on' : ''} onClick={() => p.onBassRole('root')} title="Fundamental sustentada nos tempos 1 e 3 (ideal para improvisação)">
+                    Tônica
+                  </button>
+                  <button aria-pressed={p.bassRole === 'groove'} className={p.bassRole === 'groove' ? 'on' : ''} onClick={() => p.onBassRole('groove')} title="Levada com fundamental e quinta">
+                    Cozinha
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="cad-ctl cad-toggles">

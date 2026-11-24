@@ -81,6 +81,12 @@
   font: 600 8px var(--font);
   fill: var(--faint);
 }
+.cof-hub {
+  fill: var(--surface-base, #121215);
+  stroke: var(--line, rgba(255, 255, 255, 0.08));
+  stroke-width: 1;
+  filter: none;
+}
 .hub-key {
   font: 800 var(--fs-md) / 1.1 var(--font-display);
 }
