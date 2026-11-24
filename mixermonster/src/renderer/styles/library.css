@@ -645,3 +645,36 @@ button.coll-chip.add {
   display: flex;
   gap: var(--s-2);
 }
+
+@media (max-width: 800px) {
+  .transfer-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .lib-grid {
+    grid-template-columns: 1fr;
+  }
+  .lib-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lib-select {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .lib-select select {
+    flex: 1 1 auto;
+  }
+  .coll-bar {
+    gap: 6px;
+  }
+  .loc-acts {
+    flex-direction: column;
+    width: 100%;
+  }
+  .loc-acts button {
+    width: 100%;
+  }
+}

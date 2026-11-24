@@ -58,7 +58,7 @@ async function run() {
     if (libTab) await libTab.click();
     await win.waitForTimeout(400);
 
-    const firstSong = await win.$('.song-card, .track-item, [role="button"]:has-text("Abrir"), .library-item');
+    const firstSong = await win.$('.lib-card, .song-card, .track-item, [role="button"]:has-text("Abrir"), .library-item');
     if (firstSong) {
       await firstSong.click();
       await win.waitForTimeout(800);

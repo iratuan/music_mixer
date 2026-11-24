@@ -8,17 +8,38 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-2);
-  padding: 14px var(--s-5) 12px;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 12px var(--s-5);
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 .song-id {
-  flex: 0 1 280px;
-  min-width: 200px;
+  flex: 1 1 240px;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.song-head-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+.song-views-seg {
+  display: inline-flex;
+  align-items: center;
+}
+.song-views-seg button {
+  white-space: nowrap;
+}
+.song-tools-seg {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
 }
 .song-id h1 {
   font-size: 21px;
@@ -647,6 +668,96 @@ button.tkey.on {
   }
 }
 
+@media (max-width: 1024px) {
+  .song-head-acts {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .song-views-seg {
+    flex: 1 1 auto;
+  }
+  .song-views-seg button {
+    flex: 1 1 0;
+  }
+  .song-tools-seg {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+  .transport-bar {
+    gap: var(--s-3);
+  }
+  .tone,
+  .tone.speed {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dock {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-3);
+    padding: 10px var(--s-3);
+  }
+  .dock-chord {
+    grid-column: 2;
+  }
+  .dock-neck {
+    grid-column: 1 / -1;
+  }
+  .dock-neck-head .seg.tiny button {
+    flex: 1 1 0;
+  }
+  .song-tools-seg {
+    width: 100%;
+  }
+  .song-tools-seg button {
+    flex: 1 1 calc(50% - var(--s-2));
+  }
+  .transport-bar {
+    padding: 8px var(--s-3);
+    gap: 8px;
+  }
+  .tone,
+  .tone.speed,
+  .transport-bar button.chip-btn {
+    flex: 1 1 calc(50% - 6px);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .song-head {
+    padding: 10px var(--s-3);
+  }
+  .song-id h1 {
+    font-size: 18px;
+  }
+  .song-views-seg {
+    width: 100%;
+  }
+  .song-views-seg button {
+    flex: 1 1 0;
+  }
+  .song-tools-seg button {
+    flex: 1 1 100%;
+  }
+  .dock {
+    grid-template-columns: 1fr;
+  }
+  .dock-bar,
+  .dock-chord {
+    grid-column: 1;
+  }
+  .transport-keys button.tkey {
+    flex: 1 1 0;
+  }
+  .tone,
+  .tone.speed,
+  .transport-bar button.chip-btn {
+    flex: 1 1 100%;
+  }
+}
+
 /* Console Mute / Solo Hardware Push-Buttons */
 .ms-pair {
   display: inline-flex;
@@ -656,6 +767,9 @@ button.tkey.on {
   padding: 2px;
   border-radius: var(--r-sm, 6px);
   border: 1px solid var(--border-subtle, #27272a);
+}
+.ms-pair.single {
+  justify-content: center;
 }
 .ms {
   width: 24px;

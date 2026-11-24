@@ -1439,44 +1439,45 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
             )}
           </div>
         </div>
-        <div className="spacer" />
-        {analysis && (
-          <button className={guidePanel ? 'ghost on' : 'ghost'} onClick={() => setGuidePanel((open) => !open)} aria-expanded={guidePanel} title="Configurar as visualizações harmônicas do braço e do teclado">
-            <Icon name="chords" size={16} /> Guias harmônicos
-          </button>
-        )}
-        {analysis && (
-          <button className={tabOpen ? 'ghost on' : 'ghost'} onClick={() => setTabOpen((o) => !o)} aria-expanded={tabOpen} title="Tablatura do baixo por compasso, com a harmonia">
-            <Icon name="tab" size={16} /> Tablatura
-          </button>
-        )}
-        {analysis && (
-          <button className={mapOpen ? 'ghost on' : 'ghost'} onClick={() => setMapOpen((o) => !o)} aria-expanded={mapOpen}>
-            <Icon name="staff" size={16} /> Mapa
-          </button>
-        )}
-        {lanes && (
-          <button
-            className="ghost"
-            onClick={() => void exportMix()}
-            disabled={mixBusy || mixCount === 0}
-            title="Junta as faixas marcadas com o volume, o pan e o tom de agora, num WAV"
-          >
-            {mixBusy ? <span className="spin" aria-hidden="true" /> : <Icon name="export" size={16} />} Exportar mixagem
-            <span className="count-pill">{mixCount}</span>
-          </button>
-        )}
-        {lanes && (
-          <button className="ghost" onClick={() => void saveStartMix()} title="Ao abrir a música, cada faixa começa muda ou tocando como está agora">
-            <Icon name="check" size={15} /> Salvar como padrão
-          </button>
-        )}
-        <button className="ghost" onClick={() => setPicker((p) => !p)} disabled={busy} aria-expanded={picker}>
-          <Icon name="scissors" size={16} /> Separar de novo
-        </button>
-        <button className={confirmRemove ? 'danger' : 'ghost'} onClick={() => void remove()} onBlur={() => setConfirmRemove(false)}>
-          {confirmRemove ? 'Confirmar remoção' : 'Remover'}
-        </button>
+        <div className="song-head-acts">
+          {analysis && (
+            <div className="seg tiny song-views-seg" role="group" aria-label="Visualizações da música">
+              <button className={guidePanel ? 'on' : ''} onClick={() => setGuidePanel((open) => !open)} aria-expanded={guidePanel} title="Configurar as visualizações harmônicas do braço e do teclado">
+                <Icon name="chords" size={15} /> Guias
+              </button>
+              <button className={tabOpen ? 'on' : ''} onClick={() => setTabOpen((o) => !o)} aria-expanded={tabOpen} title="Tablatura do baixo por compasso, com a harmonia">
+                <Icon name="tab" size={15} /> Tablatura
+              </button>
+              <button className={mapOpen ? 'on' : ''} onClick={() => setMapOpen((o) => !o)} aria-expanded={mapOpen} title="Mapa e seções da música">
+                <Icon name="staff" size={15} /> Mapa
+              </button>
+            </div>
+          )}
+          <div className="song-tools-seg">
+            {lanes && (
+              <button
+                className="ghost small-btn"
+                onClick={() => void exportMix()}
+                disabled={mixBusy || mixCount === 0}
+                title="Junta as faixas marcadas com o volume, o pan e o tom de agora, num WAV"
+              >
+                {mixBusy ? <span className="spin" aria-hidden="true" /> : <Icon name="export" size={15} />} Exportar mix
+                <span className="count-pill">{mixCount}</span>
+              </button>
+            )}
+            {lanes && (
+              <button className="ghost small-btn" onClick={() => void saveStartMix()} title="Ao abrir a música, cada faixa começa muda ou tocando como está agora">
+                <Icon name="check" size={14} /> Padrão
+              </button>
+            )}
+            <button className="ghost small-btn" onClick={() => setPicker((p) => !p)} disabled={busy} aria-expanded={picker} title="Separar as faixas da música novamente">
+              <Icon name="scissors" size={15} /> Separar de novo
+            </button>
+            <button className={confirmRemove ? 'danger small-btn' : 'ghost small-btn'} onClick={() => void remove()} onBlur={() => setConfirmRemove(false)} title="Remover música da biblioteca">
+              {confirmRemove ? 'Confirmar remoção' : 'Remover'}
+            </button>
+          </div>
+        </div>
       </header>
 
       {mapOpen && analysis && sections && (
@@ -2087,15 +2088,17 @@ export function Song({ songId, name, job, onSeparate, onAnalyze, onRemoved }: Pr
                     <kbd className="lane-num">M</kbd>
                   </span>
                   <div className="lane-ctrls">
-                    <button
-                      className={`ms mute ${metro.on ? '' : 'on'}`}
-                      aria-pressed={!metro.on}
-                      aria-label="Metrônomo mudo"
-                      title="Mudo (M liga e desliga)"
-                      onClick={() => setMetro((x) => ({ ...x, on: !x.on }))}
-                    >
-                      M
-                    </button>
+                    <div className="ms-pair single">
+                      <button
+                        className={`ms mute ${metro.on ? '' : 'on'}`}
+                        aria-pressed={!metro.on}
+                        aria-label="Metrônomo mudo"
+                        title="Mudo (M liga e desliga)"
+                        onClick={() => setMetro((x) => ({ ...x, on: !x.on }))}
+                      >
+                        M
+                      </button>
+                    </div>
                     <Knob value={metro.vol} min={0} max={1} step={0.01} defaultValue={0.6} size={26} label="Volume do metrônomo" format={fmtGain} onChange={(v) => setMetro((x) => ({ ...x, vol: v }))} />
                   </div>
                 </div>
